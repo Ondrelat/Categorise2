@@ -48,7 +48,7 @@ export async function getFilmsSortedByRating(limit: number = 50) {
         }
       },
       orderBy: {
-        averageRatingIMDB: 'desc' // Tri par note décroissante
+        averageRatingIMDB: 'desc' // Tri par note décroissant
       },
       take: limit, // Limite le nombre de résultats
       select: {
