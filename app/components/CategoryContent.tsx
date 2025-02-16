@@ -16,7 +16,7 @@ const CategoryContent: React.FC<{ categoryId: string; slug: string }> = ({ categ
     const [articles, setArticles] = useState<Article[]>([]);
 
     useEffect(() => {
-        // Fetch articles for the active section
+        // Fetch articles for the active section 
         const fetchArticles = async () => {
             const response = await fetch(`/api/articles?categoryId=${categoryId}&type=${activeSection}`);
             if (response.ok) {
