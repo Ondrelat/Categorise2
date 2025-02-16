@@ -8,6 +8,9 @@ const nextConfig = {
             }
         ];
     },
+    experimental: {
+        appDir: false,
+      },
     // Option 1 : Conserver tous les logs en développement ET en production
     compiler: {
         removeConsole: false,
