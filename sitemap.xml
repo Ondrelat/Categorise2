@@ -6,13 +6,6 @@
     <lastmod>2023-05-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://www.dicteeinteractive.fr/"/>
-  </url>
-  <url>
-    <loc>https://www.dicteeinteractive.fr/regle</loc>
-    <lastmod>2024-10-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://www.dicteeinteractive.fr/regle"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://categorise.vercel.app/"/>
   </url>
 </urlset>
