@@ -5,6 +5,32 @@ const prisma = new PrismaClient();
 
 export async function getArticleById(id: string) {
   const debutArticle = performance.now();
+
+  try {
+    const article = await prisma.article.findUnique({
+      where: {
+        id: id,
+      }
+    });
+
+    const finArticle = performance.now();
+    console.log(`Temps d'exécution : ${finArticle - debutArticle} ms`);
+
+    if (!article) {
+      throw new Error(`Article avec l'ID ${id} non trouvé`);
+    }
+
+    return article;
+  } catch (error) {
+    console.error('Erreur lors de la récupération de l\'article:', error);
+    throw error;
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+export async function getArticleClassementById(id: string) {
+  const debutArticle = performance.now();
   console.log("Début de la recherche d'article");
 
   try {

@@ -64,6 +64,21 @@ model Categories {
   isActive    Boolean   @default(true)
   parent      Categories? @relation("CategoryToCategory", fields: [parentId], references: [id])
   children    Categories[] @relation("CategoryToCategory")
+  articles    Article[]   // Ajout de la relation reverse
+}
+
+model Article {
+  id          String      @id @default(uuid())
+  title       String
+  content     String      @db.Text
+  imageUrl    String?
+  type        String      
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  categoryId  String      // Référence à Categories
+  isActive    Boolean     @default(true)
+  category    Categories  @relation(fields: [categoryId], references: [id])
+  @@map("articles")
 }
 
 model ArticleClassement {

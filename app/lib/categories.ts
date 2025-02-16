@@ -7,7 +7,6 @@ const prisma = new PrismaClient();
 
 export async function getCategories(): Promise<CategoryTreeItem[]> {
   const startTime = performance.now();
-  console.log("début prisma categories");
 
   try {
     const categories = await prisma.categories.findMany({
@@ -15,7 +14,6 @@ export async function getCategories(): Promise<CategoryTreeItem[]> {
         name: 'asc',
       },
     });
-    console.log("Categories trouvées:", categories);
   
     const buildCategoryTree = (categories: any[], parentId: string | null = null): CategoryTreeItem[] => {
       return categories
@@ -46,7 +44,6 @@ export async function getCategories(): Promise<CategoryTreeItem[]> {
 
 export async function getCategoryBySlug(slug: string) {
   const startTime = performance.now();
-  console.log("début prisma category by slug");
 
   try {
     const category = await prisma.categories.findUnique({
@@ -56,7 +53,6 @@ export async function getCategoryBySlug(slug: string) {
     });
 
     const endTime = performance.now();
-    console.log("fin prisma category by slug");
     console.log(`Temps d'exécution : ${endTime - startTime} ms`);
 
     return category;

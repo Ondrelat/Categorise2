@@ -17,7 +17,6 @@ const CategoryContent: React.FC<{ categoryId: string; slug: string }> = ({ categ
 
     useEffect(() => {
         // Fetch articles for the active section
-        console.log("try fetch article");
         const fetchArticles = async () => {
             const response = await fetch(`/api/articles?categoryId=${categoryId}&type=${activeSection}`);
             if (response.ok) {

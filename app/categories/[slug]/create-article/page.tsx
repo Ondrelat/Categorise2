@@ -5,7 +5,7 @@ import { getCategoryBySlug } from '@/app/lib/categories';
 
 export default async function CreateArticlePage({ params }: { params: { slug: string } }) {
     const category = await getCategoryBySlug(params.slug);
-
+    console.log ("create dans" + category?.name);
     if (!category) {
         notFound();
     }
@@ -13,7 +13,7 @@ export default async function CreateArticlePage({ params }: { params: { slug: st
     return (
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold mb-6">Créer un article pour {category.name}</h1>
-            <ArticleCreationForm categoryId={category._id.toString()} />
+            <ArticleCreationForm categoryId={category.id.toString()} />
         </div>
     );
 }
