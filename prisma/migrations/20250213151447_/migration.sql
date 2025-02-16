@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "article_classement" ALTER COLUMN "tconst" DROP NOT NULL,
+ALTER COLUMN "averageRatingIMDB" DROP NOT NULL,
+ALTER COLUMN "numVotesIMDB" DROP NOT NULL;

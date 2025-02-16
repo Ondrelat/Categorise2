@@ -1,0 +1,20 @@
+/* styles.css */
+@font-face {
+    font-family: 'Butterfly Kids';
+    src: url('/fonts/ButterflyKids-Regular.ttf');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.font-butterfly-kids {
+    font-family: 'Butterfly Kids', cursive;
+}
+
+.text-36px {
+    font-size: 40px;
+}
+
+.font-light-bold {
+    font-weight: 600;
+    /* Vous pouvez ajuster cette valeur entre 400 (normal) et 700 (bold) selon vos besoins */
+}
