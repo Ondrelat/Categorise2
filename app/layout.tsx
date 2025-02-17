@@ -17,10 +17,18 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <SessionWrapper>
           <div className="flex flex-col min-h-screen">
             <Navbar />
-            <div className="flex flex-1 h-full">
-              <SideBar />
-               {children}
-            </div>
+            <div className="flex flex-1 h-full mt-1">
+  <div className="flex-1 flex justify-center items-center">
+    <div className="relative flex">
+      <div className="absolute -translate-x-full"> {/* Utilisation de transform pour décaler */}
+        <SideBar />
+      </div>
+      <div className="w-[800px]"> {/* Largeur fixe pour le children */}
+        {children}
+      </div>
+    </div>
+  </div>
+</div>
             <Footer />
           </div>
         </SessionWrapper>
