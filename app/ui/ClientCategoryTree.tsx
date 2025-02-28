@@ -63,7 +63,7 @@ const ClientCategoryTree: React.FC<CategoryTreeProps> = ({
                             )}
                         </span>
                         <FolderIcon className="w-4 h-4 text-blue-500 mr-2" />
-                        <Link href={`/categories/${category.slug}`} className="text-sm hover:text-blue-500 flex-1">
+                        <Link href={`/categories/${category.name}`} className="text-sm hover:text-blue-500 flex-1">
                             {category.name}
                         </Link>
                         

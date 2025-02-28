@@ -1,10 +1,10 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import ArticleCreationForm from '@/app/components/ArticleCreationForm';
-import { getCategoryBySlug } from '@/app/lib/categories';
+import { getCategoryByName } from '@/app/lib/categories';
 
-export default async function CreateArticlePage({ params }: { params: { slug: string } }) {
-    const category = await getCategoryBySlug(params.slug);
+export default async function CreateArticlePage({ params }: { params: { name: string } }) {
+    const category = await getCategoryByName(params.name);
     console.log ("create dans" + category?.name);
     if (!category) {
         notFound();

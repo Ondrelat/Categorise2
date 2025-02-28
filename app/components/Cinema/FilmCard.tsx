@@ -1,6 +1,6 @@
 // app/films/components/FilmCard.tsx
 import { Star } from 'lucide-react';
-import { Film } from '../../categories/[slug]/types';
+import { Film } from '../../types';
 import Image from 'next/image';
 
 export default function FilmCard({ film }: { film: Film }) {

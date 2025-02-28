@@ -1,7 +1,7 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import SideBar from '@/app/components/Category/Sidebar';
-import { getCategoryBySlug } from '@/app/lib/categories';
+import { getCategoryByName } from '@/app/lib/categories';
 import dynamic from "next/dynamic";
 import NavigatorSection from '@/app/components/Category/NavigatorSection';
 
@@ -20,15 +20,15 @@ export default async function CategoryLayout({
   params 
 }: { 
   children: React.ReactNode, 
-  params: { slug: string } 
+  params: { name: string } 
 }) {
-    const category = await getCategoryBySlug(params.slug);
+    const category = await getCategoryByName(params.name);
 
     if (!category) {
         notFound();
     }
 
-    if (category.slug === "film") {
+    if (category.name === "film") {
         return <FilmPage />;
     }
 
@@ -36,7 +36,7 @@ export default async function CategoryLayout({
         <div className="flex flex-1 h-full mt-4 justify-center">
           <div className="relative">
             <div className="absolute -translate-x-full">
-              <SideBar initialSlug={params.slug} />
+              <SideBar initialName={params.name} />
             </div>
             <div className="w-[800px] ml-4">
               <div className="container mx-auto px-4 py-8">

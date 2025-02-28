@@ -10,7 +10,7 @@ import { useSession } from 'next-auth/react'; // Importation de useSession pour 
 
 interface CategoryActionsProps {
   initialCategories: CategoryTreeItem[];
-  currentCategorySlug?: string;
+  currentCategoryName?: string;
   currentCategoryId?: string | null;
 }
 
@@ -20,7 +20,7 @@ interface CreateCategoryResponse {
   data?: CategoryTreeItem;
 }
 
-export default function CategoryActions({ initialCategories, currentCategorySlug, currentCategoryId }: CategoryActionsProps) {
+export default function CategoryActions({ initialCategories, currentCategoryName, currentCategoryId }: CategoryActionsProps) {
   const [categories, setCategories] = useState<CategoryTreeItem[]>(initialCategories);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
@@ -30,7 +30,6 @@ export default function CategoryActions({ initialCategories, currentCategorySlug
   // États pour le formulaire d'ajout
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategorySlug, setNewCategorySlug] = useState('');
   const [addCategoryError, setAddCategoryError] = useState<string | null>(null);
   const [addingCategoryLoading, setAddingCategoryLoading] = useState(false);
   
@@ -43,23 +42,23 @@ export default function CategoryActions({ initialCategories, currentCategorySlug
   // Vérification si l'utilisateur est Ondrelat
   const isOndrelat = session?.user?.name === "Ondrelat" || session?.user?.email === "ondrelat@example.com";
   
-  // Trouver la catégorie actuelle en fonction du slug
-  const findCurrentCategory = (categories: CategoryTreeItem[], slug?: string): CategoryTreeItem | null => {
-    if (!slug) return null;
+  // Trouver la catégorie actuelle en fonction du name
+  const findCurrentCategory = (categories: CategoryTreeItem[], name?: string): CategoryTreeItem | null => {
+    if (!name) return null;
     
     for (const category of categories) {
-      if (category.slug === slug) {
+      if (category.name === name) {
         return category;
       }
       
-      const foundInChildren = findCurrentCategory(category.subcategories, slug);
+      const foundInChildren = findCurrentCategory(category.subcategories, name);
       if (foundInChildren) return foundInChildren;
     }
     
     return null;
   };
   
-  const currentCategory = findCurrentCategory(categories, currentCategorySlug);
+  const currentCategory = findCurrentCategory(categories, currentCategoryName);
 
   // Fonction d'édition - vérification des permissions
   const handleEdit = (categoryId: string) => {
@@ -126,8 +125,8 @@ export default function CategoryActions({ initialCategories, currentCategorySlug
       return;
     }
     
-    if (!newCategoryName.trim() || !newCategorySlug.trim()) {
-      setAddCategoryError('Le nom et le slug sont requis');
+    if (!newCategoryName.trim()) {
+      setAddCategoryError('Le nom et le name sont requis');
       return;
     }
     
@@ -137,7 +136,6 @@ export default function CategoryActions({ initialCategories, currentCategorySlug
     try {
       const result = await createCategory({
         name: newCategoryName.trim(),
-        slug: newCategorySlug.trim(),
         parentId: currentCategoryId || null
       }) as CreateCategoryResponse;
       
@@ -170,7 +168,6 @@ export default function CategoryActions({ initialCategories, currentCategorySlug
         
         setCategories(addNewCategory([...categories], currentCategory?.id || null));
         setNewCategoryName('');
-        setNewCategorySlug('');
         setIsAddingCategory(false);
         router.refresh();
       } else {
@@ -184,13 +181,13 @@ export default function CategoryActions({ initialCategories, currentCategorySlug
     }
   };
 
-  // Générer automatiquement un slug à partir du nom
+  // Générer automatiquement un name à partir du nom
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
     setNewCategoryName(name);
     
-    // Générer un slug simple
-    const slug = name.toLowerCase()
+    // Générer un name simple
+    const nameReplace = name.toLowerCase()
       .replace(/[àáâãäå]/g, 'a')
       .replace(/[èéêë]/g, 'e')
       .replace(/[ìíîï]/g, 'i')
@@ -203,7 +200,7 @@ export default function CategoryActions({ initialCategories, currentCategorySlug
       .replace(/^-+/, '')
       .replace(/-+$/, '');
     
-    setNewCategorySlug(slug);
+    setNewCategoryName(nameReplace);
   };
 
   return (

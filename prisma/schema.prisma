@@ -58,7 +58,6 @@ model Categories {
   id          String    @id @default(uuid())
   name        String
   description String
-  slug        String    @unique
   parentId    String?   // Optional parent category reference
   updatedAt   DateTime  @updatedAt
   isActive    Boolean   @default(true)

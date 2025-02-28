@@ -1,24 +1,24 @@
 import React from 'react';
 import { notFound, redirect } from 'next/navigation';
 
-import { getCategoryBySlug } from '@/app/lib/categories';
+import { getCategoryByName } from '@/app/lib/categories';
 import dynamic from "next/dynamic";
 
 const FilmPage = dynamic(() => import("@/app/components/Cinema/FilmPage"), { ssr: true });
 
-export default async function CategoryPage({ params }: { params: { slug: string } }) {
-    const category = await getCategoryBySlug(params.slug);
+export default async function CategoryPage({ params }: { params: { name: string } }) {
+    const category = await getCategoryByName(params.name);
     
     if (!category) {
         notFound();
     }
 
-    if (category.slug === "film") {
+    if (category.name === "film") {
         return <FilmPage />;
     }
 
 
-    return redirect(`/categories/${params.slug}/classement`);
+    return redirect(`/categories/${params.name}/classement`);
 
 
 }

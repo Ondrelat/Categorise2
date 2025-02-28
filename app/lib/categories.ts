@@ -21,7 +21,6 @@ export async function getCategories(): Promise<CategoryTreeItem[]> {
           id: cat.id,
           name: cat.name,
           description: cat.description,
-          slug: cat.slug,
           isActive: cat.isActive,
           subcategories: buildCategoryTree(categories, cat.id)
         }));
@@ -41,13 +40,13 @@ export async function getCategories(): Promise<CategoryTreeItem[]> {
   }
 }
 
-export async function getCategoryBySlug(slug: string) {
+export async function getCategoryByName(name: string) {
   const startTime = performance.now();
 
   try {
-    const category = await prisma.categories.findUnique({
+    const category = await prisma.categories.findFirst({
       where: {
-        slug: slug,
+        name: name,
       },
     });
 
@@ -124,23 +123,23 @@ export async function deleteCategory(categoryId: string) {
 // Nouvelle fonction pour mettre à jour une catégorie
 export async function updateCategory(
   categoryId: string, 
-  data: { name: string; slug: string; description?: string; isActive?: boolean }
+  data: { name: string; description?: string; isActive?: boolean }
 ) {
   try {
-    const { name, slug } = data;
+    const { name } = data;
 
     // Validation des données
-    if (!name || !slug) {
+    if (!name) {
       return {
         success: false,
-        message: 'Le nom et le slug sont requis'
+        message: 'Le nom et le name sont requis'
       };
     }
 
-    // Vérifier que le slug est unique
+    // Vérifier que le name est unique
     const existingCategory = await prisma.categories.findFirst({
       where: {
-        slug,
+        name,
         id: {
           not: categoryId
         }
@@ -150,7 +149,7 @@ export async function updateCategory(
     if (existingCategory) {
       return {
         success: false,
-        message: 'Une catégorie avec ce slug existe déjà'
+        message: 'Une catégorie avec ce name existe déjà'
       };
     }
 
@@ -184,35 +183,34 @@ export async function updateCategory(
 
 export async function createCategory(data: { 
   name: string; 
-  slug: string; 
   parentId: string | null;
   description?: string;
   isActive?: boolean;
 }) {
   'use server';
   
-  const { name, slug, parentId, description = '', isActive = true } = data;
+  const { name, parentId, description = '', isActive = true } = data;
 
   try {
     // Validation des données
-    if (!name || !slug) {
+    if (!name) {
       return {
         success: false,
-        message: 'Le nom et le slug sont requis'
+        message: 'Le nom et le name sont requis'
       };
     }
 
-    // Vérifier que le slug est unique
-    const existingCategory = await prisma.categories.findUnique({
+    // Vérifier que le name est unique
+    const existingCategory = await prisma.categories.findFirst({
       where: {
-        slug: slug
+        name: name
       }
     });
 
     if (existingCategory) {
       return {
         success: false,
-        message: 'Une catégorie avec ce slug existe déjà'
+        message: 'Une catégorie avec ce name existe déjà'
       };
     }
 
@@ -220,7 +218,6 @@ export async function createCategory(data: {
     const newCategory = await prisma.categories.create({
       data: {
         name,
-        slug,
         parentId,
         description,
         isActive
@@ -232,7 +229,6 @@ export async function createCategory(data: {
       id: newCategory.id,
       name: newCategory.name,
       description: newCategory.description,
-      slug: newCategory.slug,
       isActive: newCategory.isActive,
       subcategories: []
     };
@@ -240,7 +236,7 @@ export async function createCategory(data: {
     // Revalider les chemins pour rafraîchir les données
     revalidatePath('/admin/categories');
     revalidatePath('/categories');
-    revalidatePath(`/categories/${slug}`);
+    revalidatePath(`/categories/${name}`);
 
     return {
       success: true,

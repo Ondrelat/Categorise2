@@ -8,13 +8,11 @@ type SectionType = 'classement' | 'forum' | 'apprentissage' | 'media';
 
 interface CategoryLayoutProps {
   children: React.ReactNode;
-  categorySlug: string;
   categoryName: string;
 }
 
 const CategoryLayout: React.FC<CategoryLayoutProps> = ({ 
   children, 
-  categorySlug,
   categoryName
 }) => {
   const pathname = usePathname();
@@ -52,7 +50,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
                 {sections.map((section) => (
                   <Link
                     key={section}
-                    href={`/categories/${categorySlug}/${section}`}
+                    href={`/categories/${categoryName}/${section}`}
                     className={`mr-2 px-4 py-2 rounded-md inline-block ${
                       activeSection === section ? 'bg-blue-400 text-white' : 'bg-gray-200'
                     }`}
@@ -62,7 +60,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
                 ))}
               </div>
               <Link 
-                href={`/categories/${categorySlug}/create-article`} 
+                href={`/categories/${categoryName}/create-article`} 
                 className="bg-blue-400 text-white font-bold py-2 px-4 rounded"
               >
                 Créer un article

@@ -115,8 +115,8 @@ export async function getArticlesByTypeAndCategory(categoryTitle: string, type: 
 
   try {
     // Requête unifiée pour tous les types d'articles
-    const category = await prisma.categories.findUnique({
-      where: { slug: categoryTitle }
+    const category = await prisma.categories.findFirst({
+      where: { name: categoryTitle }
     });
 
     const articles = await prisma.article.findMany({

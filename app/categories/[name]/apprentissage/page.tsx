@@ -1,4 +1,4 @@
-// app/categories/[slug]/apprentissage/page.tsx
+// app/categories/[name]/apprentissage/page.tsx
 import React from 'react';
 
 import { getArticlesByTypeAndCategory } from '@/app/lib/articles';
@@ -6,14 +6,14 @@ import Link from 'next/link';
 
 interface ApprentissagePageProps {
   params: {
-    slug: string;
+    name: string;
   };
 }
 
 export default async function ApprentissagePage({ params }: ApprentissagePageProps) {
-  const { slug } = params;
+  const { name } = params;
   
-  const courses = await getArticlesByTypeAndCategory(params.slug, 'apprentissage');
+  const courses = await getArticlesByTypeAndCategory(params.name, 'apprentissage');
 
   return (
     <div className="mt-4">
@@ -21,7 +21,7 @@ export default async function ApprentissagePage({ params }: ApprentissagePagePro
       <div className="grid gap-4 md:grid-cols-2">
         {courses.map((course) => (
           <div key={course.id} className="bg-white p-4 border rounded shadow-sm">
-            <Link href={`/categories/${slug}/${course.id}`} className="text-blue-500 font-medium hover:underline block mb-2">
+            <Link href={`/categories/${name}/${course.id}`} className="text-blue-500 font-medium hover:underline block mb-2">
               {course.title}
             </Link>
             <div className="flex items-center text-sm text-gray-600">

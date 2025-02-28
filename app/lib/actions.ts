@@ -51,7 +51,7 @@ export async function createArticle(prevState: ActionState, formData: FormData):
       data: validatedFields.data,
     });
 
-    revalidatePath('/categories/[slug]');
+    revalidatePath('/categories/[name]');
         // Redirection vers la page de la catégorie après création
     redirect(`/categories/${validatedFields.data.categoryId}`);
     

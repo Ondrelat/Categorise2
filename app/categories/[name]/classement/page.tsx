@@ -1,20 +1,20 @@
-// app/categories/[slug]/classement/page.tsx
+// app/categories/[name]/classement/page.tsx
 import React from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
 interface ClassementPageProps {
   params: {
-    slug: string;
+    name: string;
   };
 }
 
 export default async function ClassementPage({ params }: ClassementPageProps) {
-  const { slug } = params;
+  const { name } = params;
   
   const { getArticlesByTypeAndCategory } = await import('@/app/lib/articles');
   
-  const articles = await getArticlesByTypeAndCategory(params.slug, 'classement');
+  const articles = await getArticlesByTypeAndCategory(params.name, 'classement');
 
   return (
     <div className="mt-4">
@@ -22,7 +22,7 @@ export default async function ClassementPage({ params }: ClassementPageProps) {
       <div className="space-y-2">
         {articles.map((article) => (
           <div key={article.id} className="p-3 bg-white shadow rounded-md">
-            <Link href={`/categories/${slug}/${article.id}`} className="text-blue-500 hover:underline">
+            <Link href={`/categories/${name}/${article.id}`} className="text-blue-500 hover:underline">
               {article.title}
             </Link>
           </div>

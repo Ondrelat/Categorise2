@@ -1,4 +1,4 @@
-// app/categories/[slug]/media/page.tsx
+// app/categories/[name]/media/page.tsx
 import React from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -6,16 +6,16 @@ import Image from 'next/image';
 
 interface MediaPageProps {
   params: {
-    slug: string;
+    name: string;
   };
 }
 
 export default async function MediaPage({ params }: MediaPageProps) {
-  const { slug } = params;
+  const { name } = params;
   
   const { getArticlesByTypeAndCategory } = await import('@/app/lib/articles');
   
-  const mediaItems = await getArticlesByTypeAndCategory(params.slug, 'media');
+  const mediaItems = await getArticlesByTypeAndCategory(params.name, 'media');
 
   return (
     <div className="mt-4">
@@ -30,7 +30,7 @@ export default async function MediaPage({ params }: MediaPageProps) {
               </div>
             </div>
             <div className="p-3">
-              <Link href={`/categories/${slug}/${media.id}`} className="text-blue-500 font-medium hover:underline block">
+              <Link href={`/categories/${name}/${media.id}`} className="text-blue-500 font-medium hover:underline block">
                 {media.title}
               </Link>
             </div>

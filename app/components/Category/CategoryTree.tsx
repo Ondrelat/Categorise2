@@ -1,16 +1,16 @@
 import React from 'react';
-import { getCategories, getCategoryBySlug } from '../../lib/categories';
+import { getCategories, getCategoryByName } from '../../lib/categories';
 import CategoryActions from './CategoryActions';
 import { useParams } from 'next/navigation';
 
 interface CategoryTreeProps {
-  initialSlug?: string; // Slug initial optionnel
+    initialCategoryName?: string; // name initial optionnel
 }
 
-export default async function CategoryTree({ initialSlug }: CategoryTreeProps) {
+export default async function CategoryTree({ initialCategoryName }: CategoryTreeProps) {
 
-    // Récupérer la catégorie si un slug est spécifié, sinon null
-    const category = initialSlug ? await getCategoryBySlug(initialSlug) : null;
+    // Récupérer la catégorie si un name est spécifié, sinon null
+    const category = initialCategoryName ? await getCategoryByName(initialCategoryName) : null;
     
     // Récupérer toutes les catégories
     const categories = await getCategories();
@@ -18,7 +18,7 @@ export default async function CategoryTree({ initialSlug }: CategoryTreeProps) {
     return (
         <CategoryActions 
             initialCategories={categories} 
-            currentCategorySlug={category?.slug || ""} 
+            currentCategoryName={category?.name || ""} 
             currentCategoryId={category?.id || ""}
         />
     );

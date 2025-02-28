@@ -4,7 +4,6 @@ export interface Category {
     id: string;
     name: string;
     description: string;
-    slug: string;
     parentCategory: string | null;  // Changé de parentId à parentCategory
     createdAt: Date;
     updatedAt: Date;
@@ -15,7 +14,6 @@ export interface CategoryTreeItem {
     id: string;
     name: string;
     description: string;
-    slug: string;
     isActive: boolean;
     subcategories: CategoryTreeItem[];
 }
