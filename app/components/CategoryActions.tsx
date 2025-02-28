@@ -1,10 +1,12 @@
+
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import ClientCategoryTree from '../ui/ClientCategoryTree';
 import { CategoryTreeItem } from '../types';
 import { deleteCategory, createCategory } from '../lib/categories';
+import { useSession } from 'next-auth/react'; // Importation de useSession pour vérifier l'utilisateur
 
 interface CategoryActionsProps {
   initialCategories: CategoryTreeItem[];
@@ -34,7 +36,13 @@ export default function CategoryActions({ initialCategories, currentCategorySlug
   
   const router = useRouter();
   const pathname = usePathname();
-
+  
+  // Récupération des données de session utilisateur
+  const { data: session } = useSession();
+  
+  // Vérification si l'utilisateur est Ondrelat
+  const isOndrelat = session?.user?.name === "Ondrelat" || session?.user?.email === "ondrelat@example.com";
+  
   // Trouver la catégorie actuelle en fonction du slug
   const findCurrentCategory = (categories: CategoryTreeItem[], slug?: string): CategoryTreeItem | null => {
     if (!slug) return null;
@@ -53,17 +61,27 @@ export default function CategoryActions({ initialCategories, currentCategorySlug
   
   const currentCategory = findCurrentCategory(categories, currentCategorySlug);
 
+  // Fonction d'édition - vérification des permissions
   const handleEdit = (categoryId: string) => {
+    if (!isOndrelat) {
+      setErrorMessage("Vous n'avez pas les permissions pour modifier les catégories");
+      return;
+    }
     router.push(`/admin/categories/edit/${categoryId}`);
   };
 
+  // Fonction de suppression - vérification des permissions
   const handleDelete = (categoryId: string) => {
+    if (!isOndrelat) {
+      setErrorMessage("Vous n'avez pas les permissions pour supprimer les catégories");
+      return;
+    }
     setCategoryToDelete(categoryId);
     setIsDeleteDialogOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    if (!categoryToDelete) return;
+    if (!categoryToDelete || !isOndrelat) return;
     
     setIsLoading(true);
     setErrorMessage(null);
@@ -102,6 +120,12 @@ export default function CategoryActions({ initialCategories, currentCategorySlug
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Vérification des permissions
+    if (!isOndrelat) {
+      setAddCategoryError("Vous n'avez pas les permissions pour créer des catégories");
+      return;
+    }
+    
     if (!newCategoryName.trim() || !newCategorySlug.trim()) {
       setAddCategoryError('Le nom et le slug sont requis');
       return;
@@ -111,8 +135,6 @@ export default function CategoryActions({ initialCategories, currentCategorySlug
     setAddCategoryError(null);
     
     try {
-        console.log('currentCategory', currentCategory);
-        console.log('parentId', currentCategoryId);
       const result = await createCategory({
         name: newCategoryName.trim(),
         slug: newCategorySlug.trim(),
@@ -167,7 +189,7 @@ export default function CategoryActions({ initialCategories, currentCategorySlug
     const name = e.target.value;
     setNewCategoryName(name);
     
-    // Générer un slug simple (vous pourriez vouloir une fonction plus sophistiquée)
+    // Générer un slug simple
     const slug = name.toLowerCase()
       .replace(/[àáâãäå]/g, 'a')
       .replace(/[èéêë]/g, 'e')
@@ -186,6 +208,7 @@ export default function CategoryActions({ initialCategories, currentCategorySlug
 
   return (
     <div className="space-y-6">
+      
       {/* Affichage de la catégorie actuelle si elle existe */}
       {currentCategory && (
         <div className="bg-blue-50 p-3 rounded-md mb-4">
@@ -195,18 +218,20 @@ export default function CategoryActions({ initialCategories, currentCategorySlug
         </div>
       )}
       
-      {/* Bouton pour afficher/masquer le formulaire d'ajout */}
-      <div className="mb-4">
-        <button
-          onClick={() => setIsAddingCategory(!isAddingCategory)}
-          className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
-        >
-          {isAddingCategory ? 'Annuler' : `Ajouter une ${currentCategory ? 'sous-catégorie' : 'catégorie'}`}
-        </button>
-      </div>
+      {/* Bouton pour afficher/masquer le formulaire d'ajout - visible uniquement pour Ondrelat */}
+      {isOndrelat && (
+        <div className="mb-4">
+          <button
+            onClick={() => setIsAddingCategory(!isAddingCategory)}
+            className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
+          >
+            {isAddingCategory ? 'Annuler' : `Ajouter une ${currentCategory ? 'sous-catégorie' : 'catégorie'}`}
+          </button>
+        </div>
+      )}
       
-      {/* Formulaire d'ajout de catégorie */}
-      {isAddingCategory && (
+      {/* Formulaire d'ajout de catégorie - affiché uniquement si isAddingCategory et si l'utilisateur est Ondrelat */}
+      {isAddingCategory && isOndrelat && (
         <div className="bg-gray-50 p-4 rounded-md mb-6 border border-gray-200">
           <h3 className="text-lg font-medium mb-3">
             {currentCategory ? `Ajouter une sous-catégorie à "${currentCategory.name}"` : 'Ajouter une catégorie'}
@@ -255,12 +280,20 @@ export default function CategoryActions({ initialCategories, currentCategorySlug
         </div>
       )}
       
-      {/* Arbre des catégories */}
+      {/* Arbre des catégories - en passant isOndrelat au composant pour gérer les boutons d'action */}
       <ClientCategoryTree 
         categories={categories}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        isReadOnly={!isOndrelat} // Nouvelle propriété pour indiquer mode lecture seule
       />
+
+      {/* Affichage d'erreur globale (si l'utilisateur n'est pas Ondrelat et tente une action restreinte) */}
+      {errorMessage && (
+        <div className="p-3 bg-red-50 text-red-600 rounded-md border border-red-200 mt-4">
+          {errorMessage}
+        </div>
+      )}
 
       {/* Dialogue de confirmation de suppression */}
       {isDeleteDialogOpen && (

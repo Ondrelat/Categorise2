@@ -10,13 +10,15 @@ interface CategoryTreeProps {
     level?: number;
     onEdit?: (categoryId: string) => void;
     onDelete?: (categoryId: string) => void;
+    isReadOnly?: boolean; // Nouvelle propriété pour le mode lecture seule
 }
 
 const ClientCategoryTree: React.FC<CategoryTreeProps> = ({
     categories,
     level = 0,
     onEdit = (id) => console.log(`Edit category: ${id}`),
-    onDelete = (id) => console.log(`Delete category: ${id}`)
+    onDelete = (id) => console.log(`Delete category: ${id}`),
+    isReadOnly = false // Par défaut, les actions sont disponibles
 }) => {
     const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({});
 
@@ -64,22 +66,26 @@ const ClientCategoryTree: React.FC<CategoryTreeProps> = ({
                         <Link href={`/categories/${category.slug}`} className="text-sm hover:text-blue-500 flex-1">
                             {category.name}
                         </Link>
-                        <div className="flex space-x-2">
-                            <button 
-                                onClick={(e) => handleEdit(e, category.id)}
-                                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200"
-                                title="Éditer"
-                            >
-                                <PencilIcon className="w-4 h-4 text-gray-600" />
-                            </button>
-                            <button 
-                                onClick={(e) => handleDelete(e, category.id)} 
-                                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200"
-                                title="Supprimer"
-                            >
-                                <TrashIcon className="w-4 h-4 text-red-500" />
-                            </button>
-                        </div>
+                        
+                        {/* N'afficher les boutons d'action que si !isReadOnly */}
+                        {!isReadOnly && (
+                            <div className="flex space-x-2">
+                                <button 
+                                    onClick={(e) => handleEdit(e, category.id)}
+                                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200"
+                                    title="Éditer"
+                                >
+                                    <PencilIcon className="w-4 h-4 text-gray-600" />
+                                </button>
+                                <button 
+                                    onClick={(e) => handleDelete(e, category.id)} 
+                                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200"
+                                    title="Supprimer"
+                                >
+                                    <TrashIcon className="w-4 h-4 text-red-500" />
+                                </button>
+                            </div>
+                        )}
                     </div>
                     {expandedCategories[category.id] && category.subcategories.length > 0 && (
                         <ClientCategoryTree 
@@ -87,6 +93,7 @@ const ClientCategoryTree: React.FC<CategoryTreeProps> = ({
                             level={level + 1} 
                             onEdit={onEdit}
                             onDelete={onDelete}
+                            isReadOnly={isReadOnly} // Propager le mode lecture seule aux enfants
                         />
                     )}
                 </li>
