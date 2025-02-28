@@ -1,40 +1,59 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
 type ContentSection = 'classement' | 'forum' | 'apprentissage' | 'media';
+const SECTIONS = ['classement', 'forum', 'apprentissage', 'media'] as ContentSection[];
 
 const NavigatorSection: React.FC = () => {
-    const [activeSection, setActiveSection] = useState<ContentSection>('classement');
     const router = useRouter();
     const pathname = usePathname();
     
-    // Fonction pour obtenir l'URL de base actuelle (sans la dernière partie du chemin)
-    const getBaseUrl = () => {
-        // Si le pathname contient déjà une des sections, on remonte d'un niveau
-        const sections = ['classement', 'forum', 'apprentissage', 'media'];
-        if(!pathname) return '';
-        const lastSegment = pathname.split('/').pop();
+    // Mémoriser la fonction avec useCallback
+    const getSectionFromPath = useCallback((): ContentSection => {
+        if (!pathname) return 'classement';
         
-        if (sections.includes(lastSegment || '')) {
+        const lastSegment = pathname.split('/').pop() || '';
+        const decodedSegment = decodeURIComponent(lastSegment);
+        
+        return SECTIONS.includes(decodedSegment as ContentSection) 
+            ? (decodedSegment as ContentSection) 
+            : 'classement';
+    }, [pathname]);
+    
+    // Initialiser activeSection avec la valeur correcte depuis l'URL
+    const [activeSection, setActiveSection] = useState<ContentSection>(getSectionFromPath());
+    
+    // Mettre à jour activeSection quand getSectionFromPath change
+    useEffect(() => {
+        setActiveSection(getSectionFromPath());
+    }, [getSectionFromPath]);
+
+    // Mémoriser la fonction getBaseUrl avec useCallback
+    const getBaseUrl = useCallback(() => {
+        if(!pathname) return '';
+        const lastSegment = pathname.split('/').pop() || '';
+        const decodedSegment = decodeURIComponent(lastSegment);
+        
+        if (SECTIONS.includes(decodedSegment as ContentSection)) {
             return pathname.substring(0, pathname.lastIndexOf('/'));
         }
         
         return pathname;
-    };
+    }, [pathname]);
 
-    const handleSectionClick = (section: ContentSection) => {
+    const handleSectionClick = useCallback((section: ContentSection) => {
         setActiveSection(section);
         const baseUrl = getBaseUrl();
         router.push(`${baseUrl}/${section}`);
-    };
+    }, [getBaseUrl, router]);
 
     return (
         <div>
             <div className="flex mb-4 justify-between items-center">
                 <div>
-                    {(['classement', 'forum', 'apprentissage', 'media'] as ContentSection[]).map((section) => (
+                    {SECTIONS.map((section) => (
                         <button
                             key={section}
                             className={`mr-2 px-4 py-2 rounded-md ${

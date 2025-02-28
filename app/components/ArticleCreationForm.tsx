@@ -48,9 +48,10 @@ export default function ArticleCreationForm({ categoryId }: { categoryId: string
            required
          >
            <option value="">Sélectionnez un type</option>
-           <option value="article">Article</option>
-           <option value="tutorial">Tutorial</option>
-           <option value="news">News</option>
+           <option value="classement">classement</option>
+           <option value="forum">forum</option>
+           <option value="apprentissage">apprentissage</option>
+           <option value="media">media</option>
          </select>
          {state.errors?.type && (
            <p className="mt-1 text-sm text-red-600">{state.errors.type[0]}</p>
