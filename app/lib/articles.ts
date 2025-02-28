@@ -1,7 +1,14 @@
 // app/lib/articles.ts
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './prisma';
 
-const prisma = new PrismaClient();
+// Définition explicite de l'interface Article
+interface Article {
+  id: string;
+  title: string;
+  type: string;
+  content?: string;
+  createdAt?: Date;
+}
 
 export async function getArticleById(id: string) {
   const debutArticle = performance.now();
@@ -97,6 +104,46 @@ export async function getFilmsSortedByRating(limit: number = 50) {
   } catch (error) {
     console.error('Erreur lors de la récupération des films:', error);
     throw new Error('Erreur lors de la récupération des films');
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+export async function getArticlesByTypeAndCategory(categoryTitle: string, type: string): Promise<Article[]> {
+  const startTime = performance.now();
+  console.log(`Début de la récupération des articles de type ${type} pour la catégorie ${categoryTitle}`);
+
+  try {
+    // Requête unifiée pour tous les types d'articles
+    const category = await prisma.categories.findUnique({
+      where: { slug: categoryTitle }
+    });
+
+    const articles = await prisma.article.findMany({
+      where: {
+        categoryId: category!.id,  // Utiliser categoryTitle au lieu de categoryId
+        type: type
+      },
+      select: {
+        id: true,
+        title: true,
+        type: true,
+        createdAt: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      take: 20
+    });
+
+    const endTime = performance.now();
+    console.log(`Articles récupérés en ${endTime - startTime} ms`);
+    console.log(`Nombre d'articles trouvés : ${articles.length}`);
+
+    return articles;
+  } catch (error) {
+    console.error(`Erreur lors de la récupération des articles de type ${type}:`, error);
+    throw new Error(`Erreur lors de la récupération des articles de type ${type}`);
   } finally {
     await prisma.$disconnect();
   }
