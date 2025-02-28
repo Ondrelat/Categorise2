@@ -3,9 +3,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import ClientCategoryTree from '../ui/ClientCategoryTree';
-import { CategoryTreeItem } from '../types';
-import { deleteCategory, createCategory } from '../lib/categories';
+import ClientCategoryTree from '../../ui/ClientCategoryTree';
+import { CategoryTreeItem } from '../../types';
+import { deleteCategory, createCategory } from '../../lib/categories';
 import { useSession } from 'next-auth/react'; // Importation de useSession pour vérifier l'utilisateur
 
 interface CategoryActionsProps {

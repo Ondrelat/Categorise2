@@ -1,11 +1,11 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import CategoryContent from '@/app/components/CategoryContent';
+import CategoryContent from '@/app/components/Category/CategoryContent';
 import { getCategoryBySlug } from '@/app/lib/categories';
 import dynamic from "next/dynamic";
-import SideBar from '@/app/components/Sidebar';
+import SideBar from '@/app/components/Category/Sidebar';
 
-const FilmPage = dynamic(() => import("./FilmPage"), { ssr: true });
+const FilmPage = dynamic(() => import("@/app/components/Cinema/FilmPage"), { ssr: true });
 
 export default async function CategoryPage({ params }: { params: { slug: string } }) {
     const category = await getCategoryBySlug(params.slug);

@@ -29,7 +29,6 @@ export interface Article {
     createdAt?: Date;
     categoryId?: string;
 }
-
 export interface Film {
     id: string;
     tconst: string | null;

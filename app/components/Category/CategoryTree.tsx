@@ -1,5 +1,5 @@
 import React from 'react';
-import { getCategories, getCategoryBySlug } from '../lib/categories';
+import { getCategories, getCategoryBySlug } from '../../lib/categories';
 import CategoryActions from './CategoryActions';
 import { useParams } from 'next/navigation';
 
