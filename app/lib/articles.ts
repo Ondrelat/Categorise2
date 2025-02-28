@@ -111,13 +111,15 @@ export async function getFilmsSortedByRating(limit: number = 50) {
 
 export async function getArticlesByTypeAndCategory(categoryTitle: string, type: string): Promise<Article[]> {
   const startTime = performance.now();
-  console.log(`Début de la récupération des articles de type ${type} pour la catégorie ${categoryTitle}`);
+  const categoryTitleDecode = decodeURIComponent(categoryTitle);
+  console.log(`Début de la récupération des articles de type ${type} pour la catégorie ${categoryTitleDecode}`);
 
   try {
     // Requête unifiée pour tous les types d'articles
     const category = await prisma.categories.findFirst({
-      where: { name: categoryTitle }
+      where: { name: categoryTitleDecode }
     });
+    console.log("category", category);  
 
     const articles = await prisma.article.findMany({
       where: {
@@ -135,6 +137,7 @@ export async function getArticlesByTypeAndCategory(categoryTitle: string, type: 
       },
       take: 20
     });
+    console.log("articles", articles);
 
     const endTime = performance.now();
     console.log(`Articles récupérés en ${endTime - startTime} ms`);

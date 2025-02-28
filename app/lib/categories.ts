@@ -42,11 +42,13 @@ export async function getCategories(): Promise<CategoryTreeItem[]> {
 
 export async function getCategoryByName(name: string) {
   const startTime = performance.now();
+  const decodedName = decodeURIComponent(name);
+  console.log("params décodé:", decodedName);
 
   try {
     const category = await prisma.categories.findFirst({
       where: {
-        name: name,
+        name: decodedName,
       },
     });
 

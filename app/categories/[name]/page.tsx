@@ -7,7 +7,11 @@ import dynamic from "next/dynamic";
 const FilmPage = dynamic(() => import("@/app/components/Cinema/FilmPage"), { ssr: true });
 
 export default async function CategoryPage({ params }: { params: { name: string } }) {
+    
+    console.log("params", params.name);
     const category = await getCategoryByName(params.name);
+
+    console.log("category", category);
     
     if (!category) {
         notFound();
