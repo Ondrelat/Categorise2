@@ -115,15 +115,12 @@ export async function getArticlesByTypeAndCategory(categoryTitle: string, type: 
   console.log(`Début de la récupération des articles de type ${type} pour la catégorie ${categoryTitleDecode}`);
 
   try {
-    // Requête unifiée pour tous les types d'articles
-    const category = await prisma.categories.findFirst({
-      where: { name: categoryTitleDecode }
-    });
-    console.log("category", category);  
-
+    // Requête unique avec jointure implicite
     const articles = await prisma.article.findMany({
       where: {
-        categoryId: category!.id,  // Utiliser categoryTitle au lieu de categoryId
+        category: {
+          name: categoryTitleDecode
+        },
         type: type
       },
       select: {
@@ -137,7 +134,6 @@ export async function getArticlesByTypeAndCategory(categoryTitle: string, type: 
       },
       take: 20
     });
-    console.log("articles", articles);
 
     const endTime = performance.now();
     console.log(`Articles récupérés en ${endTime - startTime} ms`);
@@ -147,7 +143,6 @@ export async function getArticlesByTypeAndCategory(categoryTitle: string, type: 
   } catch (error) {
     console.error(`Erreur lors de la récupération des articles de type ${type}:`, error);
     throw new Error(`Erreur lors de la récupération des articles de type ${type}`);
-  } finally {
-    await prisma.$disconnect();
   }
+  // Ne pas déconnecter Prisma à chaque appel
 }

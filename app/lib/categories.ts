@@ -3,8 +3,9 @@
 import { prisma } from './prisma';
 import { CategoryTreeItem } from '../types';
 import { revalidatePath } from 'next/cache';
+import { cache } from 'react';
 
-export async function getCategories(): Promise<CategoryTreeItem[]> {
+export const getCategories = cache(async (): Promise<CategoryTreeItem[]> => {
   const startTime = performance.now();
 
   try {
@@ -26,10 +27,10 @@ export async function getCategories(): Promise<CategoryTreeItem[]> {
         }));
     };
   
-
     const result = buildCategoryTree(categories);
 
     const endTime = performance.now();
+    console.log(`Categories fetched in ${endTime - startTime}ms`);
 
     return result;
   } catch (error) {
@@ -38,7 +39,7 @@ export async function getCategories(): Promise<CategoryTreeItem[]> {
   } finally {
     await prisma.$disconnect();
   }
-}
+});
 
 export async function getCategoryByName(name: string) {
   const startTime = performance.now();
