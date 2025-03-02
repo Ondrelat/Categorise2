@@ -10,6 +10,7 @@ const nextConfig = {
     },
     experimental: {
         appDir: false,
+        dynamicIO: true,
       },
     // Option 1 : Conserver tous les logs en développement ET en production
     compiler: {

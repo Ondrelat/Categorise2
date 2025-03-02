@@ -54,7 +54,7 @@ export async function getCategoryByName(name: string) {
     });
 
     const endTime = performance.now();
-    console.log(`Temps d'exécution : ${endTime - startTime} ms`);
+    console.log(`Temps d'exécution : ${endTime - startTime} ms pour fetch une categorie`);
 
     return category;
   } catch (error) {

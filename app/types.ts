@@ -37,3 +37,9 @@ export interface Film {
     image_url: string | null;
     createdAt: Date;
   }
+
+  export interface CreateCategoryResponse {
+    success: boolean;
+    message: string;
+    data?: CategoryTreeItem;
+  }
