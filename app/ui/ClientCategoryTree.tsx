@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { FolderIcon, ChevronRightIcon, ChevronDownIcon, PencilIcon, TrashIcon } from 'lucide-react';
 import { CategoryTreeItem } from '../types';
 
@@ -10,7 +11,7 @@ interface CategoryTreeProps {
     level?: number;
     onEdit?: (categoryId: string) => void;
     onDelete?: (categoryId: string) => void;
-    isReadOnly?: boolean; // Nouvelle propriété pour le mode lecture seule
+    isReadOnly?: boolean;
 }
 
 const ClientCategoryTree: React.FC<CategoryTreeProps> = ({
@@ -18,9 +19,30 @@ const ClientCategoryTree: React.FC<CategoryTreeProps> = ({
     level = 0,
     onEdit = (id) => console.log(`Edit category: ${id}`),
     onDelete = (id) => console.log(`Delete category: ${id}`),
-    isReadOnly = false // Par défaut, les actions sont disponibles
+    isReadOnly = false
 }) => {
+    const pathname = usePathname();
+    const decodedPathname = pathname ? decodeURIComponent(pathname) : '';
     const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({});
+    
+    // Load expanded state from localStorage on component mount
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem('expandedCategories');
+            if (saved) {
+                setExpandedCategories(JSON.parse(saved));
+            }
+        } catch (error) {
+            console.error('Failed to load expanded categories from localStorage:', error);
+        }
+    }, []);
+    
+    // Save expanded state to localStorage whenever it changes
+    useEffect(() => {
+        if (Object.keys(expandedCategories).length > 0) {
+            localStorage.setItem('expandedCategories', JSON.stringify(expandedCategories));
+        }
+    }, [expandedCategories]);
 
     const toggleExpand = (categoryId: string) => {
         setExpandedCategories(prev => ({
@@ -45,7 +67,7 @@ const ClientCategoryTree: React.FC<CategoryTreeProps> = ({
         <ul className={`space-y-1 ${level > 0 ? 'ml-4' : ''}`}>
             {categories.map((category) => (
                 <li key={category.id}>
-                    <div className="flex items-center py-1 px-2 hover:bg-gray-100 rounded">
+                    <div className={`flex items-center py-1 px-2 hover:bg-gray-100 rounded ${decodedPathname === `/categories/${category.name}` ? 'bg-blue-100' : ''}`}>
                         <span className="w-4 h-4 flex items-center justify-center">
                             {category.subcategories.length > 0 ? (
                                 <button
@@ -63,11 +85,13 @@ const ClientCategoryTree: React.FC<CategoryTreeProps> = ({
                             )}
                         </span>
                         <FolderIcon className="w-4 h-4 text-blue-500 mr-2" />
-                        <Link href={`/categories/${category.name}`} className="text-sm hover:text-blue-500 flex-1">
+                        <Link 
+                            href={`/categories/${category.name}`} 
+                            className={`text-sm hover:text-blue-500 flex-1 ${decodedPathname === `/categories/${category.name}` ? 'font-medium text-blue-600' : ''}`}
+                        >
                             {category.name}
                         </Link>
                         
-                        {/* N'afficher les boutons d'action que si !isReadOnly */}
                         {!isReadOnly && (
                             <div className="flex space-x-2">
                                 <button 
@@ -93,7 +117,7 @@ const ClientCategoryTree: React.FC<CategoryTreeProps> = ({
                             level={level + 1} 
                             onEdit={onEdit}
                             onDelete={onDelete}
-                            isReadOnly={isReadOnly} // Propager le mode lecture seule aux enfants
+                            isReadOnly={isReadOnly}
                         />
                     )}
                 </li>
