@@ -28,24 +28,20 @@ export default async function CategoryLayout({
         notFound();
     }
 
-    if (category.name === "film") {
-        return <FilmPage />;
-    }
-
     return (
-        <div className="flex flex-1 h-full mt-4 justify-center">
-          <div className="relative">
-            <div className="absolute -translate-x-full">
-              <SideBar initialName={params.name} />
-            </div>
-            <div className="w-[800px] ml-4">
-              <div className="container mx-auto px-4 py-8">
-                <h1 className="text-3xl font-bold mb-6">{category.name}</h1>
-                <NavigatorSection />
-                {children}
-              </div>
+      <div className="flex flex-1 h-full mt-4 justify-center">
+        <div className="relative">
+          <div className="absolute -translate-x-full">
+            <SideBar initialName={params.name} />
+          </div>
+          <div className="w-[800px] ml-4">
+            <div className="container mx-auto px-4 py-8">
+              <h1 className="text-3xl font-bold mb-6">{category.name}</h1>
+              <NavigatorSection />
+              {category.name === "Film" ? <FilmPage /> : children}
             </div>
           </div>
         </div>
+      </div>
     );
 }
