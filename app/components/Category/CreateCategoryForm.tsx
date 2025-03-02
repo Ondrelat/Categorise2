@@ -26,7 +26,6 @@ export default function CreateCategoryForm({
   // Générer automatiquement un name à partir du nom
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
-    
     setNewCategoryName(name);
   };
 
@@ -57,7 +56,22 @@ export default function CreateCategoryForm({
       if (result.success && result.data) {
         setNewCategoryName('');
         setIsAddingCategory(false);
+        
+        // Force un rafraîchissement complet
         router.refresh();
+        
+        // Méthode 1: Redirection vers la nouvelle catégorie créée
+        if (parentCategoryName) {
+          // Naviguer vers la sous-catégorie nouvellement créée
+          setTimeout(() => {
+            router.push(`/categories/${newCategoryName.trim()}`);
+          }, 300);  // Un léger délai pour permettre au router.refresh() de terminer
+        } else {
+          // Méthode 2: Rafraîchissement de la page actuelle après un court délai
+          setTimeout(() => {
+            window.location.reload();
+          }, 300);
+        }
       } else {
         setAddCategoryError(result.message);
       }
