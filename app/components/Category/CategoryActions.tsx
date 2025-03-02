@@ -12,21 +12,17 @@ import CategoryEditHandler from './CategoryEditHandler';
 interface CategoryActionsProps {
   initialCategories: CategoryTreeItem[];
   currentCategoryName?: string;
-  currentCategoryId?: string | null;
 }
 
 export default function CategoryActions({ 
   initialCategories, 
   currentCategoryName, 
-  currentCategoryId 
 }: CategoryActionsProps) {
   const [categories, setCategories] = useState<CategoryTreeItem[]>(initialCategories);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  
-  const router = useRouter();
   
   // Récupération des données de session utilisateur
   const { data: session } = useSession();
@@ -130,7 +126,7 @@ export default function CategoryActions({
       {/* Composant de création de catégorie */}
       <CreateCategoryForm
         isOndrelat={isOndrelat}
-        currentCategoryId={currentCategoryId}
+        parentCategoryName={currentCategoryName}
         currentCategory={currentCategory}
         onCategoryCreated={handleCategoryCreated}
       />

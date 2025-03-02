@@ -5,15 +5,15 @@ import CategoryTree from './CategoryTree';
 import { Category } from '@/app/types'; 
 
 interface SideBarProps {
-    category?: Category;
+    categoryName?: string;
   }
   
 
-  export default function SideBar({ category }: SideBarProps) {
+  export default function SideBar({ categoryName }: SideBarProps) {
     return (
         <div className="w-64 h-screen bg-gray-50 p-4 border-r">
             <h2 className="text-xl font-semibold mb-4">Catégories</h2>
-            <CategoryTree category={category} />
+            <CategoryTree categoryName={categoryName} />
         </div>
     );
 };

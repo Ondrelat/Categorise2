@@ -7,14 +7,14 @@ import { createCategory } from '../../lib/categories';
 
 interface CreateCategoryFormProps {
   isOndrelat: boolean;
-  currentCategoryId: string | null | undefined;
+  parentCategoryName: string | null | undefined;
   currentCategory: CategoryTreeItem | null;
   onCategoryCreated: (newCategory: CategoryTreeItem, parentId: string | null) => void;
 }
 
 export default function CreateCategoryForm({ 
   isOndrelat, 
-  currentCategoryId, 
+  parentCategoryName, 
   currentCategory,
   onCategoryCreated 
 }: CreateCategoryFormProps) {
@@ -67,7 +67,7 @@ export default function CreateCategoryForm({
     try {
       const result = await createCategory({
         name: newCategoryName.trim(),
-        parentId: currentCategoryId || null
+        parentCategoryName: parentCategoryName || null
       });
       
       if (result.success && result.data) {

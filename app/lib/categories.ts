@@ -186,20 +186,20 @@ export async function updateCategory(
 
 export async function createCategory(data: { 
   name: string; 
-  parentId: string | null;
+  parentCategoryName?: string | null;
   description?: string;
   isActive?: boolean;
 }) {
   'use server';
   
-  const { name, parentId, description = '', isActive = true } = data;
+  const { name, parentCategoryName = null, description = '', isActive = true } = data;
 
   try {
     // Validation des données
     if (!name) {
       return {
         success: false,
-        message: 'Le nom et le name sont requis'
+        message: 'Le nom est requis'
       };
     }
 
@@ -215,6 +215,25 @@ export async function createCategory(data: {
         success: false,
         message: 'Une catégorie avec ce name existe déjà'
       };
+    }
+
+    // Déterminer parentId à partir de parentCategoryName
+    let parentId = null;
+    if (parentCategoryName) {
+      const parentCategory = await prisma.categories.findFirst({
+        where: {
+          name: parentCategoryName
+        }
+      });
+
+      if (!parentCategory) {
+        return {
+          success: false,
+          message: `La catégorie parente "${parentCategoryName}" n'existe pas`
+        };
+      }
+
+      parentId = parentCategory.id;
     }
 
     // Créer la nouvelle catégorie
