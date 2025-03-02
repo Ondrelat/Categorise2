@@ -23,32 +23,12 @@ export default function CategoryActions({
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  console.log("currentCategoryName:", currentCategoryName);
-  const router = useRouter();
   
   // Récupération des données de session utilisateur
   const { data: session } = useSession();
   
   // Vérification si l'utilisateur est Ondrelat
   const isOndrelat = session?.user?.name === "Ondrelat" || session?.user?.email === "ondrelat@example.com";
-  
-  // Trouver la catégorie actuelle en fonction du name
-  const findCurrentCategory = (categories: CategoryTreeItem[], name?: string): CategoryTreeItem | null => {
-    if (!name) return null;
-    
-    for (const category of categories) {
-      if (category.name === name) {
-        return category;
-      }
-      
-      const foundInChildren = findCurrentCategory(category.subcategories, name);
-      if (foundInChildren) return foundInChildren;
-    }
-    
-    return null;
-  };
-  
-  const currentCategory = findCurrentCategory(categories, currentCategoryName);
 
   // Gestionnaire d'édition de catégorie
   const { handleEdit } = CategoryEditHandler({
@@ -83,44 +63,14 @@ export default function CategoryActions({
     setCategories(removeCategory([...categories]));
   };
 
-  // Gestionnaire pour l'ajout réussi
-  const handleCategoryCreated = (newCategory: CategoryTreeItem, parentId: string | null) => {
-    const addNewCategory = (items: CategoryTreeItem[], parentId: string | null): CategoryTreeItem[] => {
-      if (parentId === null) {
-        // Ajouter au niveau racine si aucun parent n'est spécifié
-        return [...items, newCategory];
-      }
-      
-      return items.map(category => {
-        if (category.id === parentId) {
-          return {
-            ...category,
-            subcategories: [...category.subcategories, newCategory]
-          };
-        }
-        
-        if (category.subcategories.length > 0) {
-          return {
-            ...category,
-            subcategories: addNewCategory(category.subcategories, parentId)
-          };
-        }
-        
-        return category;
-      });
-    };
-    
-    setCategories(addNewCategory([...categories], parentId));
-  };
-
   return (
     <div className="space-y-6">
       
       {/* Affichage de la catégorie actuelle si elle existe */}
-      {currentCategory && (
+      {currentCategoryName && (
         <div className="bg-blue-50 p-3 rounded-md mb-4">
           <p className="text-sm font-medium">
-            Catégorie actuelle: <span className="text-blue-600">{currentCategory.name}</span>
+            Catégorie actuelle: <span className="text-blue-600">{currentCategoryName}</span>
           </p>
         </div>
       )}

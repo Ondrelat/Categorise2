@@ -1,7 +1,6 @@
 import React from 'react';
 import { getCategories, getCategoryByName } from '../../lib/categories';
 import CategoryActions from './CategoryActions';
-import { Category } from '@/app/types';
 import { cache } from 'react';
 
 // Utiliser la fonction cache de React pour mémoriser l'appel à getCategories
