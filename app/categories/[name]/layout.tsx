@@ -1,8 +1,6 @@
 // app/[name]/layout.tsx
 import React from 'react';
-import { notFound } from 'next/navigation';
 import SideBar from '@/app/components/Category/Sidebar';
-import { getCategoryByName } from '@/app/lib/categories';
 import dynamic from "next/dynamic";
 import NavigatorSection from '@/app/components/Category/NavigatorSection';
 

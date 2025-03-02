@@ -23,6 +23,8 @@ export default function CategoryActions({
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  console.log("currentCategoryName:", currentCategoryName);
+  const router = useRouter();
   
   // Récupération des données de session utilisateur
   const { data: session } = useSession();
@@ -127,8 +129,6 @@ export default function CategoryActions({
       <CreateCategoryForm
         isOndrelat={isOndrelat}
         parentCategoryName={currentCategoryName}
-        currentCategory={currentCategory}
-        onCategoryCreated={handleCategoryCreated}
       />
       
       {/* Arbre des catégories */}

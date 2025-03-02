@@ -10,18 +10,17 @@ const getCachedCategories = cache(async () => {
 });
 
 interface CategoryTreeProps {
-  category?: Category;
   categoryName?: string;
 }
 
-export default async function CategoryTree({ category }: CategoryTreeProps) {
+export default async function CategoryTree({ categoryName }: CategoryTreeProps) {
   // Utiliser la version mise en cache de getCategories
   const categories = await getCachedCategories();
   
   return (
     <CategoryActions 
       initialCategories={categories} 
-      currentCategoryName={category?.name || ""} 
+      currentCategoryName={categoryName} 
     />
   );
 }

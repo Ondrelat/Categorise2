@@ -8,15 +8,11 @@ import { createCategory } from '../../lib/categories';
 interface CreateCategoryFormProps {
   isOndrelat: boolean;
   parentCategoryName: string | null | undefined;
-  currentCategory: CategoryTreeItem | null;
-  onCategoryCreated: (newCategory: CategoryTreeItem, parentId: string | null) => void;
 }
 
 export default function CreateCategoryForm({ 
   isOndrelat, 
   parentCategoryName, 
-  currentCategory,
-  onCategoryCreated 
 }: CreateCategoryFormProps) {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -24,6 +20,8 @@ export default function CreateCategoryForm({
   const [addingCategoryLoading, setAddingCategoryLoading] = useState(false);
   
   const router = useRouter();
+
+  console.log("parentCategoryName:", parentCategoryName);
 
   // Générer automatiquement un name à partir du nom
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,7 +69,6 @@ export default function CreateCategoryForm({
       });
       
       if (result.success && result.data) {
-        onCategoryCreated(result.data, currentCategory?.id || null);
         setNewCategoryName('');
         setIsAddingCategory(false);
         router.refresh();
@@ -95,7 +92,7 @@ export default function CreateCategoryForm({
             onClick={() => setIsAddingCategory(!isAddingCategory)}
             className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
           >
-            {isAddingCategory ? 'Annuler' : `Ajouter une ${currentCategory ? 'sous-catégorie' : 'catégorie'}`}
+            {isAddingCategory ? 'Annuler' : `Ajouter une ${parentCategoryName ? 'sous-catégorie' : 'catégorie'}`}
           </button>
         </div>
       )}
@@ -104,7 +101,7 @@ export default function CreateCategoryForm({
       {isAddingCategory && isOndrelat && (
         <div className="bg-gray-50 p-4 rounded-md mb-6 border border-gray-200">
           <h3 className="text-lg font-medium mb-3">
-            {currentCategory ? `Ajouter une sous-catégorie à "${currentCategory.name}"` : 'Ajouter une catégorie'}
+            {parentCategoryName ? `Ajouter une sous-catégorie à "${parentCategoryName}"` : 'Ajouter une catégorie'}
           </h3>
           
           <form onSubmit={handleCreateCategory} className="space-y-4">
