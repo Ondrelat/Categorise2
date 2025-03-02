@@ -1,18 +1,19 @@
 // components/Sidebar.tsx
 import React from 'react';
 import CategoryTree from './CategoryTree';
+import { Category } from '@/app/types'; 
 
 interface SideBarProps {
-    initialName?: string;
+    category: Category;
   }
   
 
-export default function SideBar({ initialName }: SideBarProps) {
+  export default function SideBar({ category }: SideBarProps) {
     console.log("categoriesAvantTree")
     return (
         <div className="w-64 h-screen bg-gray-50 p-4 border-r">
             <h2 className="text-xl font-semibold mb-4">Catégories</h2>
-            <CategoryTree initialName={initialName} />
+            <CategoryTree category={category} />
         </div>
     );
 };

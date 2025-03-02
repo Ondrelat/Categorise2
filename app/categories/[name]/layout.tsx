@@ -5,15 +5,8 @@ import { getCategoryByName } from '@/app/lib/categories';
 import dynamic from "next/dynamic";
 import NavigatorSection from '@/app/components/Category/NavigatorSection';
 
+
 const FilmPage = dynamic(() => import("@/app/components/Cinema/FilmPage"), { ssr: true });
-type ContentSection = 'classement' | 'forum' | 'apprentissage' | 'media';
-
-
-interface Article {
-    id: string;
-    title: string;
-    type: ContentSection;
-}
 
 export default async function CategoryLayout({ 
   children,
@@ -32,7 +25,7 @@ export default async function CategoryLayout({
       <div className="flex flex-1 h-full mt-4 justify-center">
         <div className="relative">
           <div className="absolute -translate-x-full">
-            <SideBar initialName={params.name} />
+            <SideBar category={category} />
           </div>
           <div className="w-[800px] ml-4">
             <div className="container mx-auto px-4 py-8">

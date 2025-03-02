@@ -1,16 +1,13 @@
 import React from 'react';
 import { getCategories, getCategoryByName } from '../../lib/categories';
 import CategoryActions from './CategoryActions';
-import { useParams } from 'next/navigation';
+import { Category } from '@/app/types'; 
 
 interface CategoryTreeProps {
-    initialName?: string; // name initial optionnel
+    category: Category;
 }
 
-export default async function CategoryTree({ initialName }: CategoryTreeProps) {
-
-    // Récupérer la catégorie si un name est spécifié, sinon null
-    const category = initialName ? await getCategoryByName(initialName) : null;
+export default async function CategoryTree({ category }: CategoryTreeProps) {
     
     // Récupérer toutes les catégories
     const categories = await getCategories();
