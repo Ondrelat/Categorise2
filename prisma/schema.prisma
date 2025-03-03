@@ -38,7 +38,7 @@ model User {
   name          String?
   email         String?   @unique
   emailVerified DateTime?
-  password      String?   // Ajoutez ce champ
+  password      String?
   image         String?
   score         String?
   accounts      Account[]
@@ -53,47 +53,47 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-
 model Categories {
-  id          String    @id @default(uuid())
+  id          String       @id @default(uuid())
   name        String
   description String
-  parentId    String?   // Optional parent category reference
-  updatedAt   DateTime  @updatedAt
-  isActive    Boolean   @default(true)
-  parent      Categories? @relation("CategoryToCategory", fields: [parentId], references: [id])
+  parentId    String?
+  updatedAt   DateTime     @updatedAt
+  isActive    Boolean      @default(true)
+  parent      Categories?  @relation("CategoryToCategory", fields: [parentId], references: [id])
   children    Categories[] @relation("CategoryToCategory")
-  articles    Article[]   // Ajout de la relation reverse
+  articles    Article[]
 }
 
 model Article {
-  id          String      @id @default(uuid())
-  title       String
-  content     String      @db.Text
-  imageUrl    String?
-  type        String      
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  categoryId  String      // Référence à Categories
-  isActive    Boolean     @default(true)
-  category    Categories  @relation(fields: [categoryId], references: [id])
+  id         String     @id @default(uuid())
+  title      String
+  content    String
+  imageUrl   String?
+  type       String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  categoryId String
+  isActive   Boolean    @default(true)
+  category   Categories @relation(fields: [categoryId], references: [id])
+
   @@map("articles")
 }
 
 model ArticleClassement {
-  id      String    @id @default(uuid())
-  tconst           String?
+  id                String   @id @default(uuid())
+  tconst            String?
   averageRatingIMDB Float?
   numVotesIMDB      Int?
-  titre_fr         String? 
-  titre_en         String? 
-  image_url        String?
-  createdAt        DateTime  @default(now())
-  titleType        String?
-  genres           String?
-  startYear        Int?
-  endYear          Int?
-  duration         String?
-   @@map("article_classement") 
-}
+  titre_fr          String?
+  titre_en          String?
+  createdAt         DateTime @default(now())
+  image_url         String?
+  duration          String?
+  endYear           Int?
+  genres            String?
+  startYear         Int?
+  titleType         String?
 
+  @@map("article_classement")
+}
