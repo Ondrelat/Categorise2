@@ -30,22 +30,6 @@ export default function CategoryActions({
   // Vérification si l'utilisateur est Ondrelat
   const isOndrelat = session?.user?.name === "Ondrelat" || session?.user?.email === "ondrelat@example.com";
 
-  // Gestionnaire d'édition de catégorie
-  const { handleEdit } = CategoryEditHandler({
-    isOndrelat,
-    onPermissionError: (message) => setErrorMessage(message)
-  });
-
-  // Fonction de suppression - vérification des permissions
-  const handleDelete = (categoryId: string) => {
-    if (!isOndrelat) {
-      setErrorMessage("Vous n'avez pas les permissions pour supprimer les catégories");
-      return;
-    }
-    setCategoryToDelete(categoryId);
-    setIsDeleteDialogOpen(true);
-  };
-
   // Gestionnaire pour la suppression réussie
   const handleDeleteSuccess = (categoryId: string) => {
     const removeCategory = (items: CategoryTreeItem[]): CategoryTreeItem[] => {
@@ -84,8 +68,6 @@ export default function CategoryActions({
       {/* Arbre des catégories */}
       <ClientCategoryTree 
         categories={categories}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
         isReadOnly={!isOndrelat}
       />
 

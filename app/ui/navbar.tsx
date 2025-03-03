@@ -30,10 +30,10 @@ export default async function Navbar() {
                         <Image src="/favicon.ico" width={50} height={50} alt="Icone de stylo" className="rounded-full" />
                     </div>
                     <Link href="/">
-    <h1 className="font-bold text-3xl text-[min(7vw,2.5rem)] leading-tight transition-all duration-300 hover:text-blue-600">
-        Categorise
-    </h1>
-</Link>
+                        <h1 className="font-bold text-3xl text-[min(7vw,2.5rem)] leading-tight transition-all duration-300 hover:text-blue-600">
+                            Categorise
+                        </h1>
+                    </Link>
                     {/* mobile */}
                     <div className="block lg:hidden">{session ? <User /> : <LoginButton />}</div>
                 </div>

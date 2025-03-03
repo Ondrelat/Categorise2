@@ -43,6 +43,8 @@ model User {
   score         String?
   accounts      Account[]
   sessions      Session[]
+  revisions     Revision[]
+  comments      Comment[]
 }
 
 model VerificationToken {
@@ -65,19 +67,65 @@ model Categories {
   articles    Article[]
 }
 
+// Définition des types de références entre articles
+enum ArticleReferenceType {
+  PREREQUISITE   // Articles prérequis pour comprendre l'article actuel
+  COURSE_PART    // Articles qui font partie du même cours ou de la même série
+}
+
+enum ArticleLevel {
+  BEGINNER       // Débutant
+  INTERMEDIATE   // Intermédiaire 
+  ADVANCED       // Avancé
+}
+
 model Article {
-  id         String     @id @default(uuid())
-  title      String
-  content    String
-  imageUrl   String?
-  type       String
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  categoryId String
-  isActive   Boolean    @default(true)
-  category   Categories @relation(fields: [categoryId], references: [id])
+  id                 String            @id @default(uuid())
+  title              String
+  content            String
+  slug               String?           @unique
+  imageUrl           String?
+  type               String
+  status             ArticleStatus?     @default(DRAFT)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  categoryId         String
+  isActive           Boolean           @default(true)
+  level              ArticleLevel?     // Rendu optionnel en ajoutant "?"
+  
+  // Relations existantes
+  category           Categories        @relation(fields: [categoryId], references: [id])
+  sections           Section[]
+  tableOfContents    TableOfContents[]
+  references         Reference[]
+  revisions          Revision[]
+  redirectsTo        Redirect[]        @relation("TargetArticle")
+  comments           Comment[]
+  articleTags        ArticleTag[]
+  
+  // Nouvelles relations pour les références entre articles
+  referencedIn       ArticleReference[] @relation("ReferencedArticle")
+  referencesTo       ArticleReference[] @relation("SourceArticle")
 
   @@map("articles")
+}
+
+model ArticleReference {
+  id                String               @id @default(uuid())
+  sourceArticleId   String               // L'article qui référence
+  targetArticleId   String               // L'article qui est référencé
+  referenceType     ArticleReferenceType // Type de référence (RELATED ou CITATION)
+  description       String?              // Description optionnelle de la référence
+  createdAt         DateTime             @default(now())
+  
+  // Relations
+  sourceArticle     Article              @relation("SourceArticle", fields: [sourceArticleId], references: [id], onDelete: Cascade)
+  targetArticle     Article              @relation("ReferencedArticle", fields: [targetArticleId], references: [id], onDelete: Cascade)
+  
+  @@unique([sourceArticleId, targetArticleId, referenceType])
+  @@index([sourceArticleId])
+  @@index([targetArticleId])
+  @@map("article_references")
 }
 
 model ArticleClassement {
@@ -96,4 +144,148 @@ model ArticleClassement {
   titleType         String?
 
   @@map("article_classement")
+}
+
+model Section {
+  id              String          @id @default(uuid())
+  articleId       String
+  parentSectionId String?
+  title           String
+  position        Int
+  level           Int             @default(1)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  article         Article         @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  parentSection   Section?        @relation("SectionHierarchy", fields: [parentSectionId], references: [id])
+  childSections   Section[]       @relation("SectionHierarchy")
+  contentBlocks   ContentBlock[]
+  tableOfContents TableOfContents[]
+  
+  @@index([articleId])
+  @@index([parentSectionId])
+  @@map("sections")
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  REVIEW
+}
+
+model ContentBlock {
+  id                 String            @id @default(uuid())
+  sectionId          String
+  contentType        String            // paragraph, list, quote, code, image, etc.
+  content            String            @db.Text
+  position           Int
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  section            Section           @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  contentReferences  ContentReference[]
+  
+  @@index([sectionId])
+  @@map("content_blocks")
+}
+
+model TableOfContents {
+  id              String          @id @default(uuid())
+  articleId       String
+  sectionId       String
+  displayText     String
+  position        Int
+  level           Int             @default(1)
+  createdAt       DateTime        @default(now())
+  article         Article         @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  section         Section         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  
+  @@index([articleId])
+  @@index([sectionId])
+  @@map("table_of_contents")
+}
+
+model Reference {
+  id                 String            @id @default(uuid())
+  articleId          String
+  citation           String            @db.Text
+  url                String?
+  createdAt          DateTime          @default(now())
+  article            Article           @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  contentReferences  ContentReference[]
+  
+  @@index([articleId])
+  @@map("references")
+}
+
+model ContentReference {
+  id              String          @id @default(uuid())
+  blockId         String
+  referenceId     String
+  position        Int
+  contentBlock    ContentBlock    @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  reference       Reference       @relation(fields: [referenceId], references: [id], onDelete: Cascade)
+  
+  @@index([blockId])
+  @@index([referenceId])
+  @@map("content_references")
+}
+
+model Revision {
+  id              String          @id @default(uuid())
+  articleId       String
+  userId          String
+  contentJson     Json            // État complet de l'article en JSON
+  comment         String?
+  createdAt       DateTime        @default(now())
+  article         Article         @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user            User            @relation(fields: [userId], references: [id])
+  
+  @@index([articleId])
+  @@index([userId])
+  @@map("revisions")
+}
+
+model Redirect {
+  id              String          @id @default(uuid())
+  sourceSlug      String          @unique
+  targetArticleId String
+  createdAt       DateTime        @default(now())
+  targetArticle   Article         @relation("TargetArticle", fields: [targetArticleId], references: [id], onDelete: Cascade)
+  @@index([targetArticleId])
+  @@map("redirects")
+}
+
+model Comment {
+  id              String          @id @default(uuid())
+  articleId       String
+  userId          String
+  content         String          @db.Text
+  createdAt       DateTime        @default(now())
+  article         Article         @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user            User            @relation(fields: [userId], references: [id])
+  
+  @@index([articleId])
+  @@index([userId])
+  @@map("comments")
+}
+
+model Tag {
+  id              String          @id @default(uuid())
+  name            String          @unique
+  description     String?
+  articles        ArticleTag[]
+  
+  @@map("tags")
+}
+
+model ArticleTag {
+  articleId       String
+  tagId           String
+  article         Article         @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag             Tag             @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@id([articleId, tagId])
+  @@index([articleId])
+  @@index([tagId])
+  @@map("article_tags")
 }
