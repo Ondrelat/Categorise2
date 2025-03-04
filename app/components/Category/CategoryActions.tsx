@@ -19,16 +19,92 @@ export default function CategoryActions({
   currentCategoryName, 
 }: CategoryActionsProps) {
   const [categories, setCategories] = useState<CategoryTreeItem[]>(initialCategories);
+  
+  // Delete state and handlers
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
+  // Edit state and handlers
+  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({});
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   
   // Récupération des données de session utilisateur
   const { data: session } = useSession();
   
   // Vérification si l'utilisateur est Ondrelat
   const isOndrelat = session?.user?.name === "Ondrelat" || session?.user?.email === "ondrelat@example.com";
+
+  // Toggle category expansion
+  const handleToggleExpand = (categoryId: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
+
+  // Helper function to find category name by ID
+  const findCategoryName = (items: CategoryTreeItem[], categoryId: string): string => {
+    for (const category of items) {
+      if (category.id === categoryId) return category.name;
+      if (category.subcategories.length > 0) {
+        const name = findCategoryName(category.subcategories, categoryId);
+        if (name) return name;
+      }
+    }
+    return '';
+  };
+
+  // Edit handlers
+  const handleEdit = (categoryId: string) => {
+    // Set the current category being edited
+    setEditingCategoryId(categoryId);
+    
+    // Here you might want to pre-populate any edit form with the category name
+    const categoryName = findCategoryName(categories, categoryId);
+    console.log(`Editing category: ${categoryName}`);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCategoryId(null);
+  };
+
+  const handleSaveEdit = (categoryId: string, newName: string) => {
+    // Function to recursively update category name
+    const updateCategoryName = (items: CategoryTreeItem[]): CategoryTreeItem[] => {
+      return items.map(category => {
+        if (category.id === categoryId) {
+          return {
+            ...category,
+            name: newName,
+            // You might want to update the slug here as well
+            slug: newName.toLowerCase().replace(/\s+/g, '-')
+          };
+        }
+        
+        if (category.subcategories.length > 0) {
+          return {
+            ...category,
+            subcategories: updateCategoryName(category.subcategories)
+          };
+        }
+        
+        return category;
+      });
+    };
+    
+    setCategories(updateCategoryName([...categories]));
+    setEditingCategoryId(null);
+    
+    // Here you would typically also make an API call to update the category on the server
+  };
+
+  // Delete handlers
+  const handleDelete = (categoryId: string) => {
+    setCategoryToDelete(categoryId);
+    setIsDeleteDialogOpen(true);
+  };
 
   // Gestionnaire pour la suppression réussie
   const handleDeleteSuccess = (categoryId: string) => {
@@ -68,6 +144,13 @@ export default function CategoryActions({
       {/* Arbre des catégories */}
       <ClientCategoryTree 
         categories={categories}
+        expandedCategories={expandedCategories}
+        editingCategoryId={editingCategoryId}
+        onToggleExpand={handleToggleExpand}
+        onEdit={handleEdit}
+        onCancelEdit={handleCancelEdit}
+        onSaveEdit={handleSaveEdit}
+        onDelete={handleDelete}
         isReadOnly={!isOndrelat}
       />
 
