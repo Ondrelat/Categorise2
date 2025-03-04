@@ -36,6 +36,25 @@ export default function CategoryActions({
   // Vérification si l'utilisateur est Ondrelat
   const isOndrelat = session?.user?.name === "Ondrelat" || session?.user?.email === "ondrelat@example.com";
 
+  // Load expanded state from localStorage on component mount
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem('expandedCategories');
+      if (saved) {
+        setExpandedCategories(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.error('Failed to load expanded categories from localStorage:', error);
+    }
+  }, []);
+  
+  // Save expanded state to localStorage whenever it changes
+  React.useEffect(() => {
+    if (Object.keys(expandedCategories).length > 0) {
+      localStorage.setItem('expandedCategories', JSON.stringify(expandedCategories));
+    }
+  }, [expandedCategories]);
+
   // Toggle category expansion
   const handleToggleExpand = (categoryId: string) => {
     setExpandedCategories(prev => ({
