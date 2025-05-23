@@ -65,6 +65,9 @@ model Categories {
   parent      Categories?  @relation("CategoryToCategory", fields: [parentId], references: [id])
   children    Categories[] @relation("CategoryToCategory")
   articles    Article[]
+
+    articleReferences ArticleReference[]   @relation("CategoryArticleReference")
+  articleClassements ArticleClassement[] @relation("CategoryArticleClassement")
 }
 
 // Définition des types de références entre articles
@@ -121,7 +124,8 @@ model ArticleReference {
   // Relations
   sourceArticle     Article              @relation("SourceArticle", fields: [sourceArticleId], references: [id], onDelete: Cascade)
   targetArticle     Article              @relation("ReferencedArticle", fields: [targetArticleId], references: [id], onDelete: Cascade)
-  
+ categoryId String?
+  category   Categories? @relation("CategoryArticleReference", fields: [categoryId], references: [id])
   @@unique([sourceArticleId, targetArticleId, referenceType])
   @@index([sourceArticleId])
   @@index([targetArticleId])
@@ -142,9 +146,13 @@ model ArticleClassement {
   genres            String?
   startYear         Int?
   titleType         String?
+  categoryId String?
+  category   Categories? @relation("CategoryArticleClassement", fields: [categoryId], references: [id])
 
   @@map("article_classement")
 }
+
+
 
 model Section {
   id              String          @id @default(uuid())
