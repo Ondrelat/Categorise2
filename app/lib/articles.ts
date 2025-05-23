@@ -64,37 +64,48 @@ export async function getArticleClassementById(id: string) {
   }
 }
 
-export async function getFilmsSortedByRating(limit: number = 50) {
+export async function getFilmsSortedByRating(categoryTitle: string, limit: number = 50) {
   const startTime = performance.now();
+  const categoryTitleDecode = decodeURIComponent(categoryTitle);
   console.log("Début de la récupération des films triés");
+  console.log("category decode url ", categoryTitleDecode);
+
+  let delimiter = 800;
+  if (categoryTitle === "Film" || categoryTitle === "Série") {
+    delimiter = 20000;
+  }
 
   try {
     const films = await prisma.articleClassement.findMany({
-      where: {
-        // S'assurer que nous avons une note et un nombre minimum de votes
-        averageRatingIMDB: { not: null },
-        titleType: "movie",
-        numVotesIMDB: {
-          not: null,
-          // Optionnel : filtre pour avoir un minimum de votes (ex: 1000)
-          gt: 50000
-        }
+  where: {
+    averageRatingIMDB: { not: null },
+    numVotesIMDB: {
+      not: null,
+      gt: delimiter,
+    },
+    categories: {
+      some: {
+        category: {
+          name: categoryTitleDecode,
+        },
       },
-      orderBy: {
-        averageRatingIMDB: 'desc' // Tri par note décroissant
-      },
-      take: limit, // Limite le nombre de résultats
-      select: {
-        id: true,
-        tconst: true,
-        averageRatingIMDB: true,
-        numVotesIMDB: true,
-        titre_fr: true,
-        titre_en: true,
-        image_url: true,
-        createdAt: true
-      }
-    });
+    },
+  },
+  orderBy: {
+    averageRatingIMDB: 'desc',
+  },
+  take: limit,
+  select: {
+    id: true,
+    tconst: true,
+    averageRatingIMDB: true,
+    numVotesIMDB: true,
+    titre_fr: true,
+    titre_en: true,
+    image_url: true,
+    createdAt: true,
+  },
+});
 
     const endTime = performance.now();
     console.log(`Films récupérés en ${endTime - startTime} ms`);
