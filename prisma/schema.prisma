@@ -45,6 +45,7 @@ model User {
   sessions      Session[]
   revisions     Revision[]
   comments      Comment[]
+  articleData   ArticleClassementUserData[]
 }
 
 model VerificationToken {
@@ -137,6 +138,8 @@ model ArticleClassement {
   tconst            String?
   averageRatingIMDB Float?
   numVotesIMDB      Int?
+  primary_title     String?
+  titre_original    String?
   titre_fr          String?
   titre_en          String?
   createdAt         DateTime @default(now())
@@ -148,8 +151,26 @@ model ArticleClassement {
   titleType         String?
 
   categories ArticleClassementCategory[]  // <- liaison multiple
+  userData      ArticleClassementUserData[]
 
   @@map("article_classement")
+}
+
+model ArticleClassementUserData {
+  id            String   @id @default(cuid())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String
+  article       ArticleClassement @relation(fields: [articleId], references: [id])
+  articleId     String
+
+  liked         Boolean  @default(false)
+  rating        Int?     // ou Float si tu veux une note de 0 à 10
+  rank          Int?     // position personnalisée dans un classement
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, articleId]) // pour qu’un user ne puisse avoir qu’une seule entrée par article
 }
 
 

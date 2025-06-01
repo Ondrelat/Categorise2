@@ -1,5 +1,4 @@
 // components/Sidebar.tsx
-'use cache'
 import React from 'react';
 import CategoryTree from './CategoryTree';
 

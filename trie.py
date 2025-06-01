@@ -21,7 +21,7 @@ def filter_title_basics():
         # Lire le fichier title.basics.tsv par chunks pour économiser la mémoire
         chunk_size = 100000  # Ajustez selon votre RAM disponible
         filtered_chunks = []
-               total_rows = 0
+        total_rows = 0
         kept_rows = 0
         
         # Traiter le fichier par chunks
@@ -44,7 +44,7 @@ def filter_title_basics():
             final_df = pd.concat(filtered_chunks, ignore_index=True)
             
             # Sauvegarder le résultat
-            output_file = 'title_basics_filtered.tsv'
+            output_file = 'title_basics_filtered_v2.tsv'
             final_df.to_csv(output_file, sep='\t', index=False, na_rep='\\N')
             
             print(f"\n✅ Traitement terminé!")
