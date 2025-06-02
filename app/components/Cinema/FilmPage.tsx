@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import FilmCard from './FilmCard';
+import FilmCardIMDB from './FilmCardIMDB';
+import FilmCardCategorise from './FilmCardCategorise';
 import { Film } from '@/app/types';
 
 export default function FilmsPage({ categoryName }: { categoryName: string }) {
@@ -25,6 +26,46 @@ export default function FilmsPage({ categoryName }: { categoryName: string }) {
     setRatingSource((prev) => (prev === 'imdb' ? 'categorise' : 'imdb'));
   };
 
+  // Handlers pour les interactions de notation
+  const handleLike = async (filmId: string, liked: boolean) => {
+    try {
+      await fetch('/api/films/like', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filmId, liked })
+      });
+      console.log(`Film ${filmId} ${liked ? 'aimé' : 'retiré des favoris'}`);
+    } catch (error) {
+      console.error('Erreur lors du like:', error);
+    }
+  };
+
+  const handleRateSlider = async (filmId: string, rating: number) => {
+    try {
+      await fetch('/api/films/rate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filmId, rating })
+      });
+      console.log(`Film ${filmId} noté ${rating}/100`);
+    } catch (error) {
+      console.error('Erreur lors de la notation:', error);
+    }
+  };
+
+  const handleAddToRanking = async (filmId: string) => {
+    try {
+      await fetch('/api/films/ranking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filmId })
+      });
+      console.log(`Film ${filmId} ajouté au classement`);
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout au classement:', error);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gray-50 flex justify-center">
       <div className="max-w-6xl px-4 py-8 w-full">
@@ -46,7 +87,23 @@ export default function FilmsPage({ categoryName }: { categoryName: string }) {
         ) : (
           <div className="flex flex-col items-center gap-6">
             {films.map((film: Film) => (
-              <FilmCard key={film.id} film={film} />
+              ratingSource === 'imdb' ? (
+                <FilmCardIMDB
+                  key={film.id}
+                  film={film}
+                  onLike={handleLike}
+                  onRateSlider={handleRateSlider}
+                  onAddToRanking={handleAddToRanking}
+                />
+              ) : (
+                <FilmCardCategorise
+                  key={film.id}
+                  film={film}
+                  onLike={handleLike}
+                  onRateSlider={handleRateSlider}
+                  onAddToRanking={handleAddToRanking}
+                />
+              )
             ))}
           </div>
         )}
