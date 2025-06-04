@@ -1,5 +1,5 @@
 // app/films/components/FilmCard.tsx
-import { Star, Heart, Plus, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { Star, Heart, Plus, ChevronDown, ChevronUp, Eye, List } from 'lucide-react';
 import { Film } from '../../types';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -9,8 +9,10 @@ interface FilmCardProps {
   ratingSource: 'imdb' | 'categorise';
   onLike?: (filmId: string, liked: boolean) => void;
   onRateSlider?: (filmId: string, rating: number) => void;
-  onAddToRanking?: (filmId: string) => void;
+  onAddToRanking?: () => void;
+  onShowRanking?: () => void;
   onWatched?: (filmId: string, watched: boolean) => void;
+  isInRanking?: boolean;
 }
 
 export default function FilmCard({
@@ -19,7 +21,9 @@ export default function FilmCard({
   onLike,
   onRateSlider,
   onAddToRanking,
+  onShowRanking,
   onWatched,
+  isInRanking = false,
 }: FilmCardProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [isWatched, setIsWatched] = useState(false);
@@ -42,12 +46,6 @@ export default function FilmCard({
     onLike?.(film.id, newLikedState);
   };
 
-  const handleWatched = () => {
-    const newWatchedState = !isWatched;
-    setIsWatched(newWatchedState);
-    onWatched?.(film.id, newWatchedState);
-  };
-
   const handleSliderChange = (value: number) => {
     setSliderRating(value);
   };
@@ -59,8 +57,12 @@ export default function FilmCard({
     setShowRatingTool(false);
   };
 
-  const handleAddToRanking = () => {
-    onAddToRanking?.(film.id);
+  const handleRankingAction = () => {
+    if (isInRanking && onShowRanking) {
+      onShowRanking();
+    } else if (onAddToRanking) {
+      onAddToRanking();
+    }
   };
 
   // Calculate the display rating (0.0-10.0)
@@ -211,13 +213,26 @@ export default function FilmCard({
                     </div>
                   )}
 
-                  {/* Ajout classement */}
+                  {/* Bouton Ajout/Voir classement */}
                   <button
-                    onClick={handleAddToRanking}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded text-sm bg-green-100 hover:bg-green-200 text-green-700 transition"
+                    onClick={handleRankingAction}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm transition ${
+                      isInRanking
+                        ? 'bg-blue-100 hover:bg-blue-200 text-blue-700'
+                        : 'bg-green-100 hover:bg-green-200 text-green-700'
+                    }`}
                   >
-                    <Plus className="w-4 h-4" />
-                    Ajouter à ma liste
+                    {isInRanking ? (
+                      <>
+                        <List className="w-4 h-4" />
+                        Voir mon classement
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4" />
+                        Ajouter à ma liste
+                      </>
+                    )}
                   </button>
                 </div>
               </div>

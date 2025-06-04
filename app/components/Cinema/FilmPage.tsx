@@ -3,11 +3,15 @@
 import { useEffect, useState } from 'react';
 import FilmCard from './FilmCard';
 import { Film } from '@/app/types';
+import Modal from '@/app/components/Modal'; // Adjust path as needed
+import RankingModalContent from '@/app/components/RankingModalContent'; // Adjust path as needed
 
 export default function FilmsPage({ categoryName }: { categoryName: string }) {
   const [ratingSource, setRatingSource] = useState<'imdb' | 'categorise'>('categorise');
   const [films, setFilms] = useState<Film[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tempRanking, setTempRanking] = useState<Film[]>([]);
+  const [showRanking, setShowRanking] = useState(false);
 
   useEffect(() => {
     const fetchFilms = async () => {
@@ -52,17 +56,29 @@ export default function FilmsPage({ categoryName }: { categoryName: string }) {
     }
   };
 
-  const handleAddToRanking = async (filmId: string) => {
-    try {
-      await fetch('/api/films/ranking', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filmId })
-      });
-      console.log(`Film ${filmId} ajouté au classement`);
-    } catch (error) {
-      console.error('Erreur lors de l\'ajout au classement:', error);
+  const handleAddToRanking = (film: Film) => {
+    // Vérifier si le film n'est pas déjà dans le classement
+    if (!tempRanking.find(f => f.id === film.id)) {
+      setTempRanking(prev => [...prev, film]);
+      console.log(`Film ${film.id} ajouté au classement temporaire`);
     }
+  };
+
+  const handleRemoveFromRanking = (filmId: string) => {
+    setTempRanking(prev => prev.filter(f => f.id !== filmId));
+    console.log(`Film ${filmId} retiré du classement temporaire`);
+  };
+
+  const handleShowRanking = () => {
+    setShowRanking(true);
+  };
+
+  const handleCloseRankingModal = () => {
+    setShowRanking(false);
+  };
+
+  const handleReorderRanking = (newRanking: Film[]) => {
+    setTempRanking(newRanking);
   };
 
   return (
@@ -73,7 +89,7 @@ export default function FilmsPage({ categoryName }: { categoryName: string }) {
         </h1>
 
         <div className="flex justify-center gap-4 mb-6">
-                    <button
+          <button
             onClick={() => setRatingSource('categorise')}
             className={`px-4 py-2 rounded transition ${
               ratingSource === 'categorise' 
@@ -93,7 +109,15 @@ export default function FilmsPage({ categoryName }: { categoryName: string }) {
           >
             Voir par IMDB
           </button>
-
+          
+          {tempRanking.length > 0 && (
+            <button
+              onClick={handleShowRanking}
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+            >
+              Voir mon classement ({tempRanking.length})
+            </button>
+          )}
         </div>
 
         {loading ? (
@@ -107,12 +131,27 @@ export default function FilmsPage({ categoryName }: { categoryName: string }) {
                 ratingSource={ratingSource}
                 onLike={handleLike}
                 onRateSlider={handleRateSlider}
-                onAddToRanking={handleAddToRanking}
+                onAddToRanking={() => handleAddToRanking(film)}
+                onShowRanking={handleShowRanking}
+                isInRanking={tempRanking.some(f => f.id === film.id)}
               />
             ))}
           </div>
         )}
       </div>
+
+      {/* Utilisation du composant Modal */}
+      <Modal
+        isOpen={showRanking}
+        onClose={handleCloseRankingModal}
+        title="Mon Classement Personnel"
+      >
+        <RankingModalContent
+          ranking={tempRanking}
+          onRemoveFromRanking={handleRemoveFromRanking}
+          onReorderRanking={handleReorderRanking}
+        />
+      </Modal>
     </main>
   );
 }
