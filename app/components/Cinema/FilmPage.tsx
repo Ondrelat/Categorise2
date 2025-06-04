@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import FilmCardIMDB from './FilmCardIMDB';
-import FilmCardCategorise from './FilmCardCategorise';
+import FilmCard from './FilmCard';
 import { Film } from '@/app/types';
 
 export default function FilmsPage({ categoryName }: { categoryName: string }) {
-  const [ratingSource, setRatingSource] = useState<'imdb' | 'categorise'>('imdb');
+  const [ratingSource, setRatingSource] = useState<'imdb' | 'categorise'>('categorise');
   const [films, setFilms] = useState<Film[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -73,13 +72,28 @@ export default function FilmsPage({ categoryName }: { categoryName: string }) {
           {categoryName} les mieux notés ({ratingSource === 'imdb' ? 'IMDB' : 'Catégorisé'})
         </h1>
 
-        <div className="flex justify-center mb-6">
-          <button
-            onClick={toggleRatingSource}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+        <div className="flex justify-center gap-4 mb-6">
+                    <button
+            onClick={() => setRatingSource('categorise')}
+            className={`px-4 py-2 rounded transition ${
+              ratingSource === 'categorise' 
+                ? 'bg-purple-600 text-white' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
           >
-            Voir par {ratingSource === 'imdb' ? 'Catégorisation' : 'IMDB'}
+            Voir par Catégorisation
           </button>
+          <button
+            onClick={() => setRatingSource('imdb')}
+            className={`px-4 py-2 rounded transition ${
+              ratingSource === 'imdb' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Voir par IMDB
+          </button>
+
         </div>
 
         {loading ? (
@@ -87,23 +101,14 @@ export default function FilmsPage({ categoryName }: { categoryName: string }) {
         ) : (
           <div className="flex flex-col items-center gap-6">
             {films.map((film: Film) => (
-              ratingSource === 'imdb' ? (
-                <FilmCardIMDB
-                  key={film.id}
-                  film={film}
-                  onLike={handleLike}
-                  onRateSlider={handleRateSlider}
-                  onAddToRanking={handleAddToRanking}
-                />
-              ) : (
-                <FilmCardCategorise
-                  key={film.id}
-                  film={film}
-                  onLike={handleLike}
-                  onRateSlider={handleRateSlider}
-                  onAddToRanking={handleAddToRanking}
-                />
-              )
+              <FilmCard
+                key={film.id}
+                film={film}
+                ratingSource={ratingSource}
+                onLike={handleLike}
+                onRateSlider={handleRateSlider}
+                onAddToRanking={handleAddToRanking}
+              />
             ))}
           </div>
         )}

@@ -36,6 +36,8 @@ export interface Film {
     titre_en: string | null;
     image_url: string | null;
     createdAt: Date;
+    rankCategorise: Number;
+    scoreCategorise: Number;
   }
 
   export interface CreateCategoryResponse {
