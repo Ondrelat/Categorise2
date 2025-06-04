@@ -1,12 +1,12 @@
 // components/RankingModalContent.jsx
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Film } from '@/app/types'; // Make sure this path is correct
+import { classement } from '@/app/types'; // Make sure this path is correct
 
 interface RankingModalContentProps {
-  ranking: Film[];
-  onRemoveFromRanking: (filmId: string) => void;
-  onReorderRanking: (newRanking: Film[]) => void;
+  ranking: classement[];
+  onRemoveFromRanking: (classementid: string) => void;
+  onReorderRanking: (newRanking: classement[]) => void;
 }
 
 export default function RankingModalContent({
@@ -14,13 +14,13 @@ export default function RankingModalContent({
   onRemoveFromRanking,
   onReorderRanking,
 }: RankingModalContentProps) {
-  const [draggedItem, setDraggedItem] = useState<Film | null>(null);
+  const [draggedItem, setDraggedItem] = useState<classement | null>(null);
 
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, film: Film) => {
-    setDraggedItem(film);
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, classement: classement) => {
+    setDraggedItem(classement);
     e.dataTransfer.effectAllowed = 'move';
     // Optionally set data for more complex scenarios, though not strictly needed for reordering
-    e.dataTransfer.setData('text/plain', film.id);
+    e.dataTransfer.setData('text/plain', classement.id);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -28,13 +28,13 @@ export default function RankingModalContent({
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetFilm: Film) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetclassement: classement) => {
     e.preventDefault();
-    if (!draggedItem || draggedItem.id === targetFilm.id) return;
+    if (!draggedItem || draggedItem.id === targetclassement.id) return;
 
     const newRanking = [...ranking];
     const draggedIndex = newRanking.findIndex(f => f.id === draggedItem.id);
-    const targetIndex = newRanking.findIndex(f => f.id === targetFilm.id);
+    const targetIndex = newRanking.findIndex(f => f.id === targetclassement.id);
 
     if (draggedIndex === -1 || targetIndex === -1) return;
 
@@ -56,19 +56,19 @@ export default function RankingModalContent({
       {ranking.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-xl text-gray-500">Votre classement est vide</p>
-          <p className="text-gray-400 mt-2">Ajoutez des films à votre classement pour les voir ici</p>
+          <p className="text-gray-400 mt-2">Ajoutez des classements à votre classement pour les voir ici</p>
         </div>
       ) : (
         <div className="p-6 space-y-4">
-          {ranking.map((film, index) => (
+          {ranking.map((classement, index) => (
             <div
-              key={film.id}
+              key={classement.id}
               className={`bg-gray-50 rounded-lg shadow hover:shadow-md transition-shadow duration-300 border border-gray-200 p-4 flex items-center gap-4 cursor-grab
-                ${draggedItem?.id === film.id ? 'opacity-50 border-blue-500' : ''}`}
+                ${draggedItem?.id === classement.id ? 'opacity-50 border-blue-500' : ''}`}
               draggable
-              onDragStart={(e) => handleDragStart(e, film)}
+              onDragStart={(e) => handleDragStart(e, classement)}
               onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, film)}
+              onDrop={(e) => handleDrop(e, classement)}
               onDragEnd={handleDragEnd}
             >
               {/* Numéro de classement */}
@@ -76,12 +76,12 @@ export default function RankingModalContent({
                 {index + 1}
               </div>
 
-              {/* Image du film */}
+              {/* Image du classement */}
               <div className="relative w-16 h-20 flex-shrink-0">
-                {film.image_url ? (
+                {classement.image_url ? (
                   <Image
-                    src={film.image_url}
-                    alt={film.titre_fr || film.titre_en || 'Film'}
+                    src={classement.image_url}
+                    alt={classement.titre_fr || classement.titre_en || 'classement'}
                     fill
                     className="object-cover rounded"
                     sizes="64px"
@@ -93,25 +93,25 @@ export default function RankingModalContent({
                 )}
               </div>
 
-              {/* Informations du film */}
+              {/* Informations du classement */}
               <div className="flex-1">
                 <h3 className="text-lg font-semibold mb-1">
-                  {film.titre_fr || film.titre_en || 'Titre non disponible'}
+                  {classement.titre_fr || classement.titre_en || 'Titre non disponible'}
                 </h3>
-                {film.titre_en && film.titre_fr && film.titre_en !== film.titre_fr && (
-                  <p className="text-sm text-gray-500 mb-2">{film.titre_en}</p>
+                {classement.titre_en && classement.titre_fr && classement.titre_en !== classement.titre_fr && (
+                  <p className="text-sm text-gray-500 mb-2">{classement.titre_en}</p>
                 )}
 
                 {/* Affichage des notes */}
                 <div className="flex gap-4 text-sm">
-                  {film.averageRatingIMDB && (
+                  {classement.averageRatingIMDB && (
                     <div className="flex items-center gap-1">
-                      <span>IMDB: {film.averageRatingIMDB.toFixed(1)}</span>
+                      <span>IMDB: {classement.averageRatingIMDB.toFixed(1)}</span>
                     </div>
                   )}
-                  {film.scoreCategorise && (
+                  {classement.scoreCategorise && (
                     <div className="flex items-center gap-1">
-                      <span>Score: {Number(film.scoreCategorise)}/100</span>
+                      <span>Score: {Number(classement.scoreCategorise)}/100</span>
                     </div>
                   )}
                 </div>
@@ -119,7 +119,7 @@ export default function RankingModalContent({
 
               {/* Bouton de suppression */}
               <button
-                onClick={() => onRemoveFromRanking(film.id)}
+                onClick={() => onRemoveFromRanking(classement.id)}
                 className="px-3 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-sm flex-shrink-0"
               >
                 Retirer
@@ -132,7 +132,7 @@ export default function RankingModalContent({
       {ranking.length > 0 && (
         <div className="p-4 border-t border-gray-200 bg-gray-50 text-center">
           <p className="text-sm text-gray-600">
-            {ranking.length} film{ranking.length > 1 ? 's' : ''} dans votre classement
+            {ranking.length} classement{ranking.length > 1 ? 's' : ''} dans votre classement
           </p>
         </div>
       )}

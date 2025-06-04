@@ -4,8 +4,6 @@ import SideBar from '@/app/components/Category/Sidebar';
 import dynamic from "next/dynamic";
 import NavigatorSection from '@/app/components/Category/NavigatorSection';
 
-const FilmPage = dynamic(() => import("@/app/components/Cinema/FilmPage"), { ssr: true });
-
 export default async function CategoryLayout({ 
   children,
   params 
@@ -15,9 +13,6 @@ export default async function CategoryLayout({
 }) {
   // Décoder le nom de la catégorie pour restaurer les accents et espaces
   const decodedCategoryName = decodeURIComponent(params.name);
-
-  // Liste des catégories qui doivent utiliser FilmPage
-  const categoriesToUseFilmPage = ["Film", "Série", "Vidéo", "Short", "Anime", "Jeu vidéo", "Épisode", "Mini Série"];
 
   return (
     <div className="flex flex-1 h-full mt-4 justify-center">
@@ -31,9 +26,8 @@ export default async function CategoryLayout({
             {/* Afficher le nom décodé dans le titre */}
             <h1 className="text-3xl font-bold mb-6">{decodedCategoryName}</h1>
             <NavigatorSection />
-            {categoriesToUseFilmPage.includes(decodedCategoryName)
-              ? <FilmPage categoryName={decodedCategoryName} />
-              : children}
+
+              {children}
           </div>
         </div>
       </div>

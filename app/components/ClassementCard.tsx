@@ -1,22 +1,22 @@
-// app/films/components/FilmCard.tsx
+// app/classements/components/classementCard.tsx
 import { Star, Heart, Plus, ChevronDown, ChevronUp, Eye, List } from 'lucide-react';
-import { Film } from '../../types';
+import { Classement } from '../types';
 import Image from 'next/image';
 import { useState } from 'react';
 
-interface FilmCardProps {
-  film: Film;
+interface classementCardProps {
+  classement: Classement;
   ratingSource: 'imdb' | 'categorise';
-  onLike?: (filmId: string, liked: boolean) => void;
-  onRateSlider?: (filmId: string, rating: number) => void;
+  onLike?: (classementid: string, liked: boolean) => void;
+  onRateSlider?: (classementid: string, rating: number) => void;
   onAddToRanking?: () => void;
   onShowRanking?: () => void;
-  onWatched?: (filmId: string, watched: boolean) => void;
+  onWatched?: (classementid: string, watched: boolean) => void;
   isInRanking?: boolean;
 }
 
-export default function FilmCard({
-  film,
+export default function ClassementCard({
+  classement,
   ratingSource,
   onLike,
   onRateSlider,
@@ -24,7 +24,7 @@ export default function FilmCard({
   onShowRanking,
   onWatched,
   isInRanking = false,
-}: FilmCardProps) {
+}: classementCardProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [isWatched, setIsWatched] = useState(false);
   const [sliderRating, setSliderRating] = useState(50); // Internal 0-100 scale
@@ -43,7 +43,7 @@ export default function FilmCard({
   const handleLike = () => {
     const newLikedState = !isLiked;
     setIsLiked(newLikedState);
-    onLike?.(film.id, newLikedState);
+    onLike?.(classement.id, newLikedState);
   };
 
   const handleSliderChange = (value: number) => {
@@ -53,7 +53,7 @@ export default function FilmCard({
   const handleConfirmRating = () => {
     const finalRating = parseFloat((sliderRating / 10).toFixed(1));
     setConfirmedRating(finalRating);
-    onRateSlider?.(film.id, finalRating);
+    onRateSlider?.(classement.id, finalRating);
     setShowRatingTool(false);
   };
 
@@ -75,10 +75,10 @@ export default function FilmCard({
           <div className="flex gap-4">
             {/* Image section */}
             <div className="relative w-28 h-36 flex-shrink-0">
-              {film.image_url ? (
+              {classement.image_url ? (
                 <Image
-                  src={film.image_url}
-                  alt={film.titre_fr || film.titre_en || 'Film'}
+                  src={classement.image_url}
+                  alt={classement.titre_fr || classement.titre_en || 'classement'}
                   fill
                   className="object-cover rounded"
                   sizes="112px"
@@ -96,39 +96,39 @@ export default function FilmCard({
                 {/* Infos à gauche */}
                 <div className="flex flex-col items-start gap-2">
                   <h3 className="text-xl font-semibold">
-                    {film.titre_fr || film.titre_en || 'Titre non disponible'}
+                    {classement.titre_fr || classement.titre_en || 'Titre non disponible'}
                   </h3>
-                  {film.titre_en && film.titre_fr && film.titre_en !== film.titre_fr && (
-                    <p className="text-sm text-gray-500">{film.titre_en}</p>
+                  {classement.titre_en && classement.titre_fr && classement.titre_en !== classement.titre_fr && (
+                    <p className="text-sm text-gray-500">{classement.titre_en}</p>
                   )}
 
                   {/* Note IMDB ou Catégorisé */}
                   {ratingSource === 'imdb' ? (
-                    film.averageRatingIMDB !== null && film.numVotesIMDB !== null && (
+                    classement.averageRatingIMDB !== null && classement.numVotesIMDB !== null && (
                       <div className="flex items-center gap-1 text-sm">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
                         <span className="font-semibold">
-                          {film.averageRatingIMDB.toFixed(1)}
+                          {classement.averageRatingIMDB.toFixed(1)}
                         </span>
                         <span className="text-gray-500">
-                          ({film.numVotesIMDB.toLocaleString()} votes IMDB)
+                          ({classement.numVotesIMDB.toLocaleString()} votes IMDB)
                         </span>
                       </div>
                     )
                   ) : (
                     <>
-                      {film.scoreCategorise !== null && (
+                      {classement.scoreCategorise !== null && (
                         <div className="flex items-center gap-1 text-sm">
                           <Star className="w-4 h-4 text-purple-400 fill-current" />
                           <span className="font-semibold">
-                            {Number(film.scoreCategorise)}/100
+                            {Number(classement.scoreCategorise)}/100
                           </span>
                           <span className="text-gray-500">(Score catégorisé)</span>
                         </div>
                       )}
-                      {film.rankCategorise && (
+                      {classement.rankCategorise && (
                         <div className="text-sm text-purple-600">
-                          Classement: #{Number(film.rankCategorise)}
+                          Classement: #{Number(classement.rankCategorise)}
                         </div>
                       )}
                     </>

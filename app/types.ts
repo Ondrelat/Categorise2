@@ -27,7 +27,7 @@ export interface Article {
     createdAt?: Date;
     categoryId?: string;
 }
-export interface Film {
+export interface Classement {
     id: string;
     tconst: string | null;
     averageRatingIMDB: number | null;
@@ -36,8 +36,9 @@ export interface Film {
     titre_en: string | null;
     image_url: string | null;
     createdAt: Date;
-    rankCategorise: Number;
-    scoreCategorise: Number;
+    rankCategorise: Number | null;
+    scoreCategorise: Number | null;
+    
   }
 
   export interface CreateCategoryResponse {

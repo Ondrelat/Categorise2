@@ -31,8 +31,6 @@ export async function getArticleById(id: string) {
   } catch (error) {
     console.error('Erreur lors de la récupération de l\'article:', error);
     throw error;
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -59,64 +57,96 @@ export async function getArticleClassementById(id: string) {
   } catch (error) {
     console.error('Erreur lors de la récupération de l\'article:', error);
     throw error;
-  } finally {
-    await prisma.$disconnect();
-  }
+  } 
 }
 
-export async function getFilmsSortedByRating(categoryTitle: string, ratingSource: string) {
-    const startTime = performance.now();
-    const categoryTitleDecode = decodeURIComponent(categoryTitle);
-    console.log("Début de la récupération des films triés");
-    console.log("category decode url ", categoryTitleDecode);
-    let limit = 50;
-    let delimiter = 10000;
-    if (categoryTitle === "Film" || categoryTitle === "Série") {
-      delimiter = 20000;
-    }
-    try {
-      const films = await prisma.articleClassement.findMany({
-    where: {
-      averageRatingIMDB: { not: null },
-      numVotesIMDB: {
-        not: null,
-        gt: delimiter,
-      },
-      categories: {
-        some: {
-          category: {
-            name: categoryTitleDecode,
+export async function getclassementsSortedByRating(categoryTitle: string, ratingSource: string) {
+  const startTime = performance.now();
+  const categoryTitleDecode = decodeURIComponent(categoryTitle);
+
+  let limit = 50;
+  let delimiter = (categoryTitleDecode === "Film" || categoryTitleDecode === "Série") ? 20000 : 10000;
+
+  const orderField = ratingSource === 'IMDB' ? 'averageRatingIMDB' : 'averageRatingIMDB'; // Ajoute d'autres sources ici si besoin
+
+  try {
+    const rawFilms = await prisma.articleClassement.findMany({
+      where: {
+        [orderField]: { not: null },
+        numVotesIMDB: {
+          not: null,
+          gt: delimiter,
+        },
+        categories: {
+          some: {
+            category: {
+              name: categoryTitleDecode,
+            },
           },
         },
       },
-    },
-    orderBy: {
-      averageRatingIMDB: 'desc',
-    },
-    take: limit,
-    select: {
-      id: true,
-      tconst: true,
-      averageRatingIMDB: true,
-      numVotesIMDB: true,
-      titre_fr: true,
-      titre_en: true,
-      image_url: true,
-      createdAt: true,
-    },
-  });
+      orderBy: {
+        [orderField]: 'desc',
+      },
+      take: limit,
+      select: {
+        id: true,
+        tconst: true,
+        [orderField]: true,
+        numVotesIMDB: true,
+        titre_fr: true,
+        titre_en: true,
+        image_url: true,
+        createdAt: true,
+      },
+    });
+
+    const films = rawFilms.map(film => ({
+      ...film,
+      rankCategorise: null as number | null,
+      scoreCategorise: null as number | null,
+    }));
 
     const endTime = performance.now();
-    console.log(`Films récupérés en ${endTime - startTime} ms`);
-    console.log(`Nombre de films trouvés : ${films.length}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Films récupérés en ${endTime - startTime} ms`);
+      console.log(`Nombre de films trouvés : ${films.length}`);
+    }
 
     return films;
   } catch (error) {
     console.error('Erreur lors de la récupération des films:', error);
     throw new Error('Erreur lors de la récupération des films');
-  } finally {
-    await prisma.$disconnect();
   }
+}
+
+export async function fetchUserRankingsFromDB(userId: string) {
+  const userRankings = await prisma.articleClassementUserData.findMany({
+    where: {
+      userId,
+      rank: {
+        not: null
+      }
+    },
+    orderBy: {
+      rank: 'asc'
+    },
+    include: {
+      article: true // on inclut l'article complet
+    }
+  });
+
+  // Retourne directement une liste d’articles enrichis avec les infos de classement personnalisées
+  const articles = userRankings.map((userRanking) => ({
+    ...userRanking.article,
+    rank: userRanking.rank,
+    rating: userRanking.rating,
+    liked: userRanking.liked,
+    rankCategorise: null as number | null,
+    scoreCategorise: null as number | null,
+  }));
+
+  return articles;
 }
 
 export async function getArticlesByTypeAndCategory(categoryTitle: string, type: string): Promise<Article[]> {
@@ -155,4 +185,27 @@ export async function getArticlesByTypeAndCategory(categoryTitle: string, type: 
     throw new Error(`Erreur lors de la récupération des articles de type ${type}`);
   }
   // Ne pas déconnecter Prisma à chaque appel
+}
+
+export async function likeArticle(articleId: string, liked: boolean, userId: string) {
+
+
+  await prisma.articleClassementUserData.upsert({
+    where: {
+      userId_articleId: {
+        userId,
+        articleId,
+      },
+    },
+    update: {
+      liked,
+    },
+    create: {
+      userId,
+      articleId,
+      liked,
+    },
+  });
+
+  return { success: true };
 }
