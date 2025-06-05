@@ -6,7 +6,7 @@ import { getCategoryByName } from '@/app/lib/categories';
 export default async function CreateArticlePage(  {
     params
 }: {
-  params: { name: string };
+  params: Promise<{ name: string }>;
 }) {
   const resolvedParams = await params;
   const name = decodeURIComponent(resolvedParams.name);

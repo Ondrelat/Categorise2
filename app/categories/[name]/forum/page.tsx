@@ -12,7 +12,7 @@ interface ForumPageProps {
 export default async function ForumPage({ 
       params
 }: {
-  params: { name: string };
+  params: Promise<{ name: string }>;
 }) {
   const resolvedParams = await params;
   const name = decodeURIComponent(resolvedParams.name);

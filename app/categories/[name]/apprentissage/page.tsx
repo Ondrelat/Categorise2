@@ -8,7 +8,7 @@ import Link from 'next/link';
 export default async function ApprentissagePage({
   params 
 }: { 
-  params: { name: string };
+  params: Promise<{ name: string }>;
 }) {
   // Await the params object before accessing its properties
   const resolvedParams = await params;

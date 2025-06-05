@@ -13,7 +13,7 @@ interface MediaPageProps {
 export default async function MediaPage({ 
         params
 }: {
-  params: { name: string };
+  params: Promise<{ name: string }>;
 }) {
   const resolvedParams = await params;
   const name = decodeURIComponent(resolvedParams.name);

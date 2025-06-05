@@ -11,7 +11,7 @@ import {
 export default async function ClassementPage({
   params
 }: {
-  params: { name: string };
+  params: Promise<{ name: string }>;
 }) {
   const resolvedParams = await params;
   const name = decodeURIComponent(resolvedParams.name);

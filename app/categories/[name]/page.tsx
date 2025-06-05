@@ -3,7 +3,7 @@
 export default async function CategoryPage({
             params
 }: {
-  params: Promise<{ name: string }> 
+  params: Promise<{ name: string }>;
 }) {
 
 
