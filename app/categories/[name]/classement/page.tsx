@@ -13,8 +13,8 @@ export default async function ClassementPage({
 }: {
   params: { name: string }
 }) {
-  const name = await params.name
-  const categoryName = name || 'Action';
+  const resolvedParams = await params;
+  const categoryName = resolvedParams.name || 'Action';
   const ratingSource = 'categorise';
   const classement = await getclassementsSortedByRating(categoryName, ratingSource);
   const session = await getServerSession(authConfig);

@@ -8,7 +8,7 @@ export default async function CategoryLayout({
   params 
 }: { 
   children: React.ReactNode, 
-  params: { name: string }; // ← CE LA
+  params: Promise<{ name: string }> 
 }) {
   // Await the params object before accessing its properties
   const resolvedParams = await params;
