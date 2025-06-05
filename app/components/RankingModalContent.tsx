@@ -1,12 +1,12 @@
 // components/RankingModalContent.jsx
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { classement } from '@/app/types'; // Make sure this path is correct
+import { Classement } from '@/app/types'; // Make sure this path is correct
 
 interface RankingModalContentProps {
-  ranking: classement[];
+  ranking: Classement[];
   onRemoveFromRanking: (classementid: string) => void;
-  onReorderRanking: (newRanking: classement[]) => void;
+  onReorderRanking: (newRanking: Classement[]) => void;
 }
 
 export default function RankingModalContent({
@@ -14,9 +14,9 @@ export default function RankingModalContent({
   onRemoveFromRanking,
   onReorderRanking,
 }: RankingModalContentProps) {
-  const [draggedItem, setDraggedItem] = useState<classement | null>(null);
+  const [draggedItem, setDraggedItem] = useState<Classement | null>(null);
 
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, classement: classement) => {
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, classement: Classement) => {
     setDraggedItem(classement);
     e.dataTransfer.effectAllowed = 'move';
     // Optionally set data for more complex scenarios, though not strictly needed for reordering
@@ -28,7 +28,7 @@ export default function RankingModalContent({
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetclassement: classement) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetclassement: Classement) => {
     e.preventDefault();
     if (!draggedItem || draggedItem.id === targetclassement.id) return;
 
