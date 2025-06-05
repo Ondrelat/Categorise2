@@ -11,7 +11,7 @@ interface ApprentissagePageProps {
 }
 
 export default async function ApprentissagePage({ params }: ApprentissagePageProps) {
-  const name = await params.name;
+  const name = params.name;
   
   const courses = await getArticlesByTypeAndCategory(name, 'apprentissage');
 
