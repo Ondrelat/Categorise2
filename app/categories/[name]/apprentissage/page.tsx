@@ -4,13 +4,12 @@ import React from 'react';
 import { getArticlesByTypeAndCategory } from '@/app/lib/articles';
 import Link from 'next/link';
 
-interface ApprentissagePageProps {
-  params: {
-    name: string;
-  };
-}
 
-export default async function ApprentissagePage({ params }: ApprentissagePageProps) {
+export default async function ApprentissagePage({
+  params 
+}: { 
+  params: { name: string }; // ← CE LA
+}) {
   const name = params.name;
   
   const courses = await getArticlesByTypeAndCategory(name, 'apprentissage');
