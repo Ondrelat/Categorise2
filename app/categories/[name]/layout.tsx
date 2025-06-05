@@ -8,7 +8,7 @@ export default async function CategoryLayout({
   params 
 }: { 
   children: React.ReactNode, 
-  params: { name: string };
+  params: Promise<{ name: string }>;
 }) {
   const resolvedParams = await params;
   const name = decodeURIComponent(resolvedParams.name);
