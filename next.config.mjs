@@ -15,16 +15,22 @@ const nextConfig = {
     compiler: {
         removeConsole: false,
     },
-    images: {
-        remotePatterns: [
-          {
-            protocol: 'https',
-            hostname: 'image.tmdb.org',
-            port: '',
-            pathname: '/t/p/**',
-          },
-        ],
+images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'image.tmdb.org',
+        port: '',
+        pathname: '/t/p/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        port: '',
+        pathname: '/**',  // allow all paths under this hostname
+      },
+    ],
+  },
 
     // OU Option 2 : Ne conserver que certains types de logs
     // compiler: {
