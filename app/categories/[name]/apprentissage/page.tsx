@@ -8,12 +8,11 @@ import Link from 'next/link';
 export default async function ApprentissagePage({
   params 
 }: { 
-  params: Promise<{ name: string }> 
+  params: { name: string };
 }) {
-  // Await the params object before accessing its properties
-  const resolvedParams = await params;
+  const decodedCategoryName = decodeURIComponent(params.name);
   
-  const courses = await getArticlesByTypeAndCategory(resolvedParams.name, 'apprentissage');
+  const courses = await getArticlesByTypeAndCategory(decodedCategoryName, 'apprentissage');
 
   return (
     <div className="mt-4">

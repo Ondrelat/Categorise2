@@ -6,11 +6,10 @@ import { getCategoryByName } from '@/app/lib/categories';
 export default async function CreateArticlePage(  {
     params
 }: {
-  params: Promise<{ name: string }> 
+  params: { name: string };
 }) {
-  // Await the params object before accessing its properties
-  const resolvedParams = await params;
-    const category = await getCategoryByName(resolvedParams.name);
+  const decodedCategoryName = decodeURIComponent(params.name);
+    const category = await getCategoryByName(decodedCategoryName);
     console.log ("create dans" + category?.name);
     if (!category) {
         notFound();

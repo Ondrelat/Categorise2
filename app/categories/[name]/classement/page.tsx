@@ -11,11 +11,11 @@ import {
 export default async function ClassementPage({
   params
 }: {
-  params: Promise<{ name: string }> 
+  params: { name: string };
 }) {
-  // Await the params object before accessing its properties
-  const resolvedParams = await params;
-  const categoryName = resolvedParams.name || 'Action';
+  const name = decodeURIComponent(params.name);
+
+  const categoryName = name || 'Action';
   const ratingSource = 'categorise';
   const classement = await getclassementsSortedByRating(categoryName, ratingSource);
   const session = await getServerSession(authConfig);

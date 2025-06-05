@@ -10,9 +10,7 @@ export default async function CategoryLayout({
   children: React.ReactNode, 
   params: { name: string };
 }) {
-  // Await the params object before accessing its properties
-  const resolvedParams = await params;
-  const decodedCategoryName = decodeURIComponent(resolvedParams.name);
+  const decodedCategoryName = decodeURIComponent(params.name);
 
   return (
     <div className="flex flex-1 h-full mt-4 justify-center">

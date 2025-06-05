@@ -12,13 +12,12 @@ interface ForumPageProps {
 export default async function ForumPage({ 
       params
 }: {
-  params: Promise<{ name: string }> 
+  params: { name: string };
 }) {
-  // Awai
-    const resolvedParams = await params;
+  const name = decodeURIComponent(params.name);
   const { getArticlesByTypeAndCategory } = await import('@/app/lib/articles');
   
-  const discussions = await getArticlesByTypeAndCategory(resolvedParams.name, 'forum');
+  const discussions = await getArticlesByTypeAndCategory(name, 'forum');
 
   return (
     <div className="mt-4">
