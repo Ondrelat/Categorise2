@@ -10,8 +10,14 @@ interface MediaPageProps {
   };
 }
 
-export default async function MediaPage({ params }: MediaPageProps) {
-  const name = await params.name
+export default async function MediaPage({ 
+        params
+}: {
+  params: Promise<{ name: string }> 
+}) {
+  // Awai
+    const resolvedParams = await params;
+    const name = resolvedParams.name
   const { getArticlesByTypeAndCategory } = await import('@/app/lib/articles');
   
   const mediaItems = await getArticlesByTypeAndCategory(name, 'media');

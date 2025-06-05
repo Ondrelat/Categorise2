@@ -3,9 +3,14 @@ import { notFound } from 'next/navigation';
 import ArticleCreationForm from '@/app/components/ArticleCreationForm';
 import { getCategoryByName } from '@/app/lib/categories';
 
-export default async function CreateArticlePage({ params }: { params: { name: string } }) {
-      const name = await params.name;
-    const category = await getCategoryByName(name);
+export default async function CreateArticlePage(  {
+    params
+}: {
+  params: Promise<{ name: string }> 
+}) {
+  // Await the params object before accessing its properties
+  const resolvedParams = await params;
+    const category = await getCategoryByName(resolvedParams.name);
     console.log ("create dans" + category?.name);
     if (!category) {
         notFound();

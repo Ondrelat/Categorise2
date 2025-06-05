@@ -11,8 +11,9 @@ import {
 export default async function ClassementPage({
   params
 }: {
-  params: { name: string }
+  params: Promise<{ name: string }> 
 }) {
+  // Await the params object before accessing its properties
   const resolvedParams = await params;
   const categoryName = resolvedParams.name || 'Action';
   const ratingSource = 'categorise';
