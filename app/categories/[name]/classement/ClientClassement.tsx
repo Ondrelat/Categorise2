@@ -44,7 +44,7 @@ export default function ClientClassement({
   // useTransition pour gérer les états de chargement des Server Actions
   const [isPending, startTransition] = useTransition();
 
-    // Liste des catégories qui doivent utiliser FilmPage
+  // Liste des catégories qui doivent utiliser FilmPage                   
   const categoriesToUseFilmPage = ["Film", "Série", "Vidéo", "Short", "Anime", "Jeu vidéo", "Épisode", "Mini Série"];
 
   // Si la source de classement change, nous avons besoin de recharger les classements.
@@ -67,7 +67,7 @@ export default function ClientClassement({
       // on simule juste le fait que la source change (mais les classements ne se mettront pas à jour sans rechargement serveur)
       console.log(`[Client] Rating source changed to: ${ratingSource}. Page reload might be needed.`);
       // En production, vous voudriez naviguer vers la nouvelle URL pour que le composant serveur se recharge.
-      // window.location.href = `?category=${categoryName}&sort=${ratingSource}`; // Cela rechargerait la page entière.
+      // // window.location.href = `?category=${categoryName}&sort=${ratingSource}`; // Cela rechargerait la page entière.
     }
   }, [ratingSource, categoryName, initialRatingSource]);
 
