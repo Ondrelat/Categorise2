@@ -13,7 +13,7 @@ interface ApprentissagePageProps {
 export default async function ApprentissagePage({ params }: ApprentissagePageProps) {
   const { name } = await params;
   
-  const courses = await getArticlesByTypeAndCategory(params.name, 'apprentissage');
+  const courses = await getArticlesByTypeAndCategory(name, 'apprentissage');
 
   return (
     <div className="mt-4">

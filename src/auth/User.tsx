@@ -13,7 +13,7 @@ export const User = async () => {
     return (
         <div style={{ display: 'flex', alignItems: 'center' }}>
             {session.user.image && (
-                <img 
+                <Image 
                     src={session.user.image ?? ''} 
                     alt="User Image"
                     width="50" // Définissez la largeur souhaitée
