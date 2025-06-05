@@ -1,6 +1,11 @@
 
 
-export default async function CategoryPage({ params }: { params: { name: string } }) {
+export default async function CategoryPage({
+            params
+}: {
+  params: Promise<{ name: string }> 
+}) {
+
 
 
 }
