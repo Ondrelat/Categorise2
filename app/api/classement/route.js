@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getFilmsSortedByRating } from '@/app/lib/articles';
+import { getclassementsSortedByRating } from '@/app/lib/articles';
 
 export async function GET(request) {
   try {
