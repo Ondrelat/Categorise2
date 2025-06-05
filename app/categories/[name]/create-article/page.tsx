@@ -4,7 +4,8 @@ import ArticleCreationForm from '@/app/components/ArticleCreationForm';
 import { getCategoryByName } from '@/app/lib/categories';
 
 export default async function CreateArticlePage({ params }: { params: { name: string } }) {
-    const category = await getCategoryByName(params.name);
+      const name = await params.name;
+    const category = await getCategoryByName(name);
     console.log ("create dans" + category?.name);
     if (!category) {
         notFound();
