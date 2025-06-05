@@ -11,11 +11,11 @@ interface MediaPageProps {
 }
 
 export default async function MediaPage({ params }: MediaPageProps) {
-  const { name } = params;
+  const { name } = await params;
   
   const { getArticlesByTypeAndCategory } = await import('@/app/lib/articles');
   
-  const mediaItems = await getArticlesByTypeAndCategory(params.name, 'media');
+  const mediaItems = await getArticlesByTypeAndCategory(name, 'media');
 
   return (
     <div className="mt-4">

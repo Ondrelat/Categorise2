@@ -10,11 +10,11 @@ interface ForumPageProps {
 }
 
 export default async function ForumPage({ params }: ForumPageProps) {
-  const { name } = params;
+  const { name } = await params;
   
   const { getArticlesByTypeAndCategory } = await import('@/app/lib/articles');
   
-  const discussions = await getArticlesByTypeAndCategory(params.name, 'forum');
+  const discussions = await getArticlesByTypeAndCategory(name, 'forum');
 
   return (
     <div className="mt-4">
