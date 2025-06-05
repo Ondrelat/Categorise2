@@ -13,7 +13,8 @@ export default async function ClassementPage({
 }: {
   params: { name: string };
 }) {
-  const name = decodeURIComponent(params.name);
+  const resolvedParams = await params;
+  const name = decodeURIComponent(resolvedParams.name);
 
   const categoryName = name || 'Action';
   const ratingSource = 'categorise';

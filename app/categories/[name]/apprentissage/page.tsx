@@ -10,9 +10,11 @@ export default async function ApprentissagePage({
 }: { 
   params: { name: string };
 }) {
-  const decodedCategoryName = decodeURIComponent(params.name);
+  // Await the params object before accessing its properties
+  const resolvedParams = await params;
+  const name = decodeURIComponent(resolvedParams.name);
   
-  const courses = await getArticlesByTypeAndCategory(decodedCategoryName, 'apprentissage');
+  const courses = await getArticlesByTypeAndCategory(name, 'apprentissage');
 
   return (
     <div className="mt-4">

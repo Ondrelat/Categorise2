@@ -15,7 +15,8 @@ export default async function MediaPage({
 }: {
   params: { name: string };
 }) {
-  const name = decodeURIComponent(params.name);
+  const resolvedParams = await params;
+  const name = decodeURIComponent(resolvedParams.name);
   const { getArticlesByTypeAndCategory } = await import('@/app/lib/articles');
   
   const mediaItems = await getArticlesByTypeAndCategory(name, 'media');

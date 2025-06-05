@@ -8,8 +8,9 @@ export default async function CreateArticlePage(  {
 }: {
   params: { name: string };
 }) {
-  const decodedCategoryName = decodeURIComponent(params.name);
-    const category = await getCategoryByName(decodedCategoryName);
+  const resolvedParams = await params;
+  const name = decodeURIComponent(resolvedParams.name);
+    const category = await getCategoryByName(name);
     console.log ("create dans" + category?.name);
     if (!category) {
         notFound();
