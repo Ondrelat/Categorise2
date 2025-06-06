@@ -22,12 +22,9 @@ export default function ArticleClassementCard({
   onRateSlider,
   onAddToMyList,
   onShowMyList,
-  onWatched,
   isInMyList = false,
 }: articleClassementCardProps) {
   const [isLiked, setIsLiked] = useState(false);
-  const [isOnMyList, setIsOnMyList]  = useState(false);
-  const [isWatched, setIsWatched] = useState(false);
   const [sliderRating, setSliderRating] = useState(50); // Internal 0-100 scale
   const [showRatingTool, setShowRatingTool] = useState(false);
   const [confirmedRating, setConfirmedRating] = useState<number | null>(null);
