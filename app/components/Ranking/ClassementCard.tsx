@@ -1,6 +1,6 @@
 // app/classements/components/classementCard.tsx
 import { Star, Heart, Plus, ChevronDown, ChevronUp, Eye, List } from 'lucide-react';
-import { Classement } from '../types';
+import { Classement } from '../../types';
 import Image from 'next/image';
 import { useState } from 'react';
 
@@ -10,9 +10,9 @@ interface classementCardProps {
   onLike?: (classementid: string, liked: boolean) => void;
   onRateSlider?: (classementid: string, rating: number) => void;
   onAddToRanking?: () => void;
-  onShowRanking?: () => void;
+  onShowMyClassement?: () => void;
   onWatched?: (classementid: string, watched: boolean) => void;
-  isInRanking?: boolean;
+  isInMyClassement?: boolean;
 }
 
 export default function ClassementCard({
@@ -21,9 +21,9 @@ export default function ClassementCard({
   onLike,
   onRateSlider,
   onAddToRanking,
-  onShowRanking,
+  onShowMyClassement,
   onWatched,
-  isInRanking = false,
+  isInMyClassement = false,
 }: classementCardProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [isWatched, setIsWatched] = useState(false);
@@ -58,8 +58,8 @@ export default function ClassementCard({
   };
 
   const handleRankingAction = () => {
-    if (isInRanking && onShowRanking) {
-      onShowRanking();
+    if (isInMyClassement && onShowMyClassement) {
+      onShowMyClassement();
     } else if (onAddToRanking) {
       onAddToRanking();
     }
@@ -217,12 +217,12 @@ export default function ClassementCard({
                   <button
                     onClick={handleRankingAction}
                     className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm transition ${
-                      isInRanking
+                      isInMyClassement
                         ? 'bg-blue-100 hover:bg-blue-200 text-blue-700'
                         : 'bg-green-100 hover:bg-green-200 text-green-700'
                     }`}
                   >
-                    {isInRanking ? (
+                    {isInMyClassement ? (
                       <>
                         <List className="w-4 h-4" />
                         Voir mon classement

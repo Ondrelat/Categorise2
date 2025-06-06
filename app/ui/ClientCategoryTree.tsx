@@ -44,6 +44,8 @@ const ClientCategoryTree: React.FC<CategoryTreeProps> = ({
         onDelete(categoryId);
     };
 
+    const nameDefaultSectionForThisCategory = "classement";
+
     return (
         <ul className={`space-y-1 ${level > 0 ? 'ml-4' : ''}`}>
             {categories.map((category) => (
@@ -76,7 +78,7 @@ const ClientCategoryTree: React.FC<CategoryTreeProps> = ({
                             />
                         ) : (
                             <>
-                                <Link href={`/categories/${category.name}`} className="text-sm hover:text-blue-500 flex-1">
+                                <Link href={`/categories/${category.name}/${nameDefaultSectionForThisCategory}`} className="text-sm hover:text-blue-500 flex-1">
                                     {category.name}
                                 </Link>
                                 

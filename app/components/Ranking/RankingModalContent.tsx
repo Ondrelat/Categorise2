@@ -1,30 +1,86 @@
 // components/RankingModalContent.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { Classement } from '@/app/types'; // Make sure this path is correct
+import { Classement } from '@/app/types';
 
 interface RankingModalContentProps {
   ranking: Classement[];
   onRemoveFromRanking: (classementid: string) => void;
   onReorderRanking: (newRanking: Classement[]) => void;
+  onSaveRanking: (ranking: Classement[]) => void; // <- ajoute cette fonction dans le parent
+  onClose?: () => void; // <- si tu gères une fermeture de popup (optionnel)
 }
 
 export default function RankingModalContent({
   ranking,
   onRemoveFromRanking,
   onReorderRanking,
+  onSaveRanking,
+  onClose,
 }: RankingModalContentProps) {
   const [draggedItem, setDraggedItem] = useState<Classement | null>(null);
+
+  const isModifiedRef = useRef(false);
+  const saveTimeout = useRef<NodeJS.Timeout | null>(null);
+  const latestRankingRef = useRef<Classement[]>(ranking); // pour accéder au ranking courant dans les effets
+
+  // === Mise à jour du classement à chaque prop change
+  useEffect(() => {
+    latestRankingRef.current = ranking;
+  }, [ranking]);
+
+  // === Sauvegarde automatique après inactivité (5s)
+  const handleReorder = (newRanking: Classement[]) => {
+    // Vérifie si quelque chose a changé
+    const hasChanged = JSON.stringify(newRanking.map(i => i.id)) !== JSON.stringify(latestRankingRef.current.map(i => i.id));
+    if (!hasChanged) return;
+
+    isModifiedRef.current = true;
+    onReorderRanking(newRanking);
+    latestRankingRef.current = newRanking;
+
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+
+    saveTimeout.current = setTimeout(() => {
+      if (isModifiedRef.current) {
+        onSaveRanking(latestRankingRef.current);
+        isModifiedRef.current = false;
+      }
+    }, 5000);
+  };
+
+  // === Sauvegarde lors de la fermeture de la page
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isModifiedRef.current) {
+        onSaveRanking(latestRankingRef.current);
+        e.preventDefault();
+        e.returnValue = ''; // pour Chrome
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
+  // === Sauvegarde lors de la fermeture manuelle de la popup
+  useEffect(() => {
+    return () => {
+      if (isModifiedRef.current) {
+        onSaveRanking(latestRankingRef.current);
+        isModifiedRef.current = false;
+      }
+    };
+  }, []);
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, classement: Classement) => {
     setDraggedItem(classement);
     e.dataTransfer.effectAllowed = 'move';
-    // Optionally set data for more complex scenarios, though not strictly needed for reordering
     e.dataTransfer.setData('text/plain', classement.id);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); // Necessary to allow dropping
+    e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
   };
 
@@ -38,12 +94,10 @@ export default function RankingModalContent({
 
     if (draggedIndex === -1 || targetIndex === -1) return;
 
-    // Remove the dragged item from its original position
     const [removed] = newRanking.splice(draggedIndex, 1);
-    // Insert the dragged item at the target position
     newRanking.splice(targetIndex, 0, removed);
 
-    onReorderRanking(newRanking);
+    handleReorder(newRanking);
     setDraggedItem(null);
   };
 
@@ -71,12 +125,10 @@ export default function RankingModalContent({
               onDrop={(e) => handleDrop(e, classement)}
               onDragEnd={handleDragEnd}
             >
-              {/* Numéro de classement */}
               <div className="text-xl font-bold text-blue-600 bg-blue-100 rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
                 {index + 1}
               </div>
 
-              {/* Image du classement */}
               <div className="relative w-16 h-20 flex-shrink-0">
                 {classement.image_url ? (
                   <Image
@@ -93,7 +145,6 @@ export default function RankingModalContent({
                 )}
               </div>
 
-              {/* Informations du classement */}
               <div className="flex-1">
                 <h3 className="text-lg font-semibold mb-1">
                   {classement.titre_fr || classement.titre_en || 'Titre non disponible'}
@@ -102,7 +153,6 @@ export default function RankingModalContent({
                   <p className="text-sm text-gray-500 mb-2">{classement.titre_en}</p>
                 )}
 
-                {/* Affichage des notes */}
                 <div className="flex gap-4 text-sm">
                   {classement.averageRatingIMDB && (
                     <div className="flex items-center gap-1">
@@ -117,7 +167,6 @@ export default function RankingModalContent({
                 </div>
               </div>
 
-              {/* Bouton de suppression */}
               <button
                 onClick={() => onRemoveFromRanking(classement.id)}
                 className="px-3 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-sm flex-shrink-0"
