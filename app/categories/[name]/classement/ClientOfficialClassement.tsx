@@ -4,44 +4,44 @@
 import { useEffect, useState, useTransition } from 'react'; // useTransition pour les Server Actions
 import ArticleClassementCard from '@/app/components/Ranking/articleClassementCard';
 import { articleClassement } from '@/app/types';
-import Modal from '@/app/components/Ranking/Modal';
-import RankingModalContent from '@/app/components/Ranking/RankingModalContent';
+import Modal from '@/app/components/MyList/Modal';
+import MyListModalContent from '@/app/components/MyList/MyListModalContent';
 
 interface ClassementClientPageProps {
   OfficialClassement: articleClassement[];
   categoryName: string;
   initialRatingSource: 'imdb' | 'categorise';
   isAuthenticated: boolean;
-  MyClassement: articleClassement[];
+  MyList: articleClassement[];
   // Props pour les Server Actions
   onLike: (articleId: string, liked: boolean, categoryName: string) => Promise<{ success: boolean }>;
   onRateSlider: (articleId: string, rating: number, categoryName: string) => Promise<{ success: boolean }>;
-  onAddToMyClassement: (articleId: string, categoryName: string) => Promise<{ success: boolean }>;
-  onRemoveFromMyClassement: (articleId: string, categoryName: string) => Promise<{ success: boolean }>;
-  onReorderMyClassement: (articleId: string[], categoryName: string) => Promise<{ success: boolean }>;
+  onAddToMyList: (articleId: string, categoryName: string) => Promise<{ success: boolean }>;
+  onRemoveFromMyList: (articleId: string, categoryName: string) => Promise<{ success: boolean }>;
+  onReorderMyList: (articleId: string[], categoryName: string) => Promise<{ success: boolean }>;
 }
 
-export default function ClientClassement({
+export default function ClientOfficialClassement ({
   OfficialClassement,
   categoryName,
   initialRatingSource,
   isAuthenticated: initialIsAuthenticated,
-  MyClassement,
+  MyList,
   // Récupération des Server Actions
   onLike,
   onRateSlider,
-  onAddToMyClassement
+  onAddToMyList
 ,
-  onRemoveFromMyClassement,
-  onReorderMyClassement,
+  onRemoveFromMyList,
+  onReorderMyList,
 }: ClassementClientPageProps) {
   const [loading, setLoading] = useState(false); // Le chargement initial est fait par le serveur
 
   const [ratingSource, setRatingSource] = useState<'imdb' | 'categorise'>(initialRatingSource);
 
   const [officialClassement, setOfficialClassements] = useState<articleClassement[]>(OfficialClassement);
-  const [myClassement, setMyClassement] = useState<articleClassement[]>(MyClassement);
-  const [showmyClassement, setshowmyClassement] = useState(false);
+  const [myList, setMyList] = useState<articleClassement[]>(MyList);
+  const [showmyList, setShowMyList] = useState(false);
   
   const [isAuthenticated] = useState<boolean>(initialIsAuthenticated); // L'authentification est gérée côté serveur
 
@@ -93,13 +93,13 @@ export default function ClientClassement({
   };
 
 
-const handleAddToRanking = async (articleClassement: articleClassement) => {
+const handleAddToMyList = async (articleClassement: articleClassement) => {
   if (isAuthenticated) {
     startTransition(async () => {
-      const result = await onAddToMyClassement(articleClassement.id, categoryName);
+      const result = await onAddToMyList(articleClassement.id, categoryName);
       if (result.success) {
         // Mettre à jour l'état local après succès de l'action serveur
-        setMyClassement(prev => {
+        setMyList(prev => {
             if (!prev.find(f => f.id === articleClassement.id)) {
               return [...prev, articleClassement];
             }
@@ -109,35 +109,35 @@ const handleAddToRanking = async (articleClassement: articleClassement) => {
       });
     } else {
       // Si l'utilisateur n'est pas connecté, ajoutez à la liste temporaire locale
-      if (!myClassement.find(f => f.id === articleClassement.id)) {
-        setMyClassement(prev => [...prev, articleClassement]);
+      if (!myList.find(f => f.id === articleClassement.id)) {
+        setMyList(prev => [...prev, articleClassement]);
         console.log(`classement ${articleClassement.id} ajouté au classement temporaire local.`);
       }
     }
   };
 
 
-  const handleRemoveFromRanking = async (articleId: string) => {
+  const handleRemoveFromMyList = async (articleId: string) => {
     if (isAuthenticated) {
       startTransition(async () => {
-        const result = await onRemoveFromMyClassement(articleId, categoryName);
+        const result = await onRemoveFromMyList(articleId, categoryName);
         if (result.success) {
           // Mettre à jour l'état local après succès de l'action serveur
-          setMyClassement(prev => prev.filter(f => f.id !== articleId));
+          setMyList(prev => prev.filter(f => f.id !== articleId));
         }
       });
     } else {
-      setMyClassement(prev => prev.filter(f => f.id !== articleId));
+      setMyList(prev => prev.filter(f => f.id !== articleId));
       console.log(`officialClassement${articleId} retiré du officialClassementtemporaire.`);
     }
   };
 
-  const handleReorderRanking = async (newRanking: articleClassement[]) => {
-    setMyClassement(newRanking); // Mise à jour optimiste de l'UI
+  const handleReorderMyList = async (newmyList: articleClassement[]) => {
+    setMyList(newmyList); // Mise à jour optimiste de l'UI
     if (isAuthenticated) {
       startTransition(async () => {
-        const classementids = newRanking.map(articleId=> articleId.id);
-        const result = await onReorderMyClassement(classementids, categoryName);
+        const classementids = newmyList.map(articleId=> articleId.id);
+        const result = await onReorderMyList(classementids, categoryName);
         if (!result.success) {
           // Gérer l'échec : potentiellement revenir à l'ancien état si l'opération a échoué
           console.error("Échec de la mise à jour du officialClassementcôté serveur.");
@@ -146,12 +146,12 @@ const handleAddToRanking = async (articleClassement: articleClassement) => {
     }
   };
 
-  const handleshowmyClassement = () => {
-    setshowmyClassement(true);
+  const handleShowMyList = () => {
+    setShowMyList(true);
   };
 
-  const handleCloseRankingModal = () => {
-    setshowmyClassement(false);
+  const handleCloseMyListModal = () => {
+    setShowMyList(false);
   };
 
   return (
@@ -183,13 +183,13 @@ const handleAddToRanking = async (articleClassement: articleClassement) => {
             Voir par IMDB
           </button>
 
-          {myClassement.length > 0 && (
+          {myList.length > 0 && (
             <button
-              onClick={handleshowmyClassement}
+              onClick={handleShowMyList}
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
               disabled={isPending} // Désactiver le bouton pendant que les actions serveur s'exécutent
             >
-              Voir mon officialClassement({myClassement.length})
+              Voir mon officialClassement({myList.length})
             </button>
           )}
         </div>
@@ -205,9 +205,9 @@ const handleAddToRanking = async (articleClassement: articleClassement) => {
                 ratingSource={ratingSource}
                 onLike={handleLikeClick}
                 onRateSlider={handleRateSliderChange}
-                onAddToRanking={handleAddToRanking}
-                onShowMyClassement={handleshowmyClassement}
-                isInMyClassement={myClassement.some(f => f.id === articleOfficialClassement.id)}
+                onAddToMyList={handleAddToMyList}
+                onShowMyList={handleShowMyList}
+                isInMyList={myList.some(f => f.id === articleOfficialClassement.id)}
               />
             ))}
           </div>
@@ -215,15 +215,15 @@ const handleAddToRanking = async (articleClassement: articleClassement) => {
       </div>
 
       <Modal
-        isOpen={showmyClassement}
-        onClose={handleCloseRankingModal}
+        isOpen={showmyList}
+        onClose={handleCloseMyListModal}
         title="Mon officialClassementPersonnel"
       >
-        <RankingModalContent
-          ranking={myClassement}
-          onRemoveFromRanking={handleRemoveFromRanking}
-          onReorderRanking={handleReorderRanking}
-          onSaveRanking={handleReorderRanking}
+        <MyListModalContent
+          myList={myList}
+          onRemoveFromMyList={handleRemoveFromMyList}
+          onReorderMyList={handleReorderMyList}
+          onSaveMyList={handleReorderMyList}
         />
       </Modal>
     </main>

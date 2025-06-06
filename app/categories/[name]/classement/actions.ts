@@ -1,6 +1,6 @@
 'use server';
 
-import { likeArticle, NoteArticle, ReOrderClassement, AddOrRemoveToClassement } from '@/app/lib/articles';
+import { likeArticle, NoteArticle, ReOrderMyList, AddOrRemoveToMyList } from '@/app/lib/articles';
 import { getServerSession } from 'next-auth';
 import { authConfig } from '@/pages/api/auth/[...nextauth]';
 
@@ -20,18 +20,18 @@ export async function handleRateSlider(articleId: string, rating: number, catego
   return await NoteArticle(articleId, rating, userId);
 }
 
-export async function handleReorderMyClassement(classementIds: string[], categoryName: string)  {
+export async function handleReorderMyList(ArticleIds: string[], categoryName: string)  {
   const session = await getServerSession(authConfig);
   const userId = session?.user?.id as string | undefined;
   if (!userId) return { success: false };
 
   // transformer string[] en {id: string}[]
-  const classements = classementIds.map(id => ({ id }));
+  const articleIds = ArticleIds.map(id => ({ id }));
 
-  return await ReOrderClassement(classements, userId);
+  return await ReOrderMyList(articleIds, userId);
 }
 
-export async function handleRemoveFromMyClassement(articleId: string, categoryName: string)  {
+export async function handleRemoveFromMyList(articleId: string, categoryName: string)  {
   const session = await getServerSession(authConfig);
   const userId = session?.user?.id as string | undefined;
   if (!userId) return { success: false };
@@ -40,11 +40,11 @@ export async function handleRemoveFromMyClassement(articleId: string, categoryNa
   return { success: true };
 }
 
-export async function handleAddToMyClassement(articleId: string, categoryName: string) {
+export async function handleAddToMyList(articleId: string, categoryName: string) {
   const session = await getServerSession(authConfig);
   const userId = session?.user?.id as string | undefined;
   if (!userId) return { success: false };
 
   // Par exemple, si ReOrderClassement attend un tableau, adapte ici.
-  return await AddOrRemoveToClassement(articleId, true, userId);
+  return await AddOrRemoveToMyList(articleId, true, userId);
 }

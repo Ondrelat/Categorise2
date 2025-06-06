@@ -120,7 +120,7 @@ export async function getclassementsSortedByRating(categoryTitle: string, rating
   }
 }
 
-export async function fetchMyClassement(userId: string) {
+export async function fetchMyList(userId: string) {
   const userRankings = await prisma.articleClassementUserData.findMany({
     where: {
       userId,
@@ -241,7 +241,7 @@ export async function NoteArticle(articleId: string, rating: number, userId: str
 }
 
 // utils/classement.ts
-export async function ReOrderClassement(ranking: { id: string }[], userId: string) {
+export async function ReOrderMyList(ranking: { id: string }[], userId: string) {
   if (!userId) throw new Error("User ID manquant");
   if (!ranking || ranking.length === 0) return { success: false, message: 'Classement vide' };
 
@@ -275,7 +275,7 @@ export async function ReOrderClassement(ranking: { id: string }[], userId: strin
 }
 
 // utils/classement.ts
-export async function AddOrRemoveToClassement(articleId: string, onList: boolean, userId: string) {
+export async function AddOrRemoveToMyList(articleId: string, onList: boolean, userId: string) {
   await prisma.articleClassementUserData.upsert({
     where: {
       userId_articleId: {

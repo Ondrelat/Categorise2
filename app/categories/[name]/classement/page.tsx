@@ -1,18 +1,18 @@
 // app/classement/[name]/page.tsx
-import ClientClassement from './ClientClassement';
+import ClientOfficialClassement from './ClientOfficialClassement';
 import { articleClassement } from '@/app/types';
 import { getServerSession } from 'next-auth';
 import { authConfig } from '@/pages/api/auth/[...nextauth]';
 import {
   getclassementsSortedByRating,
-  fetchMyClassement,
+  fetchMyList,
 } from '@/app/lib/articles';
 import {
   handleLike,
   handleRateSlider,
-  handleReorderMyClassement,
-  handleRemoveFromMyClassement,
-  handleAddToMyClassement
+  handleReorderMyList,
+  handleRemoveFromMyList,
+  handleAddToMyList
 } from './actions'; // Server actions déclarées à part
 
 export default async function ClassementPage({
@@ -28,22 +28,22 @@ export default async function ClassementPage({
   const session = await getServerSession(authConfig);
   const userId = session?.user?.id as string | undefined;
 
-  const myClassement: articleClassement[] = userId
-    ? await fetchMyClassement(userId)
+  const myList: articleClassement[] = userId
+    ? await fetchMyList(userId)
     : [];
 
   return (
-<ClientClassement
+<ClientOfficialClassement
   categoryName={name}
   OfficialClassement={officialClassement}
   initialRatingSource={ratingSource}
   isAuthenticated={!!userId}
-  MyClassement={myClassement}
+  MyList={myList}
   onLike={handleLike}
   onRateSlider={handleRateSlider}
-  onAddToMyClassement={handleAddToMyClassement}  // <-- ajouté ici
-  onRemoveFromMyClassement={handleRemoveFromMyClassement}
-  onReorderMyClassement={handleReorderMyClassement}
+  onAddToMyList={handleAddToMyList}  // <-- ajouté ici
+  onRemoveFromMyList={handleRemoveFromMyList}
+  onReorderMyList={handleReorderMyList}
 />
   );
 }
