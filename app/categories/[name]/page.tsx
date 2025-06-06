@@ -5,7 +5,7 @@ export default async function CategoryPage({
 }: {
   params: Promise<{ name: string }>;
 }) {
-
+  const resolvedParams = await params;
 
 
 }

@@ -66,6 +66,9 @@ model Categories {
   parent      Categories?  @relation("CategoryToCategory", fields: [parentId], references: [id])
   children    Categories[] @relation("CategoryToCategory")
   articles    Article[]
+  articleClassementUserData ArticleClassementUserData[] // Une catégorie peut avoir plusieurs articles
+  
+
   
   articlesClassement  ArticleClassementCategory[] // 
   articleReferences   ArticleReference[] @relation("CategoryArticleReference")
@@ -162,6 +165,10 @@ model ArticleClassementUserData {
   userId        String
   article       ArticleClassement @relation(fields: [articleId], references: [id])
   articleId     String
+  
+  // Relation avec UNE seule catégorie (optionnelle)
+  category    Categories? @relation(fields: [categoryId], references: [id])
+  categoryId  String?     // Peut être null si non catégorisé
 
   liked         Boolean?  
   rating        Float?     // ou Float si tu veux une note de 0 à 10

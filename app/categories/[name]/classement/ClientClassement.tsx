@@ -2,43 +2,47 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react'; // useTransition pour les Server Actions
-import ClassementCard from '@/app/components/ClassementCard';
-import { Classement } from '@/app/types';
-import Modal from '@/app/components/Modal';
-import RankingModalContent from '@/app/components/RankingModalContent';
+import ArticleClassementCard from '@/app/components/Ranking/articleClassementCard';
+import { articleClassement } from '@/app/types';
+import Modal from '@/app/components/Ranking/Modal';
+import RankingModalContent from '@/app/components/Ranking/RankingModalContent';
 
 interface ClassementClientPageProps {
-  initialClassement: Classement[];
+  OfficialClassement: articleClassement[];
   categoryName: string;
   initialRatingSource: 'imdb' | 'categorise';
   isAuthenticated: boolean;
-  initialUserRanking: Classement[];
+  MyClassement: articleClassement[];
   // Props pour les Server Actions
-  onLike: (classementid: string, liked: boolean) => Promise<{ success: boolean }>;
-  onRateSlider: (classementid: string, rating: number) => Promise<{ success: boolean }>;
-  onAddclassementToUserRanking: (classement: Classement) => Promise<{ success: boolean }>;
-  onRemoveclassementFromUserRanking: (classementid: string) => Promise<{ success: boolean }>;
-  onReorderUserRanking: (classementids: string[]) => Promise<{ success: boolean }>;
+  onLike: (articleId: string, liked: boolean, categoryName: string) => Promise<{ success: boolean }>;
+  onRateSlider: (articleId: string, rating: number, categoryName: string) => Promise<{ success: boolean }>;
+  onAddToMyClassement: (articleId: string, categoryName: string) => Promise<{ success: boolean }>;
+  onRemoveFromMyClassement: (articleId: string, categoryName: string) => Promise<{ success: boolean }>;
+  onReorderMyClassement: (articleId: string[], categoryName: string) => Promise<{ success: boolean }>;
 }
 
 export default function ClientClassement({
-  initialClassement,
+  OfficialClassement,
   categoryName,
   initialRatingSource,
   isAuthenticated: initialIsAuthenticated,
-  initialUserRanking,
+  MyClassement,
   // Récupération des Server Actions
   onLike,
   onRateSlider,
-  onAddclassementToUserRanking,
-  onRemoveclassementFromUserRanking,
-  onReorderUserRanking,
+  onAddToMyClassement
+,
+  onRemoveFromMyClassement,
+  onReorderMyClassement,
 }: ClassementClientPageProps) {
-  const [ratingSource, setRatingSource] = useState<'imdb' | 'categorise'>(initialRatingSource);
-  const [classement, setclassements] = useState<Classement[]>(initialClassement);
   const [loading, setLoading] = useState(false); // Le chargement initial est fait par le serveur
-  const [tempRanking, setTempRanking] = useState<Classement[]>(initialUserRanking);
-  const [showRanking, setShowRanking] = useState(false);
+
+  const [ratingSource, setRatingSource] = useState<'imdb' | 'categorise'>(initialRatingSource);
+
+  const [officialClassement, setOfficialClassements] = useState<articleClassement[]>(OfficialClassement);
+  const [myClassement, setMyClassement] = useState<articleClassement[]>(MyClassement);
+  const [showmyClassement, setshowmyClassement] = useState(false);
+  
   const [isAuthenticated] = useState<boolean>(initialIsAuthenticated); // L'authentification est gérée côté serveur
 
   // useTransition pour gérer les états de chargement des Server Actions
@@ -47,7 +51,7 @@ export default function ClientClassement({
   // Liste des catégories qui doivent utiliser FilmPage                   
   const categoriesToUseFilmPage = ["Film", "Série", "Vidéo", "Short", "Anime", "Jeu vidéo", "Épisode", "Mini Série"];
 
-  // Si la source de classement change, nous avons besoin de recharger les classements.
+  // Si la source de officialClassementchange, nous avons besoin de recharger les classements.
   // Dans un cas réel, cela impliquerait soit un rafraîchissement côté serveur avec les searchParams,
   // soit un appel client à une Server Action dédiée à la recherche.
   // Pour l'exemple, nous allons simuler un rechargement simple en réutilisant la logique.
@@ -74,29 +78,30 @@ export default function ClientClassement({
 
   // --- Gestionnaires d'événements appelant les Server Actions ---
 
-  const handleLikeClick = async (classementid: string, liked: boolean) => {
+  const handleRateSliderChange = async (articleId: string, rating: number) => {
     startTransition(async () => {
-      await onLike(classementid, liked);
+      await onRateSlider(articleId, rating, categoryName);
+    });
+  };
+
+  const handleLikeClick = async (articleId: string, liked: boolean) => {
+    startTransition(async () => {
+      await onLike(articleId, liked, categoryName);
       // Optionnel : Mettre à jour l'état local si l'action serveur a un impact immédiat sur l'UI
       // (ex: un compteur de likes sur le classement, un changement de couleur du bouton)
     });
   };
 
-  const handleRateSliderChange = async (classementid: string, rating: number) => {
-    startTransition(async () => {
-      await onRateSlider(classementid, rating);
-    });
-  };
 
-  const handleAddToRanking = async (classement: Classement) => {
-    if (isAuthenticated) {
-      startTransition(async () => {
-        const result = await onAddclassementToUserRanking(classement);
-        if (result.success) {
-          // Mettre à jour l'état local après succès de l'action serveur
-          setTempRanking(prev => {
-            if (!prev.find(f => f.id === classement.id)) {
-              return [...prev, classement];
+const handleAddToRanking = async (articleClassement: articleClassement) => {
+  if (isAuthenticated) {
+    startTransition(async () => {
+      const result = await onAddToMyClassement(articleClassement.id, categoryName);
+      if (result.success) {
+        // Mettre à jour l'état local après succès de l'action serveur
+        setMyClassement(prev => {
+            if (!prev.find(f => f.id === articleClassement.id)) {
+              return [...prev, articleClassement];
             }
             return prev;
           });
@@ -104,48 +109,49 @@ export default function ClientClassement({
       });
     } else {
       // Si l'utilisateur n'est pas connecté, ajoutez à la liste temporaire locale
-      if (!tempRanking.find(f => f.id === classement.id)) {
-        setTempRanking(prev => [...prev, classement]);
-        console.log(`classement ${classement.id} ajouté au classement temporaire local.`);
+      if (!myClassement.find(f => f.id === articleClassement.id)) {
+        setMyClassement(prev => [...prev, articleClassement]);
+        console.log(`classement ${articleClassement.id} ajouté au classement temporaire local.`);
       }
     }
   };
 
-  const handleRemoveFromRanking = async (classementid: string) => {
+
+  const handleRemoveFromRanking = async (articleId: string) => {
     if (isAuthenticated) {
       startTransition(async () => {
-        const result = await onRemoveclassementFromUserRanking(classementid);
+        const result = await onRemoveFromMyClassement(articleId, categoryName);
         if (result.success) {
           // Mettre à jour l'état local après succès de l'action serveur
-          setTempRanking(prev => prev.filter(f => f.id !== classementid));
+          setMyClassement(prev => prev.filter(f => f.id !== articleId));
         }
       });
     } else {
-      setTempRanking(prev => prev.filter(f => f.id !== classementid));
-      console.log(`classement ${classementid} retiré du classement temporaire.`);
+      setMyClassement(prev => prev.filter(f => f.id !== articleId));
+      console.log(`officialClassement${articleId} retiré du officialClassementtemporaire.`);
     }
   };
 
-  const handleReorderRanking = async (newRanking: Classement[]) => {
-    setTempRanking(newRanking); // Mise à jour optimiste de l'UI
+  const handleReorderRanking = async (newRanking: articleClassement[]) => {
+    setMyClassement(newRanking); // Mise à jour optimiste de l'UI
     if (isAuthenticated) {
       startTransition(async () => {
-        const classementids = newRanking.map(classement => classement.id);
-        const result = await onReorderUserRanking(classementids);
+        const classementids = newRanking.map(articleId=> articleId.id);
+        const result = await onReorderMyClassement(classementids, categoryName);
         if (!result.success) {
           // Gérer l'échec : potentiellement revenir à l'ancien état si l'opération a échoué
-          console.error("Échec de la mise à jour du classement côté serveur.");
+          console.error("Échec de la mise à jour du officialClassementcôté serveur.");
         }
       });
     }
   };
 
-  const handleShowRanking = () => {
-    setShowRanking(true);
+  const handleshowmyClassement = () => {
+    setshowmyClassement(true);
   };
 
   const handleCloseRankingModal = () => {
-    setShowRanking(false);
+    setshowmyClassement(false);
   };
 
   return (
@@ -177,13 +183,13 @@ export default function ClientClassement({
             Voir par IMDB
           </button>
 
-          {tempRanking.length > 0 && (
+          {myClassement.length > 0 && (
             <button
-              onClick={handleShowRanking}
+              onClick={handleshowmyClassement}
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
               disabled={isPending} // Désactiver le bouton pendant que les actions serveur s'exécutent
             >
-              Voir mon classement ({tempRanking.length})
+              Voir mon officialClassement({myClassement.length})
             </button>
           )}
         </div>
@@ -192,16 +198,16 @@ export default function ClientClassement({
           <p className="text-center">Chargement...</p>
         ) : (
           <div className="flex flex-col items-center gap-6">
-            {classement.map((classement: Classement) => (
-              <ClassementCard
-                key={classement.id}
-                classement={classement}
+            {officialClassement.map((articleOfficialClassement: articleClassement) => (
+              <ArticleClassementCard
+                key={articleOfficialClassement.id}
+                articleOfficialClassement={articleOfficialClassement}
                 ratingSource={ratingSource}
                 onLike={handleLikeClick}
                 onRateSlider={handleRateSliderChange}
-                onAddToRanking={() => handleAddToRanking(classement)}
-                onShowRanking={handleShowRanking}
-                isInRanking={tempRanking.some(f => f.id === classement.id)}
+                onAddToRanking={handleAddToRanking}
+                onShowMyClassement={handleshowmyClassement}
+                isInMyClassement={myClassement.some(f => f.id === articleOfficialClassement.id)}
               />
             ))}
           </div>
@@ -209,14 +215,15 @@ export default function ClientClassement({
       </div>
 
       <Modal
-        isOpen={showRanking}
+        isOpen={showmyClassement}
         onClose={handleCloseRankingModal}
-        title="Mon Classement Personnel"
+        title="Mon officialClassementPersonnel"
       >
         <RankingModalContent
-          ranking={tempRanking}
+          ranking={myClassement}
           onRemoveFromRanking={handleRemoveFromRanking}
           onReorderRanking={handleReorderRanking}
+          onSaveRanking={handleReorderRanking}
         />
       </Modal>
     </main>

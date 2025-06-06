@@ -1,22 +1,22 @@
 // app/classements/components/classementCard.tsx
 import { Star, Heart, Plus, ChevronDown, ChevronUp, Eye, List } from 'lucide-react';
-import { Classement } from '../../types';
+import { articleClassement } from '../../types';
 import Image from 'next/image';
 import { useState } from 'react';
 
-interface classementCardProps {
-  classement: Classement;
+interface articleClassementCardProps {
+  articleOfficialClassement: articleClassement;
   ratingSource: 'imdb' | 'categorise';
-  onLike?: (classementid: string, liked: boolean) => void;
-  onRateSlider?: (classementid: string, rating: number) => void;
-  onAddToRanking?: () => void;
+  onLike?: (articleid: string, liked: boolean) => void;
+  onRateSlider?: (articleid: string, rating: number) => void;
+  onAddToRanking?: (article: articleClassement) => void;
   onShowMyClassement?: () => void;
-  onWatched?: (classementid: string, watched: boolean) => void;
+  onWatched?: (articleid: string, watched: boolean) => void;
   isInMyClassement?: boolean;
 }
 
-export default function ClassementCard({
-  classement,
+export default function ArticleClassementCard({
+  articleOfficialClassement,
   ratingSource,
   onLike,
   onRateSlider,
@@ -24,8 +24,9 @@ export default function ClassementCard({
   onShowMyClassement,
   onWatched,
   isInMyClassement = false,
-}: classementCardProps) {
+}: articleClassementCardProps) {
   const [isLiked, setIsLiked] = useState(false);
+  const [isOnMyList, setIsOnMyList]  = useState(false);
   const [isWatched, setIsWatched] = useState(false);
   const [sliderRating, setSliderRating] = useState(50); // Internal 0-100 scale
   const [showRatingTool, setShowRatingTool] = useState(false);
@@ -43,7 +44,7 @@ export default function ClassementCard({
   const handleLike = () => {
     const newLikedState = !isLiked;
     setIsLiked(newLikedState);
-    onLike?.(classement.id, newLikedState);
+    onLike?.(articleOfficialClassement.id, newLikedState);
   };
 
   const handleSliderChange = (value: number) => {
@@ -53,7 +54,7 @@ export default function ClassementCard({
   const handleConfirmRating = () => {
     const finalRating = parseFloat((sliderRating / 10).toFixed(1));
     setConfirmedRating(finalRating);
-    onRateSlider?.(classement.id, finalRating);
+    onRateSlider?.(articleOfficialClassement.id, finalRating);
     setShowRatingTool(false);
   };
 
@@ -61,7 +62,7 @@ export default function ClassementCard({
     if (isInMyClassement && onShowMyClassement) {
       onShowMyClassement();
     } else if (onAddToRanking) {
-      onAddToRanking();
+      onAddToRanking?.(articleOfficialClassement);
     }
   };
 
@@ -75,10 +76,10 @@ export default function ClassementCard({
           <div className="flex gap-4">
             {/* Image section */}
             <div className="relative w-28 h-36 flex-shrink-0">
-              {classement.image_url ? (
+              {articleOfficialClassement.image_url ? (
                 <Image
-                  src={classement.image_url}
-                  alt={classement.titre_fr || classement.titre_en || 'classement'}
+                  src={articleOfficialClassement.image_url}
+                  alt={articleOfficialClassement.titre_fr || articleOfficialClassement.titre_en || 'classement'}
                   fill
                   className="object-cover rounded"
                   sizes="112px"
@@ -96,39 +97,39 @@ export default function ClassementCard({
                 {/* Infos à gauche */}
                 <div className="flex flex-col items-start gap-2">
                   <h3 className="text-xl font-semibold">
-                    {classement.titre_fr || classement.titre_en || 'Titre non disponible'}
+                    {articleOfficialClassement.titre_fr || articleOfficialClassement.titre_en || 'Titre non disponible'}
                   </h3>
-                  {classement.titre_en && classement.titre_fr && classement.titre_en !== classement.titre_fr && (
-                    <p className="text-sm text-gray-500">{classement.titre_en}</p>
+                  {articleOfficialClassement.titre_en && articleOfficialClassement.titre_fr && articleOfficialClassement.titre_en !== articleOfficialClassement.titre_fr && (
+                    <p className="text-sm text-gray-500">{articleOfficialClassement.titre_en}</p>
                   )}
 
                   {/* Note IMDB ou Catégorisé */}
                   {ratingSource === 'imdb' ? (
-                    classement.averageRatingIMDB !== null && classement.numVotesIMDB !== null && (
+                    articleOfficialClassement.averageRatingIMDB !== null && articleOfficialClassement.numVotesIMDB !== null && (
                       <div className="flex items-center gap-1 text-sm">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
                         <span className="font-semibold">
-                          {classement.averageRatingIMDB.toFixed(1)}
+                          {articleOfficialClassement.averageRatingIMDB.toFixed(1)}
                         </span>
                         <span className="text-gray-500">
-                          ({classement.numVotesIMDB.toLocaleString()} votes IMDB)
+                          ({articleOfficialClassement.numVotesIMDB.toLocaleString()} votes IMDB)
                         </span>
                       </div>
                     )
                   ) : (
                     <>
-                      {classement.scoreCategorise !== null && (
+                      {articleOfficialClassement.scoreCategorise !== null && (
                         <div className="flex items-center gap-1 text-sm">
                           <Star className="w-4 h-4 text-purple-400 fill-current" />
                           <span className="font-semibold">
-                            {Number(classement.scoreCategorise)}/100
+                            {Number(articleOfficialClassement.scoreCategorise)}/100
                           </span>
                           <span className="text-gray-500">(Score catégorisé)</span>
                         </div>
                       )}
-                      {classement.rankCategorise && (
+                      {articleOfficialClassement.rankCategorise && (
                         <div className="text-sm text-purple-600">
-                          Classement: #{Number(classement.rankCategorise)}
+                          Classement: #{Number(articleOfficialClassement.rankCategorise)}
                         </div>
                       )}
                     </>

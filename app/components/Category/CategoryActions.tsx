@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import ClientCategoryTree from '../../ui/ClientCategoryTree';
 import { CategoryTreeItem } from '../../types';
 import CreateCategoryForm from './CreateCategoryForm';
 import DeleteCategoryDialog from './DeleteCategoryDialog';
-import CategoryEditHandler from './CategoryEditHandler';
+
 
 interface CategoryActionsProps {
   initialCategories: CategoryTreeItem[];
