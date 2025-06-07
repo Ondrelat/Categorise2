@@ -173,6 +173,7 @@ model ArticleClassementUserData {
   liked         Boolean?  
   rating        Float?     // ou Float si tu veux une note de 0 à 10
   rank          Int?     // position personnalisée dans un classement
+  rankTierList  String?       
   onList        Boolean? 
 
   createdAt     DateTime @default(now())

@@ -120,35 +120,6 @@ export async function getclassementsSortedByRating(categoryTitle: string, rating
   }
 }
 
-export async function fetchMyList(userId: string) {
-  const userRankings = await prisma.articleClassementUserData.findMany({
-    where: {
-      userId,
-      rank: {
-        not: null
-      }
-    },
-    orderBy: {
-      rank: 'asc'
-    },
-    include: {
-      article: true // on inclut l'article complet
-    }
-  });
-
-  // Retourne directement une liste d’articles enrichis avec les infos de classement personnalisées
-  const articles = userRankings.map((userRanking) => ({
-    ...userRanking.article,
-    rank: userRanking.rank,
-    rating: userRanking.rating,
-    liked: userRanking.liked,
-    rankCategorise: null as number | null,
-    scoreCategorise: null as number | null,
-  }));
-
-  return articles;
-}
-
 export async function getArticlesByTypeAndCategory(categoryTitle: string, type: string): Promise<Article[]> {
   const startTime = performance.now();
   const categoryTitleDecode = decodeURIComponent(categoryTitle);
@@ -240,58 +211,3 @@ export async function NoteArticle(articleId: string, rating: number, userId: str
   return { success: true };
 }
 
-// utils/classement.ts
-export async function ReOrderMyList(ranking: { id: string }[], userId: string) {
-  if (!userId) throw new Error("User ID manquant");
-  if (!ranking || ranking.length === 0) return { success: false, message: 'Classement vide' };
-
-  try {
-    const updateOps = ranking.map((article, index) => {
-      return prisma.articleClassementUserData.upsert({
-        where: {
-          userId_articleId: {
-            userId,
-            articleId: article.id,
-          },
-        },
-        update: {
-          rank: index + 1, // classement commence à 1
-        },
-        create: {
-          userId,
-          articleId: article.id,
-          rank: index + 1,
-        },
-      });
-    });
-
-    await prisma.$transaction(updateOps); // exécute toutes les upserts en une seule transaction
-
-    return { success: true };
-  } catch (error) {
-    console.error("Erreur lors du reorderClassement :", error);
-    return { success: false, message: 'Erreur serveur' };
-  }
-}
-
-// utils/classement.ts
-export async function AddOrRemoveToMyList(articleId: string, onList: boolean, userId: string) {
-  await prisma.articleClassementUserData.upsert({
-    where: {
-      userId_articleId: {
-        userId,
-        articleId,
-      },
-    },
-    update: {
-      onList,
-    },
-    create: {
-      userId,
-      articleId,
-      onList,
-    },
-  });
-
-  return { success: true };
-}

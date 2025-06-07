@@ -1,6 +1,7 @@
 'use server';
 
-import { likeArticle, NoteArticle, ReOrderMyList, AddOrRemoveToMyList } from '@/app/lib/articles';
+import { likeArticle, NoteArticle } from '@/app/lib/articles';
+import { ReOrderMyList, AddOrRemoveToMyList } from '@/app/lib/myList';
 import { getServerSession } from 'next-auth';
 import { authConfig } from '@/pages/api/auth/[...nextauth]';
 
@@ -36,7 +37,7 @@ export async function handleRemoveFromMyList(articleId: string, categoryName: st
   const userId = session?.user?.id as string | undefined;
   if (!userId) return { success: false };
 
-  // TODO: Ajoute ici la logique pour supprimer le classement utilisateur
+  return await AddOrRemoveToMyList(articleId, false, userId, categoryName);
   return { success: true };
 }
 
@@ -46,5 +47,5 @@ export async function handleAddToMyList(articleId: string, categoryName: string)
   if (!userId) return { success: false };
 
   // Par exemple, si ReOrderClassement attend un tableau, adapte ici.
-  return await AddOrRemoveToMyList(articleId, true, userId);
+  return await AddOrRemoveToMyList(articleId, true, userId, categoryName);
 }

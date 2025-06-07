@@ -3,10 +3,8 @@ import ClientOfficialClassement from './ClientOfficialClassement';
 import { articleClassementUserDataExtended } from '@/app/types';
 import { getServerSession } from 'next-auth';
 import { authConfig } from '@/pages/api/auth/[...nextauth]';
-import {
-  getclassementsSortedByRating,
-  fetchMyList,
-} from '@/app/lib/articles';
+import { getclassementsSortedByRating } from '@/app/lib/articles';
+import { fetchMyList } from '@/app/lib/myList';
 import {
   handleLike,
   handleRateSlider,
@@ -21,20 +19,20 @@ export default async function ClassementPage({
   params: Promise<{ name: string }>;
 }) {
   const resolvedParams = await params;
-  const name = decodeURIComponent(resolvedParams.name || 'Action');
+  const categoryName = decodeURIComponent(resolvedParams.name || 'Action');
 
   const ratingSource = 'categorise';
-  const officialClassement = await getclassementsSortedByRating(name, ratingSource);
+  const officialClassement = await getclassementsSortedByRating(categoryName, ratingSource);
   const session = await getServerSession(authConfig);
   const userId = session?.user?.id as string | undefined;
 
   const myList: articleClassementUserDataExtended[] = userId
-    ? await fetchMyList(userId)
+    ? await fetchMyList(userId, categoryName)
     : [];
 
   return (
 <ClientOfficialClassement
-  categoryName={name}
+  categoryName={categoryName}
   OfficialClassement={officialClassement}
   initialRatingSource={ratingSource}
   isAuthenticated={!!userId}

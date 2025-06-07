@@ -35,20 +35,33 @@ export default function MyListModalContent({
     { key: 'D', label: 'D', color: 'bg-blue-500', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
   ];
 
-  // Séparer les articles classés et non classés
-  const rankedArticles = myList.filter(article => article.rank !== undefined && article.rank !== null);
-  const unrankedArticles = myList.filter(article => article.rank === undefined || article.rank === null);
+  // Séparer les articles classés et non classés selon le mode
+  const rankedArticles = myList.filter(article => 
+    isTierListMode 
+      ? article.rankTierList !== undefined && article.rankTierList !== null 
+      : article.rank !== undefined && article.rank !== null
+  );
+  
+  const unrankedArticles = myList.filter(article => 
+    isTierListMode 
+      ? article.rankTierList === undefined || article.rankTierList === null 
+      : article.rank === undefined || article.rank === null
+  );
 
-  // Organiser les articles classés par rank
-  const getArticlesByrank = (rank: number | string) => {
-    return rankedArticles.filter(article => article.rank === rank);
+  // Organiser les articles classés par rank selon le mode
+  const getArticlesByRank = (rank: number | string) => {
+    if (isTierListMode) {
+      return rankedArticles.filter(article => article.rankTierList === rank);
+    } else {
+      return rankedArticles.filter(article => article.rank === rank);
+    }
   };
 
   useEffect(() => {
     latestmyListRef.current = myList;
     if (!isTierListMode) {
-      const highestrank = Math.max(...rankedArticles.map(a => typeof a.rank === 'number' ? a.rank : 0), 3);
-      setMaxRank(highestrank);
+      const highestRank = Math.max(...rankedArticles.map(a => typeof a.rank === 'number' ? a.rank : 0), 3);
+      setMaxRank(highestRank);
     }
   }, [myList, rankedArticles, isTierListMode]);
 
@@ -98,39 +111,46 @@ export default function MyListModalContent({
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDropOnrank = (e: React.DragEvent<HTMLDivElement>, targetrank: number | string) => {
+  const handleDropOnRank = (e: React.DragEvent<HTMLDivElement>, targetRank: number | string) => {
     e.preventDefault();
     if (!draggedItem) return;
 
     const updatedList = [...myList];
+    const articleIndex = updatedList.findIndex(a => a.id === draggedItem.id);
 
-    // En mode classement unique, vérifier qu'il n'y a pas déjà un article à cette rank
-    if (!isTierListMode && typeof targetrank === 'number') {
-      const existingArticle = updatedList.find(a => a.rank === targetrank && a.id !== draggedItem.id);
-      if (existingArticle) {
-        // Échanger les ranks
-        const draggedIndex = updatedList.findIndex(a => a.id === draggedItem.id);
-        const existingIndex = updatedList.findIndex(a => a.id === existingArticle.id);
-        
-        if (draggedIndex !== -1 && existingIndex !== -1) {
-          updatedList[draggedIndex] = { ...updatedList[draggedIndex], rank: targetrank };
-          updatedList[existingIndex] = { ...updatedList[existingIndex], rank: draggedItem.rank };
-        }
+    if (articleIndex !== -1) {
+      if (isTierListMode) {
+        // Mode tier list - on utilise rankTierList
+        updatedList[articleIndex] = { 
+          ...updatedList[articleIndex], 
+          rankTierList: targetRank as string,
+          rank: undefined
+        };
       } else {
-        const articleIndex = updatedList.findIndex(a => a.id === draggedItem.id);
-        if (articleIndex !== -1) {
-          updatedList[articleIndex] = { ...updatedList[articleIndex], rank: targetrank };
+        // Mode classement numérique - on utilise rank
+        const existingArticleIndex = updatedList.findIndex(a => 
+          a.rank === targetRank && 
+          a.id !== draggedItem.id
+        );
+
+        if (existingArticleIndex !== -1) {
+          // Échanger les ranks
+          updatedList[existingArticleIndex] = { 
+            ...updatedList[existingArticleIndex], 
+            rank: draggedItem.rank 
+          };
         }
+        
+        updatedList[articleIndex] = { 
+          ...updatedList[articleIndex], 
+          rank: targetRank as number,
+          rankTierList: undefined
+        };
       }
-    } else {
-      // Mode tier list - multiple articles par rank
-      const articleIndex = updatedList.findIndex(a => a.id === draggedItem.id);
-      if (articleIndex !== -1) {
-        updatedList[articleIndex] = { ...updatedList[articleIndex], rank: targetrank };
-      }
+
+      handleReorder(updatedList);
     }
 
-    handleReorder(updatedList);
     setDraggedItem(null);
     setDraggedFromUnranked(false);
   };
@@ -141,7 +161,11 @@ export default function MyListModalContent({
 
     const updatedList = myList.map(article => 
       article.id === draggedItem.id 
-        ? { ...article, rank: undefined }
+        ? { 
+            ...article, 
+            rank: undefined,
+            rankTierList: undefined 
+          }
         : article
     );
     
@@ -162,7 +186,11 @@ export default function MyListModalContent({
   const removeFromRanking = (articleId: string) => {
     const updatedList = myList.map(article => 
       article.id === articleId 
-        ? { ...article, rank: undefined }
+        ? { 
+            ...article, 
+            rank: undefined,
+            rankTierList: undefined 
+          }
         : article
     );
     handleReorder(updatedList);
@@ -172,7 +200,8 @@ export default function MyListModalContent({
     // Réinitialiser les ranks lors du changement de mode
     const updatedList = myList.map(article => ({
       ...article,
-      rank: undefined
+      rank: undefined,
+      rankTierList: undefined
     }));
     handleReorder(updatedList);
     setIsTierListMode(!isTierListMode);
@@ -181,7 +210,7 @@ export default function MyListModalContent({
   const renderTierList = () => (
     <div className="flex gap-4 mb-4">
       {tierConfig.map((tier) => {
-        const articlesInTier = getArticlesByrank(tier.key);
+        const articlesInTier = getArticlesByRank(tier.key);
         
         return (
           <div key={tier.key} className="flex-1 min-w-0">
@@ -197,10 +226,10 @@ export default function MyListModalContent({
             {/* Zone de drop */}
             <div
               className={`${tier.bgColor} ${tier.borderColor} border rounded-b-lg min-h-96 p-3 space-y-3 transition-all duration-200 ${
-                draggedItem && !draggedFromUnranked === false ? `${tier.borderColor} border-2` : ''
+                draggedItem && !draggedFromUnranked ? `${tier.borderColor} border-2` : ''
               }`}
               onDragOver={handleDragOver}
-              onDrop={(e) => handleDropOnrank(e, tier.key)}
+              onDrop={(e) => handleDropOnRank(e, tier.key)}
             >
               {articlesInTier.length === 0 ? (
                 <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded-lg bg-white/50">
@@ -268,8 +297,8 @@ export default function MyListModalContent({
     <div className="space-y-4 mb-4">
       {Array.from({ length: maxRank }, (_, index) => {
         const rank = index + 1;
-        const articlesInrank = getArticlesByrank(rank);
-        const article = articlesInrank[0]; // Un seul article par rank
+        const articlesInRank = getArticlesByRank(rank);
+        const article = articlesInRank[0]; // Un seul article par rank
         
         return (
           <div key={rank} className="flex items-center gap-4">
@@ -282,10 +311,10 @@ export default function MyListModalContent({
             {/* Zone de drop */}
             <div
               className={`flex-1 bg-white border-2 border-gray-200 rounded-lg p-4 min-h-20 transition-all duration-200 ${
-                draggedItem && !draggedFromUnranked === false ? 'border-blue-400 bg-blue-50' : ''
+                draggedItem && !draggedFromUnranked ? 'border-blue-400 bg-blue-50' : ''
               }`}
               onDragOver={handleDragOver}
-              onDrop={(e) => handleDropOnrank(e, rank)}
+              onDrop={(e) => handleDropOnRank(e, rank)}
             >
               {!article ? (
                 <div className="text-center py-4 text-gray-400 border-2 border-dashed border-gray-300 rounded-lg">

@@ -44,6 +44,7 @@ export interface articleClassementUserDataExtended extends articleClassement {
   liked?: boolean | null;
   rating?: number | null;
   rank?: number | null;
+  rankTierList?: string | null;
   onList?: boolean | null;
   categoryId?: string | null;
 }
