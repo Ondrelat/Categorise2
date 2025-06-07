@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useTransition } from 'react'; // useTransition pour les Server Actions
 import ArticleClassementCard from '@/app/components/Ranking/articleClassementCard';
-import { articleClassement } from '@/app/types';
+import { articleClassement, articleClassementUserDataExtended } from '@/app/types';
 import Modal from '@/app/components/MyList/Modal';
 import MyListModalContent from '@/app/components/MyList/MyListModalContent';
 
@@ -12,7 +12,7 @@ interface ClassementClientPageProps {
   categoryName: string;
   initialRatingSource: 'imdb' | 'categorise';
   isAuthenticated: boolean;
-  MyList: articleClassement[];
+  MyList: articleClassementUserDataExtended[];
   // Props pour les Server Actions
   onLike: (articleId: string, liked: boolean, categoryName: string) => Promise<{ success: boolean }>;
   onRateSlider: (articleId: string, rating: number, categoryName: string) => Promise<{ success: boolean }>;

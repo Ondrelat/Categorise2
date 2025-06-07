@@ -154,7 +154,7 @@ model ArticleClassement {
   titleType         String?
 
   categories ArticleClassementCategory[]  // <- liaison multiple
-  userData      ArticleClassementUserData[]
+  userData   ArticleClassementUserData[]
 
   @@map("article_classement")
 }

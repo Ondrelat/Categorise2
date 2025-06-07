@@ -1,6 +1,6 @@
 // app/classement/[name]/page.tsx
 import ClientOfficialClassement from './ClientOfficialClassement';
-import { articleClassement } from '@/app/types';
+import { articleClassementUserDataExtended } from '@/app/types';
 import { getServerSession } from 'next-auth';
 import { authConfig } from '@/pages/api/auth/[...nextauth]';
 import {
@@ -28,7 +28,7 @@ export default async function ClassementPage({
   const session = await getServerSession(authConfig);
   const userId = session?.user?.id as string | undefined;
 
-  const myList: articleClassement[] = userId
+  const myList: articleClassementUserDataExtended[] = userId
     ? await fetchMyList(userId)
     : [];
 

@@ -40,6 +40,14 @@ export interface articleClassement {
     scoreCategorise: Number | null;
   }
 
+export interface articleClassementUserDataExtended extends articleClassement {
+  liked?: boolean | null;
+  rating?: number | null;
+  rank?: number | null;
+  onList?: boolean | null;
+  categoryId?: string | null;
+}
+
   export interface CreateCategoryResponse {
     success: boolean;
     message: string;
