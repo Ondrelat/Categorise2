@@ -16,7 +16,7 @@ export default async function ForumPage({
 }) {
   const resolvedParams = await params;
   const name = decodeURIComponent(resolvedParams.name);
-  const { getArticlesByTypeAndCategory } = await import('@/app/lib/articles');
+  const { getArticlesByTypeAndCategory } = await import('@/lib/articles');
   
   const discussions = await getArticlesByTypeAndCategory(name, 'forum');
 

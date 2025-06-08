@@ -2,7 +2,7 @@
 import React from "react";
 import { getServerSession } from "next-auth";
 import { User } from '@/src/auth/User';
-import { authConfig } from '@/pages/api/auth/[...nextauth]';
+import { authConfig } from '@/app/api/auth/[...nextauth]/route';
 import { LoginButton } from "@/src/auth/LoginButton";
 import { LogoutButton } from "@/src/auth/LogoutButton";
 import Link from 'next/link';

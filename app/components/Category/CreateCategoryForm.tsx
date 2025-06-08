@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CategoryTreeItem } from '../../types';
-import { createCategory } from '../../lib/categories';
+import { createCategory } from '../../../lib/categories';
 
 interface CreateCategoryFormProps {
   isOndrelat: boolean;

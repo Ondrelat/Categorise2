@@ -1,7 +1,7 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import ArticleCreationForm from '@/app/components/ArticleCreationForm';
-import { getCategoryByName } from '@/app/lib/categories';
+import { getCategoryByName } from '@/lib/categories';
 
 export default async function CreateArticlePage(  {
     params

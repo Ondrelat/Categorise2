@@ -2,9 +2,9 @@
 import ClientOfficialClassement from './ClientOfficialClassement';
 import { articleClassementInMyList } from '@/app/types';
 import { getServerSession } from 'next-auth';
-import { authConfig } from '@/pages/api/auth/[...nextauth]';
-import { getclassementsSortedByRating } from '@/app/lib/articles';
-import { fetchMyList } from '@/app/lib/myList';
+import { authConfig } from '@/app/api/auth/[...nextauth]/route';
+import { getclassementsSortedByRating } from '@/lib/articles';
+import { fetchMyList } from '@/lib/myList';
 import {
   handleLike,
   handleRateSlider,

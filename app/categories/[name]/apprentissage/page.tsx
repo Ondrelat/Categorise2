@@ -1,7 +1,7 @@
 // app/categories/[name]/apprentissage/page.tsx
 import React from 'react';
 
-import { getArticlesByTypeAndCategory } from '@/app/lib/articles';
+import { getArticlesByTypeAndCategory } from '@/lib/articles';
 import Link from 'next/link';
 
 

@@ -69,7 +69,7 @@ export const authConfig = {
   callbacks: {
     async jwt({ token, user, account }) {
       if (user) {
-        token.id = user.id; // 👈 Ajout de l'ID de l'utilisateur
+        token.id = user.id;
       }
       if (account) {
         token.accessToken = account.access_token;
@@ -81,14 +81,16 @@ export const authConfig = {
         ...session,
         user: {
           ...session.user,
-          id: token.id, // 👈 Injection de l'ID dans session.user
+          id: token.id,
         },
         accessToken: token.accessToken,
       };
     }
   },
   adapter: PrismaAdapter(prisma),
-  secret: process.env.SECRET,
+  secret: process.env.NEXTAUTH_SECRET,
 } satisfies NextAuthOptions;
 
-export default NextAuth(authConfig);
+const handler = NextAuth(authConfig);
+
+export { handler as GET, handler as POST };

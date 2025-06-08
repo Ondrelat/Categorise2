@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { deleteCategory } from '../../lib/categories';
+import { deleteCategory } from '../../../lib/categories';
 
 interface DeleteCategoryDialogProps {
   isOpen: boolean;

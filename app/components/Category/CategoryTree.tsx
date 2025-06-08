@@ -1,5 +1,5 @@
 import React from 'react';
-import { getCategories } from '../../lib/categories';
+import { getCategories } from '../../../lib/categories';
 import CategoryActions from './CategoryActions';
 import { cache } from 'react';
 

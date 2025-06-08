@@ -1,7 +1,7 @@
 'use client';
 
 import { useFormState, useFormStatus } from 'react-dom';
-import { createArticle, type ActionState } from '@/app/lib/actions';
+import { createArticle, type ActionState } from '@/lib/actions';
 import { useRouter } from 'next/navigation';
 
 const initialState: ActionState = {

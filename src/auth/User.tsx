@@ -1,4 +1,4 @@
-import { authConfig } from "@/pages/api/auth/[...nextauth]";
+import { authConfig } from "@/app/api/auth/[...nextauth]/route";
 import { Session, getServerSession } from "next-auth";
 import { LogoutButton } from "@/src/auth/LogoutButton";
 import '@/app/globals.css';

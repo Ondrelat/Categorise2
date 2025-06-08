@@ -1,9 +1,10 @@
 'use server';
 
-import { likeArticle, NoteArticle } from '@/app/lib/articles';
-import { ReOrderMyList, AddOrRemoveToMyList } from '@/app/lib/myList';
+import { likeArticle, NoteArticle } from '@/lib/articles';
+import { ReOrderMyList, AddOrRemoveToMyList } from '@/lib/myList';
 import { getServerSession } from 'next-auth';
-import { authConfig } from '@/pages/api/auth/[...nextauth]';
+import { authConfig } from '@/app/api/auth/[...nextauth]/route';
+import { revalidatePath } from 'next/cache';
 
 export async function handleLike(articleId: string, liked: boolean, categoryName: string) {
   const session = await getServerSession(authConfig);
@@ -11,6 +12,9 @@ export async function handleLike(articleId: string, liked: boolean, categoryName
   if (!userId) return { success: false };
 
   const result = await likeArticle(articleId, liked, userId);
+  
+  // Ne pas revalider la page entière pour un simple like
+  // revalidatePath(`/classement/${categoryName}`, 'page');
   
   return result;
 }
@@ -20,18 +24,29 @@ export async function handleRateSlider(articleId: string, rating: number, catego
   const userId = session?.user?.id as string | undefined;
   if (!userId) return { success: false };
 
-  return await NoteArticle(articleId, rating, userId);
+  const result = await NoteArticle(articleId, rating, userId);
+  
+  // Ne revalider que si nécessaire (ex: si ça affecte le classement)
+  // revalidatePath(`/classement/${categoryName}`, 'page');
+  
+  return result;
 }
 
+// Gardez la revalidation seulement pour les actions qui affectent la liste
 export async function handleReorderMyList(ArticleIds: string[], categoryName: string)  {
   const session = await getServerSession(authConfig);
   const userId = session?.user?.id as string | undefined;
   if (!userId) return { success: false };
 
-  // transformer string[] en {id: string}[]
   const articleIds = ArticleIds.map(id => ({ id }));
-
-  return await ReOrderMyList(articleIds, userId, categoryName);
+  const result = await ReOrderMyList(articleIds, userId, categoryName);
+  
+  // Revalider seulement pour les changements de liste
+  if (result.success) {
+    revalidatePath(`/classement/${categoryName}`, 'page');
+  }
+  
+  return result;
 }
 
 export async function handleRemoveFromMyList(articleId: string, categoryName: string)  {
@@ -39,7 +54,13 @@ export async function handleRemoveFromMyList(articleId: string, categoryName: st
   const userId = session?.user?.id as string | undefined;
   if (!userId) return { success: false };
 
-  return await AddOrRemoveToMyList(articleId, false, userId, categoryName);
+  const result = await AddOrRemoveToMyList(articleId, false, userId, categoryName);
+  
+  if (result.success) {
+    revalidatePath(`/classement/${categoryName}`, 'page');
+  }
+  
+  return result;
 }
 
 export async function handleAddToMyList(articleId: string, categoryName: string) {
@@ -47,6 +68,11 @@ export async function handleAddToMyList(articleId: string, categoryName: string)
   const userId = session?.user?.id as string | undefined;
   if (!userId) return { success: false };
 
-  // Par exemple, si ReOrderClassement attend un tableau, adapte ici.
-  return await AddOrRemoveToMyList(articleId, true, userId, categoryName);
+  const result = await AddOrRemoveToMyList(articleId, true, userId, categoryName);
+  
+  if (result.success) {
+    revalidatePath(`/classement/${categoryName}`, 'page');
+  }
+  
+  return result;
 }

@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from './prisma';
-import { CategoryTreeItem } from '../types';
+import { CategoryTreeItem } from '../app/types';
 import { revalidatePath } from 'next/cache';
 import { cache } from 'react';
 
