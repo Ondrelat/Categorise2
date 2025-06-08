@@ -6,6 +6,9 @@ import { Star, Heart, Plus, ChevronDown, ChevronUp, Eye, List } from 'lucide-rea
 import { articleClassement } from '../../types';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import { apiClient, useApiCall } from '@/lib/api-client';
+import { getServerSession } from 'next-auth';
+import { authConfig } from '@/app/api/auth/[...nextauth]/route';
 
 interface articleClassementCardProps {
   articleOfficialClassement: articleClassement;
@@ -28,21 +31,20 @@ export default function ArticleClassementCard({
   isInMyList = false,
 }: articleClassementCardProps) {
   // États locaux synchronisés avec les props
-  const [localLiked, setLocalLiked] = useState(articleOfficialClassement.liked ?? false);
+  const [liked, setLiked] = useState(articleOfficialClassement.liked);
   const [localRating, setLocalRating] = useState(articleOfficialClassement.rating ?? 50);
   const [sliderRating, setSliderRating] = useState(articleOfficialClassement.rating ?? 50);
   const [showRatingTool, setShowRatingTool] = useState(false);
   const [confirmedRating, setConfirmedRating] = useState<number | null>(
     articleOfficialClassement.rating ? articleOfficialClassement.rating / 10 : null
   );
+    const { handleApiCall } = useApiCall();
 
   // États pour gérer les états de chargement
-  const [isLikeLoading, setIsLikeLoading] = useState(false);
   const [isRatingLoading, setIsRatingLoading] = useState(false);
 
   // Synchroniser l'état local avec les props quand elles changent
   useEffect(() => {
-    setLocalLiked(articleOfficialClassement.liked ?? false);
     setLocalRating(articleOfficialClassement.rating ?? 50);
     setSliderRating(articleOfficialClassement.rating ?? 50);
     setConfirmedRating(articleOfficialClassement.rating ? articleOfficialClassement.rating / 10 : null);
@@ -57,33 +59,15 @@ export default function ArticleClassementCard({
     return 'Excellent'; // 9.0-10.0
   }
 
-  const handleLike = async (e: React.MouseEvent) => {
-    // Empêcher la propagation d'événements qui pourraient causer un rechargement
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (isLikeLoading) return;
-    
-    const newLikedState = !localLiked;
-    
-    // Mise à jour immédiate de l'UI (optimiste)
-    setLocalLiked(newLikedState);
-    setIsLikeLoading(true);
-    
-    try {
-      if (onLike) {
-        await onLike(articleOfficialClassement.id, newLikedState);
-        console.log('Like mis à jour avec succès');
-      }
-    } catch (error) {
-      // En cas d'erreur, on revert l'état local
-      console.error('Erreur lors de la mise à jour du like:', error);
-      setLocalLiked(!newLikedState);
-    } finally {
-      setIsLikeLoading(false);
-    }
-  };
 
+  const handleLike = async () => {
+    try {
+      await handleApiCall(() => apiClient.likeArticle(articleOfficialClassement.id, !liked));
+      setLiked(!liked);
+    } catch (error) {
+      // Gérer l'erreur (afficher un toast, etc.)
+    } 
+  };
   const handleSliderChange = (value: number) => {
     setSliderRating(value);
   };
@@ -212,23 +196,17 @@ export default function ArticleClassementCard({
                 <div className="flex flex-col items-end gap-3">
                   {/* Boutons d'action : Like */}
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={handleLike}
-                      disabled={isLikeLoading}
-                      className={`p-2 rounded-full transition relative ${
-                        localLiked
-                          ? 'bg-red-500 text-white'
-                          : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                      } ${isLikeLoading ? 'opacity-70' : ''}`}
-                    >
-                      <Heart className={`w-5 h-5 ${localLiked ? 'fill-current' : ''}`} />
-                      {isLikeLoading && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
-                        </div>
-                      )}
-                    </button>
+<button
+  type="button"
+  onClick={handleLike}
+  className={`p-2 rounded-full transition ${
+    liked
+      ? 'bg-red-500 text-white'
+      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+  }`}
+>
+  <Heart className={`w-5 h-5 ${liked ? 'fill-current' : ''}`} />
+</button>
                   </div>
 
                   {/* Bouton pour afficher/cacher la notation personnelle */}
