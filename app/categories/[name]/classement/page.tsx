@@ -1,6 +1,6 @@
 // app/classement/[name]/page.tsx
 import ClientOfficialClassement from './ClientOfficialClassement';
-import { articleClassementUserDataExtended } from '@/app/types';
+import { articleClassementInMyList } from '@/app/types';
 import { getServerSession } from 'next-auth';
 import { authConfig } from '@/pages/api/auth/[...nextauth]';
 import { getclassementsSortedByRating } from '@/app/lib/articles';
@@ -22,11 +22,14 @@ export default async function ClassementPage({
   const categoryName = decodeURIComponent(resolvedParams.name || 'Action');
 
   const ratingSource = 'categorise';
-  const officialClassement = await getclassementsSortedByRating(categoryName, ratingSource);
-  const session = await getServerSession(authConfig);
+
+    const session = await getServerSession(authConfig);
   const userId = session?.user?.id as string | undefined;
 
-  const myList: articleClassementUserDataExtended[] = userId
+  const officialClassement = await getclassementsSortedByRating(categoryName, ratingSource, userId);
+
+
+  const myList: articleClassementInMyList[] = userId
     ? await fetchMyList(userId, categoryName)
     : [];
 

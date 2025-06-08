@@ -1,8 +1,11 @@
+
+
+
 // app/classements/components/classementCard.tsx
 import { Star, Heart, Plus, ChevronDown, ChevronUp, Eye, List } from 'lucide-react';
 import { articleClassement } from '../../types';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface articleClassementCardProps {
   articleOfficialClassement: articleClassement;
@@ -24,10 +27,26 @@ export default function ArticleClassementCard({
   onShowMyList,
   isInMyList = false,
 }: articleClassementCardProps) {
-  const [isLiked, setIsLiked] = useState(false);
-  const [sliderRating, setSliderRating] = useState(50); // Internal 0-100 scale
+  // États locaux synchronisés avec les props
+  const [localLiked, setLocalLiked] = useState(articleOfficialClassement.liked ?? false);
+  const [localRating, setLocalRating] = useState(articleOfficialClassement.rating ?? 50);
+  const [sliderRating, setSliderRating] = useState(articleOfficialClassement.rating ?? 50);
   const [showRatingTool, setShowRatingTool] = useState(false);
-  const [confirmedRating, setConfirmedRating] = useState<number | null>(null);
+  const [confirmedRating, setConfirmedRating] = useState<number | null>(
+    articleOfficialClassement.rating ? articleOfficialClassement.rating / 10 : null
+  );
+
+  // États pour gérer les états de chargement
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
+  const [isRatingLoading, setIsRatingLoading] = useState(false);
+
+  // Synchroniser l'état local avec les props quand elles changent
+  useEffect(() => {
+    setLocalLiked(articleOfficialClassement.liked ?? false);
+    setLocalRating(articleOfficialClassement.rating ?? 50);
+    setSliderRating(articleOfficialClassement.rating ?? 50);
+    setConfirmedRating(articleOfficialClassement.rating ? articleOfficialClassement.rating / 10 : null);
+  }, [articleOfficialClassement.liked, articleOfficialClassement.rating]);
 
   function getRatingLabel(score: number): string {
     if (score < 20) return 'Mauvais'; // 0.0-1.9
@@ -38,29 +57,85 @@ export default function ArticleClassementCard({
     return 'Excellent'; // 9.0-10.0
   }
 
-  const handleLike = () => {
-    const newLikedState = !isLiked;
-    setIsLiked(newLikedState);
-    onLike?.(articleOfficialClassement.id, newLikedState);
+  const handleLike = async (e: React.MouseEvent) => {
+    // Empêcher la propagation d'événements qui pourraient causer un rechargement
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isLikeLoading) return;
+    
+    const newLikedState = !localLiked;
+    
+    // Mise à jour immédiate de l'UI (optimiste)
+    setLocalLiked(newLikedState);
+    setIsLikeLoading(true);
+    
+    try {
+      if (onLike) {
+        await onLike(articleOfficialClassement.id, newLikedState);
+        console.log('Like mis à jour avec succès');
+      }
+    } catch (error) {
+      // En cas d'erreur, on revert l'état local
+      console.error('Erreur lors de la mise à jour du like:', error);
+      setLocalLiked(!newLikedState);
+    } finally {
+      setIsLikeLoading(false);
+    }
   };
 
   const handleSliderChange = (value: number) => {
     setSliderRating(value);
   };
 
-  const handleConfirmRating = () => {
+  const handleConfirmRating = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isRatingLoading) return;
+    
     const finalRating = parseFloat((sliderRating / 10).toFixed(1));
+    const finalRatingFor100Scale = sliderRating;
+    
+    // Mise à jour immédiate de l'UI (optimiste)
     setConfirmedRating(finalRating);
-    onRateSlider?.(articleOfficialClassement.id, finalRating);
+    setLocalRating(finalRatingFor100Scale);
     setShowRatingTool(false);
+    setIsRatingLoading(true);
+    
+    try {
+      if (onRateSlider) {
+        await onRateSlider(articleOfficialClassement.id, finalRating);
+        console.log('Note mise à jour avec succès');
+      }
+    } catch (error) {
+      // En cas d'erreur, on revert l'état local
+      console.error('Erreur lors de la mise à jour de la note:', error);
+      const previousRating = articleOfficialClassement.rating ?? 50;
+      setLocalRating(previousRating);
+      setSliderRating(previousRating);
+      setConfirmedRating(previousRating ? previousRating / 10 : null);
+      setShowRatingTool(true);
+    } finally {
+      setIsRatingLoading(false);
+    }
   };
 
-  const handleRankingAction = () => {
+  const handleRankingAction = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (isInMyList && onShowMyList) {
       onShowMyList();
     } else if (onAddToMyList) {
-      onAddToMyList?.(articleOfficialClassement);
+      onAddToMyList(articleOfficialClassement);
     }
+  };
+
+  const handleToggleRatingTool = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowRatingTool(!showRatingTool);
   };
 
   // Calculate the display rating (0.0-10.0)
@@ -135,26 +210,35 @@ export default function ArticleClassementCard({
 
                 {/* Actions à droite */}
                 <div className="flex flex-col items-end gap-3">
-                  {/* Boutons d'action : Like et Vu */}
+                  {/* Boutons d'action : Like */}
                   <div className="flex gap-2">
-                    {/* Bouton Like simplifié */}
                     <button
+                      type="button"
                       onClick={handleLike}
-                      className={`p-2 rounded-full transition ${
-                        isLiked
+                      disabled={isLikeLoading}
+                      className={`p-2 rounded-full transition relative ${
+                        localLiked
                           ? 'bg-red-500 text-white'
                           : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                      }`}
+                      } ${isLikeLoading ? 'opacity-70' : ''}`}
                     >
-                      <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+                      <Heart className={`w-5 h-5 ${localLiked ? 'fill-current' : ''}`} />
+                      {isLikeLoading && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      )}
                     </button>
-
                   </div>
 
                   {/* Bouton pour afficher/cacher la notation personnelle */}
                   <button
-                    onClick={() => setShowRatingTool(!showRatingTool)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-100 hover:bg-indigo-200 text-indigo-700 transition-all duration-300 ease-in-out group"
+                    type="button"
+                    onClick={handleToggleRatingTool}
+                    disabled={isRatingLoading}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-100 hover:bg-indigo-200 text-indigo-700 transition-all duration-300 ease-in-out group ${
+                      isRatingLoading ? 'opacity-70' : ''
+                    }`}
                   >
                     <Star className="w-4 h-4 text-indigo-500" />
                     Ma note
@@ -167,6 +251,9 @@ export default function ArticleClassementCard({
                       <ChevronUp className="w-4 h-4 ml-1 group-hover:translate-y-0.5 transition-transform" />
                     ) : (
                       <ChevronDown className="w-4 h-4 ml-1 group-hover:-translate-y-0.5 transition-transform" />
+                    )}
+                    {isRatingLoading && (
+                      <div className="w-3 h-3 border border-indigo-500 border-t-transparent rounded-full animate-spin ml-2"></div>
                     )}
                   </button>
 
@@ -193,6 +280,7 @@ export default function ArticleClassementCard({
                           value={sliderRating}
                           onChange={(e) => handleSliderChange(Number(e.target.value))}
                           className="absolute top-0 w-48 h-2 appearance-none bg-transparent cursor-pointer custom-slider-thumb"
+                          disabled={isRatingLoading}
                         />
                       </div>
 
@@ -203,16 +291,21 @@ export default function ArticleClassementCard({
                       </div>
 
                       <button
+                        type="button"
                         onClick={handleConfirmRating}
-                        className="mt-4 px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-base font-bold shadow-md"
+                        disabled={isRatingLoading}
+                        className={`mt-4 px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-base font-bold shadow-md ${
+                          isRatingLoading ? 'opacity-70 cursor-not-allowed' : ''
+                        }`}
                       >
-                        Valider la note
+                        {isRatingLoading ? 'Validation...' : 'Valider la note'}
                       </button>
                     </div>
                   )}
 
                   {/* Bouton Ajout/Voir classement */}
                   <button
+                    type="button"
                     onClick={handleRankingAction}
                     className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm transition ${
                       isInMyList
@@ -273,6 +366,11 @@ export default function ArticleClassementCard({
         .custom-slider-thumb::-moz-range-track {
           background: transparent; /* La piste sera gérée par le div sous-jacent */
           border-radius: 5px;
+        }
+
+        .custom-slider-thumb:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
       `}</style>
     </>

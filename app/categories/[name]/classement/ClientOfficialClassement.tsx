@@ -1,9 +1,9 @@
 // app/classements/classementsClientPage.tsx
 'use client';
 
-import { useEffect, useState, useTransition } from 'react'; // useTransition pour les Server Actions
+import { useEffect, useState, useTransition } from 'react';
 import ArticleClassementCard from '@/app/components/Ranking/articleClassementCard';
-import { articleClassement, articleClassementUserDataExtended } from '@/app/types';
+import { articleClassement, articleClassementInMyList } from '@/app/types';
 import Modal from '@/app/components/MyList/Modal';
 import MyListModalContent from '@/app/components/MyList/MyListModalContent';
 
@@ -12,7 +12,7 @@ interface ClassementClientPageProps {
   categoryName: string;
   initialRatingSource: 'imdb' | 'categorise';
   isAuthenticated: boolean;
-  MyList: articleClassementUserDataExtended[];
+  MyList: articleClassementInMyList[];
   // Props pour les Server Actions
   onLike: (articleId: string, liked: boolean, categoryName: string) => Promise<{ success: boolean }>;
   onRateSlider: (articleId: string, rating: number, categoryName: string) => Promise<{ success: boolean }>;
@@ -21,7 +21,7 @@ interface ClassementClientPageProps {
   onReorderMyList: (articleId: string[], categoryName: string) => Promise<{ success: boolean }>;
 }
 
-export default function ClientOfficialClassement ({
+export default function ClientOfficialClassement({
   OfficialClassement,
   categoryName,
   initialRatingSource,
@@ -30,117 +30,147 @@ export default function ClientOfficialClassement ({
   // Récupération des Server Actions
   onLike,
   onRateSlider,
-  onAddToMyList
-,
+  onAddToMyList,
   onRemoveFromMyList,
   onReorderMyList,
 }: ClassementClientPageProps) {
-  const [loading, setLoading] = useState(false); // Le chargement initial est fait par le serveur
-
+  const [loading, setLoading] = useState(false);
   const [ratingSource, setRatingSource] = useState<'imdb' | 'categorise'>(initialRatingSource);
-
   const [officialClassement, setOfficialClassements] = useState<articleClassement[]>(OfficialClassement);
   const [myList, setMyList] = useState<articleClassement[]>(MyList);
   const [showmyList, setShowMyList] = useState(false);
+  const [isAuthenticated] = useState<boolean>(initialIsAuthenticated);
   
-  const [isAuthenticated] = useState<boolean>(initialIsAuthenticated); // L'authentification est gérée côté serveur
-
   // useTransition pour gérer les états de chargement des Server Actions
   const [isPending, startTransition] = useTransition();
 
   // Liste des catégories qui doivent utiliser FilmPage                   
   const categoriesToUseFilmPage = ["Film", "Série", "Vidéo", "Short", "Anime", "Jeu vidéo", "Épisode", "Mini Série"];
 
-  // Si la source de officialClassementchange, nous avons besoin de recharger les classements.
-  // Dans un cas réel, cela impliquerait soit un rafraîchissement côté serveur avec les searchParams,
-  // soit un appel client à une Server Action dédiée à la recherche.
-  // Pour l'exemple, nous allons simuler un rechargement simple en réutilisant la logique.
-  // Idéalement, vous feriez un `router.replace` pour changer le `searchParam` `sort`
-  // et laisser Next.js recharger la page côté serveur avec les nouvelles données.
   useEffect(() => {
     if (ratingSource !== initialRatingSource) {
-      // Simuler une "recherche" via URL pour déclencher un rechargement serveur
-      // C'est la meilleure façon de "refetch" les données quand la source change
-      // Pour une vraie application, vous utiliseriez `next/navigation` pour cela.
-      // Par exemple:
-      // import { useRouter } from 'next/navigation';
-      // const router = useRouter();
-      // router.replace(`?category=${categoryName}&sort=${ratingSource}`);
-
-      // Puisque nous ne pouvons pas appeler `router` ici directement et que l'on veut éviter le fetch client,
-      // on simule juste le fait que la source change (mais les classements ne se mettront pas à jour sans rechargement serveur)
       console.log(`[Client] Rating source changed to: ${ratingSource}. Page reload might be needed.`);
-      // En production, vous voudriez naviguer vers la nouvelle URL pour que le composant serveur se recharge.
-      // // window.location.href = `?category=${categoryName}&sort=${ratingSource}`; // Cela rechargerait la page entière.
     }
   }, [ratingSource, categoryName, initialRatingSource]);
-
 
   // --- Gestionnaires d'événements appelant les Server Actions ---
 
   const handleRateSliderChange = async (articleId: string, rating: number) => {
+    // Mise à jour optimiste de l'état local
+    setOfficialClassements(prev => 
+      prev.map(article => 
+        article.id === articleId 
+          ? { ...article, rating: rating * 10 } // Convertir de 0-10 à 0-100
+          : article
+      )
+    );
+
     startTransition(async () => {
-      await onRateSlider(articleId, rating, categoryName);
+      const result = await onRateSlider(articleId, rating, categoryName);
+      if (!result.success) {
+        // Revert en cas d'échec
+        setOfficialClassements(prev => 
+          prev.map(article => 
+            article.id === articleId 
+              ? { ...article, rating: OfficialClassement.find(a => a.id === articleId)?.rating ?? 50 }
+              : article
+          )
+        );
+        console.error("Échec de la mise à jour de la note côté serveur.");
+      }
     });
   };
 
   const handleLikeClick = async (articleId: string, liked: boolean) => {
+    // Mise à jour optimiste de l'état local AVANT l'appel serveur
+    setOfficialClassements(prev => 
+      prev.map(article => 
+        article.id === articleId 
+          ? { ...article, liked }
+          : article
+      )
+    );
+
     startTransition(async () => {
-      await onLike(articleId, liked, categoryName);
-      // Optionnel : Mettre à jour l'état local si l'action serveur a un impact immédiat sur l'UI
-      // (ex: un compteur de likes sur le classement, un changement de couleur du bouton)
+      const result = await onLike(articleId, liked, categoryName);
+      if (!result.success) {
+        // Revert en cas d'échec
+        setOfficialClassements(prev => 
+          prev.map(article => 
+            article.id === articleId 
+              ? { ...article, liked: !liked } // Revert à l'état précédent
+              : article
+          )
+        );
+        console.error("Échec de la mise à jour du like côté serveur.");
+      }
     });
   };
 
+  const handleAddToMyList = async (articleClassement: articleClassement) => {
+    if (isAuthenticated) {
+      // Mise à jour optimiste
+      setMyList(prev => {
+        if (!prev.find(f => f.id === articleClassement.id)) {
+          return [...prev, articleClassement];
+        }
+        return prev;
+      });
 
-const handleAddToMyList = async (articleClassement: articleClassement) => {
-  if (isAuthenticated) {
-    startTransition(async () => {
-      const result = await onAddToMyList(articleClassement.id, categoryName);
-      if (result.success) {
-        // Mettre à jour l'état local après succès de l'action serveur
-        setMyList(prev => {
-            if (!prev.find(f => f.id === articleClassement.id)) {
-              return [...prev, articleClassement];
-            }
-            return prev;
-          });
+      startTransition(async () => {
+        const result = await onAddToMyList(articleClassement.id, categoryName);
+        if (!result.success) {
+          // Revert en cas d'échec
+          setMyList(prev => prev.filter(f => f.id !== articleClassement.id));
+          console.error("Échec de l'ajout à la liste côté serveur.");
         }
       });
     } else {
       // Si l'utilisateur n'est pas connecté, ajoutez à la liste temporaire locale
       if (!myList.find(f => f.id === articleClassement.id)) {
         setMyList(prev => [...prev, articleClassement]);
-        console.log(`classement ${articleClassement.id} ajouté au classement temporaire local.`);
+        console.log(`Classement ${articleClassement.id} ajouté au classement temporaire local.`);
       }
     }
   };
 
-
   const handleRemoveFromMyList = async (articleId: string) => {
     if (isAuthenticated) {
+      // Sauvegarde pour revert si nécessaire
+      const previousMyList = [...myList];
+      
+      // Mise à jour optimiste
+      setMyList(prev => prev.filter(f => f.id !== articleId));
+
       startTransition(async () => {
         const result = await onRemoveFromMyList(articleId, categoryName);
-        if (result.success) {
-          // Mettre à jour l'état local après succès de l'action serveur
-          setMyList(prev => prev.filter(f => f.id !== articleId));
+        if (!result.success) {
+          // Revert en cas d'échec
+          setMyList(previousMyList);
+          console.error("Échec de la suppression de la liste côté serveur.");
         }
       });
     } else {
       setMyList(prev => prev.filter(f => f.id !== articleId));
-      console.log(`officialClassement${articleId} retiré du officialClassementtemporaire.`);
+      console.log(`Article ${articleId} retiré du classement temporaire.`);
     }
   };
 
   const handleReorderMyList = async (newmyList: articleClassement[]) => {
-    setMyList(newmyList); // Mise à jour optimiste de l'UI
+    // Sauvegarde pour revert si nécessaire
+    const previousMyList = [...myList];
+    
+    // Mise à jour optimiste de l'UI
+    setMyList(newmyList);
+    
     if (isAuthenticated) {
       startTransition(async () => {
-        const classementids = newmyList.map(articleId=> articleId.id);
+        const classementids = newmyList.map(article => article.id);
         const result = await onReorderMyList(classementids, categoryName);
         if (!result.success) {
-          // Gérer l'échec : potentiellement revenir à l'ancien état si l'opération a échoué
-          console.error("Échec de la mise à jour du officialClassementcôté serveur.");
+          // Revert en cas d'échec
+          setMyList(previousMyList);
+          console.error("Échec de la mise à jour du classement côté serveur.");
         }
       });
     }
@@ -187,14 +217,14 @@ const handleAddToMyList = async (articleClassement: articleClassement) => {
             <button
               onClick={handleShowMyList}
               className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-              disabled={isPending} // Désactiver le bouton pendant que les actions serveur s'exécutent
+              disabled={isPending}
             >
-              Voir mon officialClassement({myList.length})
+              Voir mon classement ({myList.length})
             </button>
           )}
         </div>
 
-        {loading || isPending ? ( // Afficher "Chargement..." aussi si une Server Action est en cours
+        {loading || isPending ? (
           <p className="text-center">Chargement...</p>
         ) : (
           <div className="flex flex-col items-center gap-6">
@@ -217,7 +247,7 @@ const handleAddToMyList = async (articleClassement: articleClassement) => {
       <Modal
         isOpen={showmyList}
         onClose={handleCloseMyListModal}
-        title="Mon officialClassementPersonnel"
+        title="Mon classement Personnel"
       >
         <MyListModalContent
           myList={myList}

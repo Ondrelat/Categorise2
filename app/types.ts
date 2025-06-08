@@ -38,11 +38,11 @@ export interface articleClassement {
     createdAt: Date;
     rankCategorise: Number | null;
     scoreCategorise: Number | null;
+    liked?: boolean | null;
+    rating?: number | null;
   }
 
-export interface articleClassementUserDataExtended extends articleClassement {
-  liked?: boolean | null;
-  rating?: number | null;
+export interface articleClassementInMyList extends articleClassement {
   rank?: number | null;
   rankTierList?: string | null;
   onList?: boolean | null;

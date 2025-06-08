@@ -10,7 +10,9 @@ export async function handleLike(articleId: string, liked: boolean, categoryName
   const userId = session?.user?.id as string | undefined;
   if (!userId) return { success: false };
 
-  return await likeArticle(articleId, liked, userId);
+  const result = await likeArticle(articleId, liked, userId);
+  
+  return result;
 }
 
 export async function handleRateSlider(articleId: string, rating: number, categoryName: string)  {
@@ -38,7 +40,6 @@ export async function handleRemoveFromMyList(articleId: string, categoryName: st
   if (!userId) return { success: false };
 
   return await AddOrRemoveToMyList(articleId, false, userId, categoryName);
-  return { success: true };
 }
 
 export async function handleAddToMyList(articleId: string, categoryName: string) {

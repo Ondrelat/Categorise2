@@ -1,13 +1,13 @@
 // components/myListModalContent.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { articleClassementUserDataExtended } from '@/app/types';
+import { articleClassementInMyList } from '@/app/types';
 
 interface MyListModalContentProps {
-  myList: articleClassementUserDataExtended[];
+  myList: articleClassementInMyList[];
   onRemoveFromMyList: (classementid: string) => void;
-  onReorderMyList: (newmyList: articleClassementUserDataExtended[]) => void;
-  onSaveMyList: (myList: articleClassementUserDataExtended[]) => void;
+  onReorderMyList: (newmyList: articleClassementInMyList[]) => void;
+  onSaveMyList: (myList: articleClassementInMyList[]) => void;
   onClose?: () => void;
 }
 
@@ -18,13 +18,13 @@ export default function MyListModalContent({
   onSaveMyList,
   onClose,
 }: MyListModalContentProps) {
-  const [draggedItem, setDraggedItem] = useState<articleClassementUserDataExtended | null>(null);
+  const [draggedItem, setDraggedItem] = useState<articleClassementInMyList | null>(null);
   const [draggedFromUnranked, setDraggedFromUnranked] = useState<boolean>(false);
   const [maxRank, setMaxRank] = useState<number>(3);
   const [isTierListMode, setIsTierListMode] = useState<boolean>(false); // Changé : ranking par défaut
   const isModifiedRef = useRef(false);
   const saveTimeout = useRef<NodeJS.Timeout | null>(null);
-  const latestmyListRef = useRef<articleClassementUserDataExtended[]>(myList);
+  const latestmyListRef = useRef<articleClassementInMyList[]>(myList);
 
   // Configuration des tiers
   const tierConfig = [
@@ -70,7 +70,7 @@ export default function MyListModalContent({
     }
   }, [myList, rankedArticles, isTierListMode]);
 
-  const handleReorder = (updatedList: articleClassementUserDataExtended[]) => {
+  const handleReorder = (updatedList: articleClassementInMyList[]) => {
     isModifiedRef.current = true;
     onReorderMyList(updatedList);
     latestmyListRef.current = updatedList;
@@ -104,7 +104,7 @@ export default function MyListModalContent({
     };
   }, []);
 
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, article: articleClassementUserDataExtended, fromUnranked: boolean = false) => {
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, article: articleClassementInMyList, fromUnranked: boolean = false) => {
     setDraggedItem(article);
     setDraggedFromUnranked(fromUnranked);
     e.dataTransfer.effectAllowed = 'move';

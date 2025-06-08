@@ -60,51 +60,64 @@ export async function getArticleClassementById(id: string) {
   } 
 }
 
-export async function getclassementsSortedByRating(categoryTitle: string, ratingSource: string) {
+
+
+export async function getclassementsSortedByRating(
+  categoryTitle: string, 
+  ratingSource: string,
+  userId?: string
+) {
   const startTime = performance.now();
   const categoryTitleDecode = decodeURIComponent(categoryTitle);
 
-  let limit = 50;
-  let delimiter = (categoryTitleDecode === "Film" || categoryTitleDecode === "Série") ? 20000 : 10000;
-
-  const orderField = ratingSource === 'IMDB' ? 'averageRatingIMDB' : 'averageRatingIMDB'; // Ajoute d'autres sources ici si besoin
+  const limit = 50;
+  const delimiter = (categoryTitleDecode === "Film" || categoryTitleDecode === "Série") ? 20000 : 10000;
+  
+  // Pour l'instant seul IMDB est supporté, mais structure extensible
+  const orderField = ratingSource === 'IMDB' ? 'averageRatingIMDB' : 'averageRatingIMDB';
 
   try {
-    const rawFilms = await prisma.articleClassement.findMany({
-      where: {
-        [orderField]: { not: null },
-        numVotesIMDB: {
-          not: null,
-          gt: delimiter,
-        },
-        categories: {
-          some: {
-            category: {
-              name: categoryTitleDecode,
-            },
-          },
-        },
-      },
-      orderBy: {
-        [orderField]: 'desc',
-      },
-      take: limit,
-      select: {
-        id: true,
-        tconst: true,
-        [orderField]: true,
-        numVotesIMDB: true,
-        titre_fr: true,
-        titre_en: true,
-        image_url: true,
-        createdAt: true,
-      },
-    });
+    const query = `
+      SELECT 
+        ac.id,
+        ac.tconst,
+        ac."averageRatingIMDB",
+        ac."numVotesIMDB",
+        ac.titre_fr,
+        ac.titre_en,
+        ac.image_url,
+        ac."createdAt"${userId ? ',\n        acud.liked as "userLiked",\n        acud.rating as "userRating"' : ',\n        NULL as "userLiked",\n        NULL as "userRating"'}
+      FROM "article_classement" ac
+      INNER JOIN "ArticleClassementCategory" acc ON ac.id = acc."articleId"
+      INNER JOIN "Categories" c ON acc."categoryId" = c.id${userId ? '\n      LEFT JOIN "ArticleClassementUserData" acud ON ac.id = acud."articleId" AND acud."userId" = $4' : ''}
+      WHERE 
+        ac."${orderField}" IS NOT NULL
+        AND ac."numVotesIMDB" IS NOT NULL
+        AND ac."numVotesIMDB" > $1
+        AND c.name = $2
+      ORDER BY ac."${orderField}" DESC
+      LIMIT $3
+    `;
 
-    const films = rawFilms.map(film => ({
-      ...film,
+    const params = userId 
+      ? [delimiter, categoryTitleDecode, limit, userId]
+      : [delimiter, categoryTitleDecode, limit];
+
+    const rawResults = await prisma.$queryRawUnsafe(query, ...params) as any[];
+
+    const films = rawResults.map(film => ({
+      id: film.id,
+      tconst: film.tconst,
+      averageRatingIMDB: film.averageRatingIMDB,
+      numVotesIMDB: film.numVotesIMDB,
+      titre_fr: film.titre_fr,
+      titre_en: film.titre_en,
+      image_url: film.image_url,
+      createdAt: film.createdAt,
       rankCategorise: null as number | null,
       scoreCategorise: null as number | null,
+      liked: film.userLiked ?? null,
+      rating: film.userRating ? parseFloat(film.userRating.toString()) : null,
     }));
 
     const endTime = performance.now();
