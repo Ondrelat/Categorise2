@@ -29,7 +29,7 @@ export async function handleReorderMyList(ArticleIds: string[], categoryName: st
   // transformer string[] en {id: string}[]
   const articleIds = ArticleIds.map(id => ({ id }));
 
-  return await ReOrderMyList(articleIds, userId);
+  return await ReOrderMyList(articleIds, userId, categoryName);
 }
 
 export async function handleRemoveFromMyList(articleId: string, categoryName: string)  {

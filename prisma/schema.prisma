@@ -1,3 +1,4 @@
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -45,7 +46,8 @@ model User {
   sessions      Session[]
   revisions     Revision[]
   comments      Comment[]
-  articleData   ArticleClassementUserData[]
+  lists         UserList[]
+  articleClassementUserDatas ArticleClassementUserData[]
 }
 
 model VerificationToken {
@@ -66,24 +68,27 @@ model Categories {
   parent      Categories?  @relation("CategoryToCategory", fields: [parentId], references: [id])
   children    Categories[] @relation("CategoryToCategory")
   articles    Article[]
-  articleClassementUserData ArticleClassementUserData[] // Une catégorie peut avoir plusieurs articles
-  
-
-  
-  articlesClassement  ArticleClassementCategory[] // 
+  userLists   UserList[]
+  articlesClassement  ArticleClassementCategory[]
   articleReferences   ArticleReference[] @relation("CategoryArticleReference")
 }
 
-// Définition des types de références entre articles
 enum ArticleReferenceType {
-  PREREQUISITE   // Articles prérequis pour comprendre l'article actuel
-  COURSE_PART    // Articles qui font partie du même cours ou de la même série
+  PREREQUISITE
+  COURSE_PART
 }
 
 enum ArticleLevel {
-  BEGINNER       // Débutant
-  INTERMEDIATE   // Intermédiaire 
-  ADVANCED       // Avancé
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  REVIEW
 }
 
 model Article {
@@ -98,9 +103,8 @@ model Article {
   updatedAt          DateTime          @updatedAt
   categoryId         String
   isActive           Boolean           @default(true)
-  level              ArticleLevel?     // Rendu optionnel en ajoutant "?"
+  level              ArticleLevel?
   
-  // Relations existantes
   category           Categories        @relation(fields: [categoryId], references: [id])
   sections           Section[]
   tableOfContents    TableOfContents[]
@@ -109,8 +113,6 @@ model Article {
   redirectsTo        Redirect[]        @relation("TargetArticle")
   comments           Comment[]
   articleTags        ArticleTag[]
-  
-  // Nouvelles relations pour les références entre articles
   referencedIn       ArticleReference[] @relation("ReferencedArticle")
   referencesTo       ArticleReference[] @relation("SourceArticle")
 
@@ -119,17 +121,17 @@ model Article {
 
 model ArticleReference {
   id                String               @id @default(uuid())
-  sourceArticleId   String               // L'article qui référence
-  targetArticleId   String               // L'article qui est référencé
-  referenceType     ArticleReferenceType // Type de référence (RELATED ou CITATION)
-  description       String?              // Description optionnelle de la référence
+  sourceArticleId   String
+  targetArticleId   String
+  referenceType     ArticleReferenceType
+  description       String?
   createdAt         DateTime             @default(now())
+  categoryId        String?
   
-  // Relations
   sourceArticle     Article              @relation("SourceArticle", fields: [sourceArticleId], references: [id], onDelete: Cascade)
   targetArticle     Article              @relation("ReferencedArticle", fields: [targetArticleId], references: [id], onDelete: Cascade)
-  categoryId String?
-  category   Categories? @relation("CategoryArticleReference", fields: [categoryId], references: [id])
+  category          Categories?          @relation("CategoryArticleReference", fields: [categoryId], references: [id])
+  
   @@unique([sourceArticleId, targetArticleId, referenceType])
   @@index([sourceArticleId])
   @@index([targetArticleId])
@@ -153,35 +155,69 @@ model ArticleClassement {
   startYear         Int?
   titleType         String?
 
-  categories ArticleClassementCategory[]  // <- liaison multiple
-  userData   ArticleClassementUserData[]
+  categories ArticleClassementCategory[]
+  articleClassementUserLists ArticleClassementUserList[]
+  articleClassementUserDatas ArticleClassementUserData[]
 
   @@map("article_classement")
 }
 
-model ArticleClassementUserData {
+model ArticleClassementUserList {
   id            String   @id @default(cuid())
-  user          User     @relation(fields: [userId], references: [id])
-  userId        String
-  article       ArticleClassement @relation(fields: [articleId], references: [id])
   articleId     String
-  
-  // Relation avec UNE seule catégorie (optionnelle)
-  category    Categories? @relation(fields: [categoryId], references: [id])
-  categoryId  String?     // Peut être null si non catégorisé
+  categoryId    String?
+  listId        String?
+  userId        String
 
-  liked         Boolean?  
-  rating        Float?     // ou Float si tu veux une note de 0 à 10
-  rank          Int?     // position personnalisée dans un classement
+  article       ArticleClassement @relation(fields: [articleId], references: [id])
+  list          UserList? @relation(fields: [listId], references: [id])
+
+  rank          Int?
   rankTierList  String?       
-  onList        Boolean? 
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  @@unique([userId, articleId]) // pour qu’un user ne puisse avoir qu’une seule entrée par article
+  @@unique([listId, articleId])  // <= clé unique composée Il ne peut avoir qu'une fois un même article dans une liste
 }
 
+model ArticleClassementUserData {
+  id            String   @id @default(cuid())
+  articleId     String
+  userId        String
+
+  article       ArticleClassement @relation(fields: [articleId], references: [id])
+  user          User     @relation(fields: [userId], references: [id])
+
+  liked         Boolean?  
+  rating        Float?      
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([articleId, userId])  // <= clé unique composée Il ne peut avoir qu'une fois un même article dans une liste
+
+}
+
+
+
+model UserList {
+  id            String   @id @default(cuid())
+  name          String
+  userId        String
+  categoryId    String?
+  
+  user          User     @relation(fields: [userId], references: [id])
+  articleClassementUserLists  ArticleClassementUserList[]
+  
+  category      Categories? @relation(fields: [categoryId], references: [id])
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  
+  @@unique([categoryId, userId])  // <= clé unique composée clé unique composée Si il y a une category, on est en mode normalList, alors il ne peut y avoir qu'un même article par category
+}
 
 model ArticleClassementCategory {
   articleId   String
@@ -190,10 +226,8 @@ model ArticleClassementCategory {
   article     ArticleClassement @relation(fields: [articleId], references: [id])
   category    Categories         @relation(fields: [categoryId], references: [id])
 
-  @@id([articleId, categoryId])  // <- clé primaire composite
+  @@id([articleId, categoryId])
 }
-
-
 
 model Section {
   id              String          @id @default(uuid())
@@ -204,6 +238,7 @@ model Section {
   level           Int             @default(1)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+  
   article         Article         @relation(fields: [articleId], references: [id], onDelete: Cascade)
   parentSection   Section?        @relation("SectionHierarchy", fields: [parentSectionId], references: [id])
   childSections   Section[]       @relation("SectionHierarchy")
@@ -215,21 +250,15 @@ model Section {
   @@map("sections")
 }
 
-enum ArticleStatus {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
-  REVIEW
-}
-
 model ContentBlock {
   id                 String            @id @default(uuid())
   sectionId          String
-  contentType        String            // paragraph, list, quote, code, image, etc.
+  contentType        String
   content            String            @db.Text
   position           Int
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
+  
   section            Section           @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   contentReferences  ContentReference[]
   
@@ -245,6 +274,7 @@ model TableOfContents {
   position        Int
   level           Int             @default(1)
   createdAt       DateTime        @default(now())
+  
   article         Article         @relation(fields: [articleId], references: [id], onDelete: Cascade)
   section         Section         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   
@@ -259,6 +289,7 @@ model Reference {
   citation           String            @db.Text
   url                String?
   createdAt          DateTime          @default(now())
+  
   article            Article           @relation(fields: [articleId], references: [id], onDelete: Cascade)
   contentReferences  ContentReference[]
   
@@ -271,6 +302,7 @@ model ContentReference {
   blockId         String
   referenceId     String
   position        Int
+  
   contentBlock    ContentBlock    @relation(fields: [blockId], references: [id], onDelete: Cascade)
   reference       Reference       @relation(fields: [referenceId], references: [id], onDelete: Cascade)
   
@@ -283,9 +315,10 @@ model Revision {
   id              String          @id @default(uuid())
   articleId       String
   userId          String
-  contentJson     Json            // État complet de l'article en JSON
+  contentJson     Json
   comment         String?
   createdAt       DateTime        @default(now())
+  
   article         Article         @relation(fields: [articleId], references: [id], onDelete: Cascade)
   user            User            @relation(fields: [userId], references: [id])
   
@@ -299,7 +332,9 @@ model Redirect {
   sourceSlug      String          @unique
   targetArticleId String
   createdAt       DateTime        @default(now())
+  
   targetArticle   Article         @relation("TargetArticle", fields: [targetArticleId], references: [id], onDelete: Cascade)
+  
   @@index([targetArticleId])
   @@map("redirects")
 }
@@ -310,6 +345,7 @@ model Comment {
   userId          String
   content         String          @db.Text
   createdAt       DateTime        @default(now())
+  
   article         Article         @relation(fields: [articleId], references: [id], onDelete: Cascade)
   user            User            @relation(fields: [userId], references: [id])
   
@@ -322,6 +358,7 @@ model Tag {
   id              String          @id @default(uuid())
   name            String          @unique
   description     String?
+  
   articles        ArticleTag[]
   
   @@map("tags")
@@ -330,6 +367,7 @@ model Tag {
 model ArticleTag {
   articleId       String
   tagId           String
+  
   article         Article         @relation(fields: [articleId], references: [id], onDelete: Cascade)
   tag             Tag             @relation(fields: [tagId], references: [id], onDelete: Cascade)
   

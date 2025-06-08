@@ -36,8 +36,6 @@ export const getCategories = cache(async (): Promise<CategoryTreeItem[]> => {
   } catch (error) {
     console.error('Error fetching categories:', error);
     throw new Error('Error fetching categories');
-  } finally {
-    await prisma.$disconnect();
   }
 });
 
@@ -60,8 +58,6 @@ export async function getCategoryByName(name: string) {
   } catch (error) {
     console.error('Error fetching category:', error);
     throw new Error('Error fetching category');
-  } finally {
-    await prisma.$disconnect();
   }
 }
 

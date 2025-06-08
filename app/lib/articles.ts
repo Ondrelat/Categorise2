@@ -161,7 +161,7 @@ export async function getArticlesByTypeAndCategory(categoryTitle: string, type: 
 export async function likeArticle(articleId: string, liked: boolean, userId: string) {
   await prisma.articleClassementUserData.upsert({
     where: {
-      userId_articleId: {
+      articleId_userId: {
         userId,
         articleId,
       },
@@ -184,7 +184,7 @@ export async function NoteArticle(articleId: string, rating: number, userId: str
   console.log('Note à enregistrer:', rating, typeof rating);
   const result = await prisma.articleClassementUserData.upsert({
     where: {
-      userId_articleId: {
+      articleId_userId: {
         userId,
         articleId,
       },

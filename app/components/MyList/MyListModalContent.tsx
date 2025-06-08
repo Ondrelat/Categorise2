@@ -21,7 +21,7 @@ export default function MyListModalContent({
   const [draggedItem, setDraggedItem] = useState<articleClassementUserDataExtended | null>(null);
   const [draggedFromUnranked, setDraggedFromUnranked] = useState<boolean>(false);
   const [maxRank, setMaxRank] = useState<number>(3);
-  const [isTierListMode, setIsTierListMode] = useState<boolean>(true);
+  const [isTierListMode, setIsTierListMode] = useState<boolean>(false); // Changé : ranking par défaut
   const isModifiedRef = useRef(false);
   const saveTimeout = useRef<NodeJS.Timeout | null>(null);
   const latestmyListRef = useRef<articleClassementUserDataExtended[]>(myList);
@@ -60,8 +60,13 @@ export default function MyListModalContent({
   useEffect(() => {
     latestmyListRef.current = myList;
     if (!isTierListMode) {
-      const highestRank = Math.max(...rankedArticles.map(a => typeof a.rank === 'number' ? a.rank : 0), 3);
-      setMaxRank(highestRank);
+      // Calculer le nombre de positions nécessaires basé sur les articles classés
+      const highestRank = Math.max(
+        ...rankedArticles.map(a => typeof a.rank === 'number' ? a.rank : 0), 
+        0
+      );
+      // Assurer au moins 3 positions et ajouter 3 positions vides supplémentaires
+      setMaxRank(Math.max(highestRank + 3, 3));
     }
   }, [myList, rankedArticles, isTierListMode]);
 
@@ -146,6 +151,11 @@ export default function MyListModalContent({
           rank: targetRank as number,
           rankTierList: undefined
         };
+
+        // Ajuster maxRank si nécessaire pour ajouter des positions vides
+        if (targetRank === maxRank) {
+          setMaxRank(prev => prev + 3);
+        }
       }
 
       handleReorder(updatedList);
@@ -177,10 +187,6 @@ export default function MyListModalContent({
   const handleDragEnd = () => {
     setDraggedItem(null);
     setDraggedFromUnranked(false);
-  };
-
-  const addNewRankColumn = () => {
-    setMaxRank(prev => prev + 1);
   };
 
   const removeFromRanking = (articleId: string) => {
@@ -294,94 +300,85 @@ export default function MyListModalContent({
   );
 
   const renderUniqueRanking = () => (
-    <div className="space-y-4 mb-4">
-      {Array.from({ length: maxRank }, (_, index) => {
-        const rank = index + 1;
-        const articlesInRank = getArticlesByRank(rank);
-        const article = articlesInRank[0]; // Un seul article par rank
-        
-        return (
-          <div key={rank} className="flex items-center gap-4">
-            {/* Numéro de rank */}
-            <div className="flex-shrink-0">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-lg font-bold shadow-lg">
-                {rank}
-              </div>
-            </div>
-            {/* Zone de drop */}
-            <div
-              className={`flex-1 bg-white border-2 border-gray-200 rounded-lg p-4 min-h-20 transition-all duration-200 ${
-                draggedItem && !draggedFromUnranked ? 'border-blue-400 bg-blue-50' : ''
-              }`}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDropOnRank(e, rank)}
-            >
-              {!article ? (
-                <div className="text-center py-4 text-gray-400 border-2 border-dashed border-gray-300 rounded-lg">
-                  <p className="text-sm">rank {rank} - Glissez un film ici</p>
+    <div className="max-h-96 overflow-y-auto pr-2">
+      <div className="space-y-4 mb-4">
+        {Array.from({ length: maxRank }, (_, index) => {
+          const rank = index + 1;
+          const articlesInRank = getArticlesByRank(rank);
+          const article = articlesInRank[0]; // Un seul article par rank
+          
+          return (
+            <div key={rank} className="flex items-center gap-4">
+              {/* Numéro de rank */}
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-lg font-bold shadow-lg">
+                  {rank}
                 </div>
-              ) : (
-                <div
-                  className={`bg-gray-50 rounded-lg p-3 border border-gray-200 cursor-grab transition-all duration-200 ${
-                    draggedItem?.id === article.id ? 'opacity-50 scale-95' : 'hover:shadow-md hover:scale-105'
-                  }`}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, article, false)}
-                  onDragEnd={handleDragEnd}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="relative w-12 h-16 flex-shrink-0">
-                      {article.image_url ? (
-                        <Image
-                          src={article.image_url}
-                          alt={article.titre_fr || article.titre_en || 'film'}
-                          fill
-                          className="object-cover rounded"
-                          sizes="48px"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                          <span className="text-xs text-gray-400">📽️</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm truncate">
-                        {article.titre_fr || article.titre_en || 'Sans titre'}
-                      </h4>
-                      <div className="flex gap-2 text-xs text-gray-500 mt-1">
-                        {article.averageRatingIMDB && (
-                          <span>⭐ {article.averageRatingIMDB.toFixed(1)}</span>
-                        )}
-                        {article.scoreCategorise && (
-                          <span>📊 {Number(article.scoreCategorise)}</span>
+              </div>
+              {/* Zone de drop */}
+              <div
+                className={`flex-1 bg-white border-2 border-gray-200 rounded-lg p-4 min-h-20 transition-all duration-200 ${
+                  draggedItem && !draggedFromUnranked ? 'border-blue-400 bg-blue-50' : ''
+                }`}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDropOnRank(e, rank)}
+              >
+                {!article ? (
+                  <div className="text-center py-4 text-gray-400 border-2 border-dashed border-gray-300 rounded-lg">
+                    <p className="text-sm">Position {rank} - Glissez un film ici</p>
+                  </div>
+                ) : (
+                  <div
+                    className={`bg-gray-50 rounded-lg p-3 border border-gray-200 cursor-grab transition-all duration-200 ${
+                      draggedItem?.id === article.id ? 'opacity-50 scale-95' : 'hover:shadow-md hover:scale-105'
+                    }`}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, article, false)}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="relative w-12 h-16 flex-shrink-0">
+                        {article.image_url ? (
+                          <Image
+                            src={article.image_url}
+                            alt={article.titre_fr || article.titre_en || 'film'}
+                            fill
+                            className="object-cover rounded"
+                            sizes="48px"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
+                            <span className="text-xs text-gray-400">📽️</span>
+                          </div>
                         )}
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-sm truncate">
+                          {article.titre_fr || article.titre_en || 'Sans titre'}
+                        </h4>
+                        <div className="flex gap-2 text-xs text-gray-500 mt-1">
+                          {article.averageRatingIMDB && (
+                            <span>⭐ {article.averageRatingIMDB.toFixed(1)}</span>
+                          )}
+                          {article.scoreCategorise && (
+                            <span>📊 {Number(article.scoreCategorise)}</span>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => removeFromRanking(article.id)}
+                        className="text-red-500 hover:text-red-700 text-xs p-1"
+                        title="Retirer du classement"
+                      >
+                        ✕
+                      </button>
                     </div>
-                    <button
-                      onClick={() => removeFromRanking(article.id)}
-                      className="text-red-500 hover:text-red-700 text-xs p-1"
-                      title="Retirer du classement"
-                    >
-                      ✕
-                    </button>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })}
-      {/* Bouton pour ajouter une nouvelle rank */}
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 flex-shrink-0"></div>
-        <button
-          onClick={addNewRankColumn}
-          className="flex-1 bg-gray-200 hover:bg-gray-300 border-2 border-dashed border-gray-400 rounded-lg p-4 flex items-center justify-center text-gray-600 transition-colors"
-        >
-          <span className="text-xl mr-2">+</span>
-          <span className="text-sm">Ajouter rank {maxRank + 1}</span>
-        </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -408,7 +405,7 @@ export default function MyListModalContent({
         <p className="text-sm text-gray-600">
           {isTierListMode 
             ? 'Mode Tier List - Glissez les films vers les tiers S, A, B, C, D'
-            : 'Mode Classement Unique - Un seul film par rank, classement vertical'
+            : 'Mode Classement Unique - Un seul film par position, glissez vers la dernière position pour créer de nouvelles positions'
           }
         </p>
       </div>

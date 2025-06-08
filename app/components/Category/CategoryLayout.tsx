@@ -38,9 +38,6 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
   return (
     <div className="flex flex-1 h-full mt-4 justify-center">
       <div className="relative">
-        <div className="absolute -translate-x-full">
-          {/* Sidebar component here if needed */}
-        </div>
         <div className="w-[800px] ml-4">
           <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold mb-6">{categoryName}</h1>
