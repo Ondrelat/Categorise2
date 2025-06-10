@@ -135,7 +135,7 @@ export default function ClientOfficialClassement({
                 articleOfficialClassement={articleOfficialClassement}
                 ratingSource={ratingSource}
                 onShowMyList={handleShowMyList}
-                isInMyList={myList.some(f => f.id === articleOfficialClassement.id)}
+                IsInMyList={myList.some(f => f.id === articleOfficialClassement.id)}
                 categoryName={categoryName}
               />
             ))}

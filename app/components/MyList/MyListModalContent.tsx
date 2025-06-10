@@ -13,10 +13,8 @@ interface MyListModalContentProps {
 
 export default function MyListModalContent({
   myList,
-  onRemoveFromMyList,
   onReorderMyList,
   onSaveMyList,
-  onClose,
 }: MyListModalContentProps) {
   const [draggedItem, setDraggedItem] = useState<articleClassementInMyList | null>(null);
   const [draggedFromUnranked, setDraggedFromUnranked] = useState<boolean>(false);

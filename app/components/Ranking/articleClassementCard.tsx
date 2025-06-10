@@ -1,13 +1,10 @@
-
-
-
 // app/classements/components/classementCard.tsx
-import { Star, Heart, Plus, ChevronDown, ChevronUp, Eye, List } from 'lucide-react';
+import { Star, Heart, Plus, ChevronDown, ChevronUp, Eye, List, X, Trash2 } from 'lucide-react';
 import { articleClassement } from '../../types';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { apiClient, useApiCall } from '@/lib/api-client';
-import { toggleLikeArticle, handleRateSlider, handleAddToMyList } from './actions'
+import { toggleLikeArticle, handleRateSlider, AddToMyList, RemoveFromMyList} from './actions'
 import { getServerSession } from 'next-auth';
 import { authConfig } from '@/app/api/auth/[...nextauth]/route';
 
@@ -16,7 +13,7 @@ interface articleClassementCardProps {
   ratingSource: 'imdb' | 'categorise';
   onShowMyList?: () => void;
   onWatched?: (articleid: string, watched: boolean) => void;
-  isInMyList?: boolean;
+  IsInMyList?: boolean;
   categoryName: string
 }
 
@@ -24,16 +21,23 @@ export default function ArticleClassementCard({
   articleOfficialClassement,
   ratingSource,
   onShowMyList,
-  isInMyList = false,
+  IsInMyList = false,
   categoryName
 }: articleClassementCardProps) {
   // États locaux synchronisés avec les props
+  const [isInMyList, setIsInMyList] = useState(IsInMyList)
   const [liked, setLiked] = useState(articleOfficialClassement.liked);
   const [rating, setRating] = useState(articleOfficialClassement.rating ?? 0);
   const [showRatingTool, setShowRatingTool] = useState(false);
   const [confirmedRating, setConfirmedRating] = useState<number | null>(
     articleOfficialClassement.rating ? articleOfficialClassement.rating : null
   );
+  const [showConfirmRemove, setShowConfirmRemove] = useState(false);
+
+  // Synchroniser l'état local avec la prop
+  useEffect(() => {
+    setIsInMyList(IsInMyList);
+  }, [IsInMyList]);
 
   function getRatingLabel(score: number): string {
     if (score < 20) return 'Mauvais'; // 0.0-1.9
@@ -57,36 +61,52 @@ export default function ArticleClassementCard({
     setRating(value);
   };
 
-const handleConfirmRating = async (e: React.MouseEvent) => {
-  e.preventDefault();
-  e.stopPropagation();
-  
-  // Mise à jour immédiate de l'UI
-  setConfirmedRating(rating);
-  setShowRatingTool(false);
-  
-  try {
-      await handleRateSlider(articleOfficialClassement.id, rating, categoryName);
-  } catch (error) {
-    setShowRatingTool(true);
-  }
-};
-
-const handleRankingAction = async (e: React.MouseEvent) => {
-  e.preventDefault();
-  e.stopPropagation();
-
-  if (isInMyList && onShowMyList) {
-    onShowMyList();
-  } else {
+  const handleConfirmRating = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Mise à jour immédiate de l'UI
+    setConfirmedRating(rating);
+    setShowRatingTool(false);
+    
     try {
-      await handleAddToMyList(articleOfficialClassement.id, categoryName);
+        await handleRateSlider(articleOfficialClassement.id, rating, categoryName);
     } catch (error) {
-      // Optionnel : afficher une erreur, rollback UI, etc.
-      console.error("Erreur lors de l'ajout à la liste :", error);
+      setShowRatingTool(true);
     }
-  }
-};
+  };
+
+  const handleAddToMyList = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isInMyList && onShowMyList) {
+      onShowMyList();
+    } else {
+      try {
+        await AddToMyList(articleOfficialClassement.id, categoryName);
+        // Mettre à jour l'état local après succès
+        setIsInMyList(true);
+      } catch (error) {
+        // Optionnel : afficher une erreur, rollback UI, etc.
+        console.error("Erreur lors de l'ajout à la liste :", error);
+      }
+    }
+  };
+
+  const handleRemoveFromList = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      await RemoveFromMyList(articleOfficialClassement.id, categoryName);
+      // Mettre à jour l'état local après succès
+      setIsInMyList(false);
+      setShowConfirmRemove(false);
+    } catch (error) {
+      console.error("Erreur lors de la suppression de la liste :", error);
+    }
+  };
 
   const handleToggleRatingTool = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -243,28 +263,78 @@ const handleRankingAction = async (e: React.MouseEvent) => {
                     </div>
                   )}
 
-                  {/* Bouton Ajout/Voir classement */}
-                  <button
-                    type="button"
-                    onClick={handleRankingAction}
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm transition ${
-                      isInMyList
-                        ? 'bg-blue-100 hover:bg-blue-200 text-blue-700'
-                        : 'bg-green-100 hover:bg-green-200 text-green-700'
-                    }`}
-                  >
+                  {/* Section des boutons d'action pour la liste - VERSION AMÉLIORÉE */}
+                  <div className="flex flex-col gap-2 w-full">
                     {isInMyList ? (
                       <>
-                        <List className="w-4 h-4" />
-                        Voir mon classement
+                        {/* Bouton principal "Voir mon classement" */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (onShowMyList) onShowMyList();
+                          }}
+                          className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium transition-colors shadow-sm min-w-[180px]"
+                        >
+                          <List className="w-4 h-4" />
+                          <span>Voir mon classement</span>
+                        </button>
+                        
+                        {/* Bouton retirer avec confirmation */}
+                        {!showConfirmRemove ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setShowConfirmRemove(true);
+                            }}
+                            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 text-sm font-medium transition-all duration-200 border border-gray-200 hover:border-red-200 min-w-[180px]"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span>Retirer de ma liste</span>
+                          </button>
+                        ) : (
+                          <div className="flex flex-col gap-1 p-3 bg-red-50 border border-red-200 rounded-lg min-w-[180px]">
+                            <p className="text-xs text-red-700 text-center font-medium mb-2">
+                              Confirmer la suppression ?
+                            </p>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={handleRemoveFromList}
+                                className="flex-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded transition-colors"
+                              >
+                                Oui, retirer
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setShowConfirmRemove(false);
+                                }}
+                                className="flex-1 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-medium rounded transition-colors"
+                              >
+                                Annuler
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </>
                     ) : (
-                      <>
+                      /* Bouton "Ajouter à ma liste" quand pas dans la liste */
+                      <button
+                        type="button"
+                        onClick={handleAddToMyList}
+                        className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-medium transition-colors shadow-sm min-w-[180px]"
+                      >
                         <Plus className="w-4 h-4" />
-                        Ajouter à ma liste
-                      </>
+                        <span>Ajouter à ma liste</span>
+                      </button>
                     )}
-                  </button>
+                  </div>
                 </div>
               </div>
             </div>

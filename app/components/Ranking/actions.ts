@@ -50,7 +50,7 @@ export async function RemoveFromMyList(articleId: string, categoryName: string) 
   return result;
 }
 
-export async function handleAddToMyList(articleId: string, categoryName: string) {
+export async function AddToMyList(articleId: string, categoryName: string) {
   const session = await getServerSession(authConfig);
   const userId = session?.user?.id as string | undefined;
   if (!userId) return { success: false };
