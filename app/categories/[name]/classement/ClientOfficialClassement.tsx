@@ -6,6 +6,7 @@ import ArticleClassementCard from '@/app/components/Ranking/articleClassementCar
 import { articleClassement, articleClassementInMyList } from '@/app/types';
 import Modal from '@/app/components/MyList/Modal';
 import MyListModalContent from '@/app/components/MyList/MyListModalContent';
+import { RemoveFromMyList, ReorderMyList } from '@/app/components/Ranking/actions'
 
 interface ClassementClientPageProps {
   OfficialClassement: articleClassement[];
@@ -13,12 +14,6 @@ interface ClassementClientPageProps {
   initialRatingSource: 'imdb' | 'categorise';
   isAuthenticated: boolean;
   MyList: articleClassementInMyList[];
-  // Props pour les Server Actions
-  onLike: (articleId: string, liked: boolean, categoryName: string) => Promise<{ success: boolean }>;
-  onRateSlider: (articleId: string, rating: number, categoryName: string) => Promise<{ success: boolean }>;
-  onAddToMyList: (articleId: string, categoryName: string) => Promise<{ success: boolean }>;
-  onRemoveFromMyList: (articleId: string, categoryName: string) => Promise<{ success: boolean }>;
-  onReorderMyList: (articleId: string[], categoryName: string) => Promise<{ success: boolean }>;
 }
 
 export default function ClientOfficialClassement({
@@ -28,15 +23,9 @@ export default function ClientOfficialClassement({
   isAuthenticated: initialIsAuthenticated,
   MyList,
   // Récupération des Server Actions
-  onLike,
-  onRateSlider,
-  onAddToMyList,
-  onRemoveFromMyList,
-  onReorderMyList,
 }: ClassementClientPageProps) {
-  const [loading, setLoading] = useState(false);
   const [ratingSource, setRatingSource] = useState<'imdb' | 'categorise'>(initialRatingSource);
-  const [officialClassement, setOfficialClassements] = useState<articleClassement[]>(OfficialClassement);
+  const [officialClassement] = useState<articleClassement[]>(OfficialClassement);
   const [myList, setMyList] = useState<articleClassement[]>(MyList);
   const [showmyList, setShowMyList] = useState(false);
   const [isAuthenticated] = useState<boolean>(initialIsAuthenticated);
@@ -53,86 +42,7 @@ export default function ClientOfficialClassement({
     }
   }, [ratingSource, categoryName, initialRatingSource]);
 
-  // --- Gestionnaires d'événements appelant les Server Actions ---
-
-  const handleRateSliderChange = async (articleId: string, rating: number) => {
-    // Mise à jour optimiste de l'état local
-    setOfficialClassements(prev => 
-      prev.map(article => 
-        article.id === articleId 
-          ? { ...article, rating: rating * 10 } // Convertir de 0-10 à 0-100
-          : article
-      )
-    );
-
-    startTransition(async () => {
-      const result = await onRateSlider(articleId, rating, categoryName);
-      if (!result.success) {
-        // Revert en cas d'échec
-        setOfficialClassements(prev => 
-          prev.map(article => 
-            article.id === articleId 
-              ? { ...article, rating: OfficialClassement.find(a => a.id === articleId)?.rating ?? 50 }
-              : article
-          )
-        );
-        console.error("Échec de la mise à jour de la note côté serveur.");
-      }
-    });
-  };
-
-  const handleLikeClick = async (articleId: string, liked: boolean) => {
-    // Mise à jour optimiste de l'état local AVANT l'appel serveur
-    setOfficialClassements(prev => 
-      prev.map(article => 
-        article.id === articleId 
-          ? { ...article, liked }
-          : article
-      )
-    );
-
-    startTransition(async () => {
-      const result = await onLike(articleId, liked, categoryName);
-      if (!result.success) {
-        // Revert en cas d'échec
-        setOfficialClassements(prev => 
-          prev.map(article => 
-            article.id === articleId 
-              ? { ...article, liked: !liked } // Revert à l'état précédent
-              : article
-          )
-        );
-        console.error("Échec de la mise à jour du like côté serveur.");
-      }
-    });
-  };
-
-  const handleAddToMyList = async (articleClassement: articleClassement) => {
-    if (isAuthenticated) {
-      // Mise à jour optimiste
-      setMyList(prev => {
-        if (!prev.find(f => f.id === articleClassement.id)) {
-          return [...prev, articleClassement];
-        }
-        return prev;
-      });
-
-      startTransition(async () => {
-        const result = await onAddToMyList(articleClassement.id, categoryName);
-        if (!result.success) {
-          // Revert en cas d'échec
-          setMyList(prev => prev.filter(f => f.id !== articleClassement.id));
-          console.error("Échec de l'ajout à la liste côté serveur.");
-        }
-      });
-    } else {
-      // Si l'utilisateur n'est pas connecté, ajoutez à la liste temporaire locale
-      if (!myList.find(f => f.id === articleClassement.id)) {
-        setMyList(prev => [...prev, articleClassement]);
-        console.log(`Classement ${articleClassement.id} ajouté au classement temporaire local.`);
-      }
-    }
-  };
+  // --- Gestionnaires d'événements appelant les Server Actions -
 
   const handleRemoveFromMyList = async (articleId: string) => {
     if (isAuthenticated) {
@@ -143,12 +53,7 @@ export default function ClientOfficialClassement({
       setMyList(prev => prev.filter(f => f.id !== articleId));
 
       startTransition(async () => {
-        const result = await onRemoveFromMyList(articleId, categoryName);
-        if (!result.success) {
-          // Revert en cas d'échec
-          setMyList(previousMyList);
-          console.error("Échec de la suppression de la liste côté serveur.");
-        }
+        await RemoveFromMyList(articleId, categoryName);
       });
     } else {
       setMyList(prev => prev.filter(f => f.id !== articleId));
@@ -166,7 +71,7 @@ export default function ClientOfficialClassement({
     if (isAuthenticated) {
       startTransition(async () => {
         const classementids = newmyList.map(article => article.id);
-        const result = await onReorderMyList(classementids, categoryName);
+        const result = await ReorderMyList(classementids, categoryName);
         if (!result.success) {
           // Revert en cas d'échec
           setMyList(previousMyList);
@@ -223,10 +128,6 @@ export default function ClientOfficialClassement({
             </button>
           )}
         </div>
-
-        {loading || isPending ? (
-          <p className="text-center">Chargement...</p>
-        ) : (
           <div className="flex flex-col items-center gap-6">
             {officialClassement.map((articleOfficialClassement: articleClassement) => (
               <ArticleClassementCard
@@ -239,7 +140,6 @@ export default function ClientOfficialClassement({
               />
             ))}
           </div>
-        )}
       </div>
 
       <Modal

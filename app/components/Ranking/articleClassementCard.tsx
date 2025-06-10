@@ -7,7 +7,7 @@ import { articleClassement } from '../../types';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { apiClient, useApiCall } from '@/lib/api-client';
-import { toggleLikeArticle } from './action'
+import { toggleLikeArticle, handleRateSlider, handleAddToMyList } from './actions'
 import { getServerSession } from 'next-auth';
 import { authConfig } from '@/app/api/auth/[...nextauth]/route';
 
@@ -34,7 +34,6 @@ export default function ArticleClassementCard({
   const [confirmedRating, setConfirmedRating] = useState<number | null>(
     articleOfficialClassement.rating ? articleOfficialClassement.rating : null
   );
-  const { handleApiCall } = useApiCall()
 
   function getRatingLabel(score: number): string {
     if (score < 20) return 'Mauvais'; // 0.0-1.9
@@ -67,7 +66,7 @@ const handleConfirmRating = async (e: React.MouseEvent) => {
   setShowRatingTool(false);
   
   try {
-      await handleApiCall(() => apiClient.NoteArticle(articleOfficialClassement.id, rating));
+      await handleRateSlider(articleOfficialClassement.id, rating, categoryName);
   } catch (error) {
     setShowRatingTool(true);
   }
@@ -81,7 +80,7 @@ const handleRankingAction = async (e: React.MouseEvent) => {
     onShowMyList();
   } else {
     try {
-      await handleApiCall(() => apiClient.addToMyList(articleOfficialClassement.id, categoryName));
+      await handleAddToMyList(articleOfficialClassement.id, categoryName);
     } catch (error) {
       // Optionnel : afficher une erreur, rollback UI, etc.
       console.error("Erreur lors de l'ajout à la liste :", error);

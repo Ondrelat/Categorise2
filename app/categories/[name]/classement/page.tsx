@@ -5,13 +5,6 @@ import { getServerSession } from 'next-auth';
 import { authConfig } from '@/app/api/auth/[...nextauth]/route';
 import { getclassementsSortedByRating } from '@/lib/articles';
 import { fetchMyList } from '@/lib/myList';
-import {
-  handleLike,
-  handleRateSlider,
-  handleReorderMyList,
-  handleRemoveFromMyList,
-  handleAddToMyList
-} from './actions'; // Server actions déclarées à part
 
 export default async function ClassementPage({
   params,
@@ -40,11 +33,6 @@ export default async function ClassementPage({
   initialRatingSource={ratingSource}
   isAuthenticated={!!userId}
   MyList={myList}
-  onLike={handleLike}
-  onRateSlider={handleRateSlider}
-  onAddToMyList={handleAddToMyList}  // <-- ajouté ici
-  onRemoveFromMyList={handleRemoveFromMyList}
-  onReorderMyList={handleReorderMyList}
 />
   );
 }
