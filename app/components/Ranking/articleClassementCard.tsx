@@ -7,48 +7,34 @@ import { articleClassement } from '../../types';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { apiClient, useApiCall } from '@/lib/api-client';
+import { toggleLikeArticle } from './action'
 import { getServerSession } from 'next-auth';
 import { authConfig } from '@/app/api/auth/[...nextauth]/route';
 
 interface articleClassementCardProps {
   articleOfficialClassement: articleClassement;
   ratingSource: 'imdb' | 'categorise';
-  onLike?: (articleid: string, liked: boolean) => void;
-  onRateSlider?: (articleid: string, rating: number) => void;
-  onAddToMyList?: (article: articleClassement) => void;
   onShowMyList?: () => void;
   onWatched?: (articleid: string, watched: boolean) => void;
   isInMyList?: boolean;
+  categoryName: string
 }
 
 export default function ArticleClassementCard({
   articleOfficialClassement,
   ratingSource,
-  onLike,
-  onRateSlider,
-  onAddToMyList,
   onShowMyList,
   isInMyList = false,
+  categoryName
 }: articleClassementCardProps) {
   // États locaux synchronisés avec les props
   const [liked, setLiked] = useState(articleOfficialClassement.liked);
-  const [localRating, setLocalRating] = useState(articleOfficialClassement.rating ?? 50);
-  const [sliderRating, setSliderRating] = useState(articleOfficialClassement.rating ?? 50);
+  const [rating, setRating] = useState(articleOfficialClassement.rating ?? 0);
   const [showRatingTool, setShowRatingTool] = useState(false);
   const [confirmedRating, setConfirmedRating] = useState<number | null>(
-    articleOfficialClassement.rating ? articleOfficialClassement.rating / 10 : null
+    articleOfficialClassement.rating ? articleOfficialClassement.rating : null
   );
-    const { handleApiCall } = useApiCall();
-
-  // États pour gérer les états de chargement
-  const [isRatingLoading, setIsRatingLoading] = useState(false);
-
-  // Synchroniser l'état local avec les props quand elles changent
-  useEffect(() => {
-    setLocalRating(articleOfficialClassement.rating ?? 50);
-    setSliderRating(articleOfficialClassement.rating ?? 50);
-    setConfirmedRating(articleOfficialClassement.rating ? articleOfficialClassement.rating / 10 : null);
-  }, [articleOfficialClassement.liked, articleOfficialClassement.rating]);
+  const { handleApiCall } = useApiCall()
 
   function getRatingLabel(score: number): string {
     if (score < 20) return 'Mauvais'; // 0.0-1.9
@@ -59,71 +45,55 @@ export default function ArticleClassementCard({
     return 'Excellent'; // 9.0-10.0
   }
 
-
   const handleLike = async () => {
     try {
-      await handleApiCall(() => apiClient.likeArticle(articleOfficialClassement.id, !liked));
+      await toggleLikeArticle(articleOfficialClassement.id, !liked, categoryName);
       setLiked(!liked);
     } catch (error) {
       // Gérer l'erreur (afficher un toast, etc.)
     } 
   };
+
   const handleSliderChange = (value: number) => {
-    setSliderRating(value);
+    setRating(value);
   };
 
-  const handleConfirmRating = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (isRatingLoading) return;
-    
-    const finalRating = parseFloat((sliderRating / 10).toFixed(1));
-    const finalRatingFor100Scale = sliderRating;
-    
-    // Mise à jour immédiate de l'UI (optimiste)
-    setConfirmedRating(finalRating);
-    setLocalRating(finalRatingFor100Scale);
-    setShowRatingTool(false);
-    setIsRatingLoading(true);
-    
+const handleConfirmRating = async (e: React.MouseEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  // Mise à jour immédiate de l'UI
+  setConfirmedRating(rating);
+  setShowRatingTool(false);
+  
+  try {
+      await handleApiCall(() => apiClient.NoteArticle(articleOfficialClassement.id, rating));
+  } catch (error) {
+    setShowRatingTool(true);
+  }
+};
+
+const handleRankingAction = async (e: React.MouseEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (isInMyList && onShowMyList) {
+    onShowMyList();
+  } else {
     try {
-      if (onRateSlider) {
-        await onRateSlider(articleOfficialClassement.id, finalRating);
-        console.log('Note mise à jour avec succès');
-      }
+      await handleApiCall(() => apiClient.addToMyList(articleOfficialClassement.id, categoryName));
     } catch (error) {
-      // En cas d'erreur, on revert l'état local
-      console.error('Erreur lors de la mise à jour de la note:', error);
-      const previousRating = articleOfficialClassement.rating ?? 50;
-      setLocalRating(previousRating);
-      setSliderRating(previousRating);
-      setConfirmedRating(previousRating ? previousRating / 10 : null);
-      setShowRatingTool(true);
-    } finally {
-      setIsRatingLoading(false);
+      // Optionnel : afficher une erreur, rollback UI, etc.
+      console.error("Erreur lors de l'ajout à la liste :", error);
     }
-  };
-
-  const handleRankingAction = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (isInMyList && onShowMyList) {
-      onShowMyList();
-    } else if (onAddToMyList) {
-      onAddToMyList(articleOfficialClassement);
-    }
-  };
+  }
+};
 
   const handleToggleRatingTool = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setShowRatingTool(!showRatingTool);
   };
-
-  // Calculate the display rating (0.0-10.0)
-  const displayRating = (sliderRating / 10).toFixed(1);
 
   return (
     <>
@@ -178,7 +148,7 @@ export default function ArticleClassementCard({
                         <div className="flex items-center gap-1 text-sm">
                           <Star className="w-4 h-4 text-purple-400 fill-current" />
                           <span className="font-semibold">
-                            {Number(articleOfficialClassement.scoreCategorise)}/100
+                            {Number(articleOfficialClassement.scoreCategorise)}/10
                           </span>
                           <span className="text-gray-500">(Score catégorisé)</span>
                         </div>
@@ -196,42 +166,38 @@ export default function ArticleClassementCard({
                 <div className="flex flex-col items-end gap-3">
                   {/* Boutons d'action : Like */}
                   <div className="flex gap-2">
-<button
-  type="button"
-  onClick={handleLike}
-  className={`p-2 rounded-full transition ${
-    liked
-      ? 'bg-red-500 text-white'
-      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-  }`}
->
-  <Heart className={`w-5 h-5 ${liked ? 'fill-current' : ''}`} />
-</button>
+                    <button
+                      type="button"
+                      onClick={handleLike}
+                      className={`p-2 rounded-full transition ${
+                        liked
+                          ? 'bg-red-500 text-white'
+                          : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                      }`}
+                    >
+                      <Heart className={`w-5 h-5 ${liked ? 'fill-current' : ''}`} />
+                    </button>
                   </div>
 
                   {/* Bouton pour afficher/cacher la notation personnelle */}
                   <button
                     type="button"
                     onClick={handleToggleRatingTool}
-                    disabled={isRatingLoading}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-100 hover:bg-indigo-200 text-indigo-700 transition-all duration-300 ease-in-out group ${
-                      isRatingLoading ? 'opacity-70' : ''
+                      rating ? 'opacity-70' : ''
                     }`}
                   >
                     <Star className="w-4 h-4 text-indigo-500" />
                     Ma note
                     {confirmedRating !== null && (
                       <span className="ml-1 text-indigo-900 font-bold">
-                        ({confirmedRating}/10)
+                        ({confirmedRating})
                       </span>
                     )}
                     {showRatingTool ? (
                       <ChevronUp className="w-4 h-4 ml-1 group-hover:translate-y-0.5 transition-transform" />
                     ) : (
                       <ChevronDown className="w-4 h-4 ml-1 group-hover:-translate-y-0.5 transition-transform" />
-                    )}
-                    {isRatingLoading && (
-                      <div className="w-3 h-3 border border-indigo-500 border-t-transparent rounded-full animate-spin ml-2"></div>
                     )}
                   </button>
 
@@ -240,11 +206,11 @@ export default function ArticleClassementCard({
                     <div className="text-right border border-gray-200 p-4 rounded-lg mt-2 bg-gray-50 transform origin-top transition-all duration-300 ease-in-out scale-y-100 opacity-100">
                       <div className="flex flex-col items-end mb-2">
                         <span className="text-3xl font-extrabold text-gray-800">
-                          {displayRating}
+                          {rating}
                           <span className="text-lg text-gray-500">/10</span>
                         </span>
                         <span className="text-base font-semibold text-indigo-600">
-                          {getRatingLabel(sliderRating)}
+                          {getRatingLabel(rating)}
                         </span>
                       </div>
 
@@ -253,12 +219,11 @@ export default function ArticleClassementCard({
                         <input
                           type="range"
                           min="0"
-                          max="100"
-                          step="1"
-                          value={sliderRating}
+                          max="10"
+                          step="0.1"
+                          value={rating}
                           onChange={(e) => handleSliderChange(Number(e.target.value))}
                           className="absolute top-0 w-48 h-2 appearance-none bg-transparent cursor-pointer custom-slider-thumb"
-                          disabled={isRatingLoading}
                         />
                       </div>
 
@@ -271,12 +236,10 @@ export default function ArticleClassementCard({
                       <button
                         type="button"
                         onClick={handleConfirmRating}
-                        disabled={isRatingLoading}
-                        className={`mt-4 px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-base font-bold shadow-md ${
-                          isRatingLoading ? 'opacity-70 cursor-not-allowed' : ''
+                        className={`mt-4 px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-base font-bold shadow-md
                         }`}
                       >
-                        {isRatingLoading ? 'Validation...' : 'Valider la note'}
+                        {'Valider la note'}
                       </button>
                     </div>
                   )}

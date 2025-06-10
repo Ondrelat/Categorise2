@@ -19,8 +19,8 @@ export const apiClient = {
   },
 
   // Rate article
-  rateArticle: async (articleId: string, rating: number) => {
-    const response = await fetch(`${API_BASE}/article/rate`, {
+  NoteArticle: async (articleId: string, rating: number) => {
+    const response = await fetch(`${API_BASE}/article/note`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ articleId, rating }),
@@ -34,37 +34,37 @@ export const apiClient = {
     return response.json();
   },
 
-  // Add to my list
-  addToMyList: async (articleId: string, categoryName: string) => {
-    const response = await fetch(`${API_BASE}/mylist/add`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ articleId, categoryName }),
-      credentials: 'include', // <-- Nécessaire pour les cookies
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to add to list');
-    }
-    
-    return response.json();
-  },
+// Add to my list
+addToMyList: async (articleId: string, categoryName: string) => {
+  const response = await fetch(`${API_BASE}/mylist/manage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ articleId, isAdding: true, categoryName }),
+    credentials: 'include',
+  });
 
-  // Remove from my list
-  removeFromMyList: async (articleId: string, categoryName: string) => {
-    const response = await fetch(`${API_BASE}/mylist/remove`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ articleId, categoryName }),
-      credentials: 'include', // <-- Nécessaire pour les cookies
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to remove from list');
-    }
-    
-    return response.json();
-  },
+  if (!response.ok) {
+    throw new Error('Failed to add to list');
+  }
+
+  return response.json();
+},
+
+// Remove from my list
+removeFromMyList: async (articleId: string, categoryName: string) => {
+  const response = await fetch(`${API_BASE}/mylist/manage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ articleId, isAdding: false, categoryName }),
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to remove from list');
+  }
+
+  return response.json();
+},
 
   // Reorder my list
   reorderMyList: async (articleIds: string[], categoryName: string) => {

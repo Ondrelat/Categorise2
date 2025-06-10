@@ -233,11 +233,9 @@ export default function ClientOfficialClassement({
                 key={articleOfficialClassement.id}
                 articleOfficialClassement={articleOfficialClassement}
                 ratingSource={ratingSource}
-                onLike={handleLikeClick}
-                onRateSlider={handleRateSliderChange}
-                onAddToMyList={handleAddToMyList}
                 onShowMyList={handleShowMyList}
                 isInMyList={myList.some(f => f.id === articleOfficialClassement.id)}
+                categoryName={categoryName}
               />
             ))}
           </div>

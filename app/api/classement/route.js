@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getclassementsSortedByRating } from '@/app/lib/articles';
+import { getclassementsSortedByRating } from '@/lib/articles';
 
 export async function GET(request) {
   try {
@@ -16,7 +16,7 @@ export async function GET(request) {
       );
     }
 
-    const films = await getFilmsSortedByRating(category, sort || 'imdb');
+    const films = await getclassementsSortedByRating(category, sort || 'imdb');
     
     return NextResponse.json(films, {
       headers: {
