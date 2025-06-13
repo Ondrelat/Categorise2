@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-Sitemap: https://www.dicteeinteractive.fr/sitemap.xml
-Sitemap: https://www.dicteeinteractive.fr/server-sitemap.xml
