@@ -2,30 +2,53 @@
 import prisma from './db/db';
 import { articleClassement, Article } from '@/app/types';
 
+import { z } from 'zod';
+import { ContentSection } from '@/app/types';
 
-export async function getArticleById(id: string) {
-  const debutArticle = performance.now();
 
-  try {
-    const article = await prisma.article.findUnique({
-      where: {
-        id: id,
-      }
-    });
+export const BaseSchema = z.object({
+  // Remove type from here if it's defined
+  content: z.string().min(10),
+  categoryId: z.string(),
+  isActive: z.boolean().default(true),
+});
 
-    const finArticle = performance.now();
-    console.log(`Temps d'exécution : ${finArticle - debutArticle} ms`);
+// Définir un schéma par type
+const ForumSchema = BaseSchema.extend({
+  title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
+});
 
-    if (!article) {
-      throw new Error(`Article avec l'ID ${id} non trouvé`);
-    }
+const ApprentissageSchema = BaseSchema.extend({
+  level: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).optional(),
+  title: z.literal(undefined), // empêche le champ "title"
+});
 
-    return article;
-  } catch (error) {
-    console.error('Erreur lors de la récupération de l\'article:', error);
-    throw error;
-  }
-}
+const ClassementSchema = BaseSchema.extend({
+  imageUrl: z.string().url("URL d'image invalide").optional(),
+  title: z.literal(undefined), // empêche aussi "title"
+});
+
+const MediaSchema = BaseSchema.extend({
+  title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
+  // Add any media-specific fields here
+  mediaUrl: z.string().url("URL de média invalide").optional(),
+});
+
+const GenericSchema = BaseSchema.extend({
+  type: z.literal("Generic"), // Ajoute une valeur unique
+  title: z.literal(undefined),
+});
+
+export const ArticleSchema = z.discriminatedUnion('type', [
+  ForumSchema.extend({ type: z.literal('Forum') }),
+  ApprentissageSchema.extend({ type: z.literal('Apprentissage') }),
+  ClassementSchema.extend({ type: z.literal('Classement') }),
+  MediaSchema.extend({ type: z.literal('Media') }),
+  GenericSchema.extend({ type: z.literal('Generic') })
+]);
+
+export type ArticleInput = z.infer<typeof ArticleSchema>;
+
 
 export async function getArticleClassementById(id: string) {
   const debutArticle = performance.now();
@@ -126,19 +149,20 @@ export async function getclassementsSortedByRating(
   }
 }
 
-export async function getArticlesByTypeAndCategory(categoryTitle: string, type: string): Promise<Article[]> {
-  const startTime = performance.now();
+export async function getArticlesByTypeAndCategory(
+  type: string,
+  categoryTitle: string 
+): Promise<Article[]> {
   const categoryTitleDecode = decodeURIComponent(categoryTitle);
-  console.log(`Début de la récupération des articles de type ${type} pour la catégorie ${categoryTitleDecode}`);
-
+  
   try {
-    // Requête unique avec jointure implicite
     const articles = await prisma.article.findMany({
       where: {
         category: {
           name: categoryTitleDecode
         },
-        type: type
+        type: type,
+        title: { not: null } // Ensure title exists
       },
       select: {
         id: true,
@@ -152,16 +176,14 @@ export async function getArticlesByTypeAndCategory(categoryTitle: string, type: 
       take: 20
     });
 
-    const endTime = performance.now();
-    console.log(`Articles récupérés en ${endTime - startTime} ms`);
-    console.log(`Nombre d'articles trouvés : ${articles.length}`);
-
-    return articles;
+    return articles.map(article => ({
+      ...article,
+      title: article.title || 'Untitled' // Fallback for TypeScript
+    })) as Article[];
   } catch (error) {
-    console.error(`Erreur lors de la récupération des articles de type ${type}:`, error);
-    throw new Error(`Erreur lors de la récupération des articles de type ${type}`);
+    console.error(`Error fetching ${type} articles:`, error);
+    throw error;
   }
-  // Ne pas déconnecter Prisma à chaque appel
 }
 
 export async function likeArticle(articleId: string, liked: boolean, userId: string) {
@@ -217,3 +239,52 @@ export async function NoteArticle(articleId: string, rating: number, userId: str
   return { success: true };
 }
 
+export async function getMissingArticleTypes(categoryName: string): Promise<ContentSection[]> {
+  const typesManquants: ContentSection[] = []
+
+  // D'abord, récupérer la catégorie par son nom
+  const category = await prisma.categories.findFirst({
+    where: {
+      name: categoryName,
+    },
+    select: {
+      id: true,
+    },
+  })
+
+  if (!category) {
+    throw new Error(`Category with name "${categoryName}" not found`)
+  }
+
+  const categorieId = category.id
+
+  const [hasClassement, hasForum, hasApprentissage, hasMedia] = await Promise.all([
+    prisma.articleClassementCategory.findFirst({
+      where: {
+        categoryId: categorieId,
+      },
+      select: {
+        articleId: true,
+      },
+    }),
+    prisma.article.findFirst({
+      where: { categoryId: categorieId, type: 'Forum' },
+      select: { id: true },
+    }),
+    prisma.article.findFirst({
+      where: { categoryId: categorieId, type: 'Apprentissage' },
+      select: { id: true },
+    }),
+    prisma.article.findFirst({
+      where: { categoryId: categorieId, type: 'Media' },
+      select: { id: true },
+    }),
+  ])
+
+  if (!hasClassement) typesManquants.push('Classement')
+  if (!hasForum) typesManquants.push('Forum')
+  if (!hasApprentissage) typesManquants.push('Apprentissage')
+  if (!hasMedia) typesManquants.push('Media')
+
+  return typesManquants
+}

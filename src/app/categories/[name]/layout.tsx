@@ -2,7 +2,7 @@
 import React from 'react';
 import SideBar from '@/components/Category/Sidebar';
 import NavigatorSection from '@/components/Category/NavigatorSection';
-import { getMissingArticleTypes } from '@/lib/actions';
+import { getMissingArticleTypes } from '@/lib/articles';
 
 export default async function CategoryLayout({ 
   children,

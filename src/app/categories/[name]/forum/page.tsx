@@ -1,18 +1,16 @@
-// app/categories/[name]/forum/page.tsx
 import React from 'react';
 import Link from 'next/link';
+import { getArticlesByTypeAndCategory } from '@/lib/articles';
 
-
-export default async function ForumPage({ 
-      params
+export default async function ForumPage({
+  params
 }: {
   params: Promise<{ name: string }>;
 }) {
   const resolvedParams = await params;
   const name = decodeURIComponent(resolvedParams.name);
-  const { getArticlesByTypeAndCategory } = await import('@/lib/articles');
   
-  const discussions = await getArticlesByTypeAndCategory(name, 'forum');
+  const discussions = await getArticlesByTypeAndCategory('forum', name);
 
   return (
     <div className="mt-4">
@@ -20,7 +18,10 @@ export default async function ForumPage({
       <div className="space-y-3">
         {discussions.map((discussion) => (
           <div key={discussion.id} className="p-4 bg-white shadow-sm rounded-md border-l-4 border-blue-400">
-            <Link href={`/categories/${name}/${discussion.id}`} className="text-blue-500 font-medium hover:underline block mb-1">
+            <Link 
+              href={`/categories/${name}/${discussion.id}`} 
+              className="text-blue-500 font-medium hover:underline block mb-1"
+            >
               {discussion.title}
             </Link>
             {discussion.createdAt && (

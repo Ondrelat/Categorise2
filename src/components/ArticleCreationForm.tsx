@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { createArticle, type ActionState } from '@/lib/actions';
+import { createArticle, type ActionState } from '@/lib/article.server';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ARTICLE_TYPES, ContentSection } from '@/app/types';
