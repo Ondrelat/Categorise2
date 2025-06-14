@@ -6,7 +6,7 @@ import ArticleClassementCard from '@/components/Ranking/articleClassementCard';
 import { articleClassement, articleClassementInMyList } from '@/app/types';
 import Modal from '@/components/MyList/Modal';
 import MyListModalContent from '@/components/MyList/MyListModalContent';
-import { ReorderMyList } from '@//components/Ranking/actions'
+import { ReorderMyList } from '@/components/Ranking/actions'
 
 interface ClassementClientPageProps {
   OfficialClassement: articleClassement[];

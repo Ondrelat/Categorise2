@@ -66,6 +66,23 @@ export async function getCategoryByName(name: string) {
   }
 }
 
+export async function getCategoryById(id: string) {
+
+  try {
+    const category = await prisma.categories.findFirst({
+      select : { name: true },
+      where: {
+        id: id,
+      },
+    });
+
+    return category;
+  } catch (error) {
+    console.error('Error fetching category:', error);
+    throw new Error('Error fetching category');
+  }
+}
+
 // Nouvelle fonction pour supprimer une catégorie
 export async function deleteCategory(categoryId: string) {
   try {

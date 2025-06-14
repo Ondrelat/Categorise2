@@ -55,3 +55,12 @@ export interface articleClassementInMyList extends articleClassement {
     message: string;
     data?: CategoryTreeItem;
   }
+
+  export const ARTICLE_TYPES = [
+    'Classement',
+    'Forum', 
+    'Apprentissage',
+    'Media'
+  ] as const;
+  
+  export type ContentSection = typeof ARTICLE_TYPES[number];

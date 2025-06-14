@@ -93,7 +93,7 @@ enum ArticleStatus {
 
 model Article {
   id                 String            @id @default(uuid())
-  title              String
+  title              String?
   content            String
   slug               String?           @unique
   imageUrl           String?

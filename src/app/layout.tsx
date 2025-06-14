@@ -8,6 +8,7 @@ import Footer from './footer';
 const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
+
   return (
     <html lang="fr" className="h-full">
       <head>
