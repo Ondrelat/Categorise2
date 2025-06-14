@@ -29,9 +29,6 @@ const ClassementSchema = BaseSchema.extend({
 });
 
 const MediaSchema = BaseSchema.extend({
-  title: z.string().min(3, "Le titre doit contenir au moins 3 caractères"),
-  // Add any media-specific fields here
-  mediaUrl: z.string().url("URL de média invalide").optional(),
 });
 
 const GenericSchema = BaseSchema.extend({
@@ -149,12 +146,14 @@ export async function getclassementsSortedByRating(
   }
 }
 
-export async function getArticlesByTypeAndCategory(
-  type: string,
-  categoryTitle: string 
+export async function getArticlesByCategoryAndType(
+  categoryTitle: string ,
+  type: string
+
 ): Promise<Article[]> {
   const categoryTitleDecode = decodeURIComponent(categoryTitle);
-  
+      console.log("categoryTitle", categoryTitle);
+            console.log("type", type);
   try {
     const articles = await prisma.article.findMany({
       where: {
@@ -162,7 +161,6 @@ export async function getArticlesByTypeAndCategory(
           name: categoryTitleDecode
         },
         type: type,
-        title: { not: null } // Ensure title exists
       },
       select: {
         id: true,
@@ -175,7 +173,7 @@ export async function getArticlesByTypeAndCategory(
       },
       take: 20
     });
-
+    console.log("articles", articles);
     return articles.map(article => ({
       ...article,
       title: article.title || 'Untitled' // Fallback for TypeScript

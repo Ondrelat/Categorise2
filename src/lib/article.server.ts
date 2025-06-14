@@ -11,7 +11,6 @@ export type ActionState = {
   errors: Record<string, string[]>;
 };
 
-
 export async function createArticle(
   prevState: ActionState,
   formData: FormData
@@ -22,7 +21,7 @@ export async function createArticle(
     isActive: true,
   };
 
-  // validation avec schéma dynamique
+  // Validation avec schéma dynamique
   const validatedFields = ArticleSchema.safeParse(parsedData);
 
   if (!validatedFields.success) {
@@ -34,23 +33,24 @@ export async function createArticle(
   }
 
   const data = validatedFields.data;
+  let categoryName: string | null = null; // 1. On stocke juste le nom nécessaire
 
   try {
+    // 2. Vérification et récupération de la catégorie
     const category = await getCategoryById(data.categoryId);
     if (!category) {
       return {
         success: false,
         message: 'Catégorie introuvable',
-        errors: {
-          categoryId: ['La catégorie spécifiée est introuvable.'],
-        },
+        errors: { categoryId: ['La catégorie spécifiée est introuvable.'] },
       };
     }
 
-    await prisma.article.create({ data });
+    categoryName = category.name; // 3. On conserve uniquement ce dont on a besoin
 
-    revalidatePath(`/categories/${encodeURIComponent(category.name)}/${data.type.toLowerCase()}`);
-    redirect(`/categories/${encodeURIComponent(category.name)}/${data.type.toLowerCase()}`);
+    await prisma.article.create({ data });
+    revalidatePath(`/categories/${encodeURIComponent(categoryName)}/${data.type.toLowerCase()}`);
+
   } catch (error) {
     return {
       success: false,
@@ -58,28 +58,15 @@ export async function createArticle(
       errors: { general: [String(error)] },
     };
   }
-}
 
-export async function getArticleById(id: string) {
-  const debutArticle = performance.now();
-
-  try {
-    const article = await prisma.article.findUnique({
-      where: {
-        id: id,
-      }
-    });
-
-    const finArticle = performance.now();
-    console.log(`Temps d'exécution : ${finArticle - debutArticle} ms`);
-
-    if (!article) {
-      throw new Error(`Article avec l'ID ${id} non trouvé`);
-    }
-
-    return article;
-  } catch (error) {
-    console.error('Erreur lors de la récupération de l\'article:', error);
-    throw error;
+  // 4. Redirection sécurisée
+  if (!categoryName) {
+    return {
+      success: false,
+      message: "Erreur critique : nom de catégorie manquant",
+      errors: { general: ["Impossible de déterminer la catégorie"] },
+    };
   }
+
+  redirect(`/categories/${encodeURIComponent(categoryName)}/${data.type.toLowerCase()}`);
 }

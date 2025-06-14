@@ -9,9 +9,9 @@ export default async function MediaPage({
 }) {
   const resolvedParams = await params;
   const name = decodeURIComponent(resolvedParams.name);
-  const { getArticlesByTypeAndCategory } = await import('@/lib/articles');
+  const { getArticlesByCategoryAndType } = await import('@/lib/articles');
   
-  const mediaItems = await getArticlesByTypeAndCategory(name, 'media');
+  const mediaItems = await getArticlesByCategoryAndType(name, 'Media');
 
   return (
     <div className="mt-4">

@@ -1,8 +1,8 @@
 // app/categories/[name]/apprentissage/page.tsx
 import React from 'react';
-
-import { getArticlesByTypeAndCategory } from '@/lib/articles';
 import Link from 'next/link';
+import { getArticlesByCategoryAndType } from '@/lib/articles';
+
 
 
 export default async function ApprentissagePage({
@@ -14,7 +14,7 @@ export default async function ApprentissagePage({
   const resolvedParams = await params;
   const name = decodeURIComponent(resolvedParams.name);
   
-  const courses = await getArticlesByTypeAndCategory(name, 'apprentissage');
+  const courses = await getArticlesByCategoryAndType(name, 'Apprentissage');
 
   return (
     <div className="mt-4">

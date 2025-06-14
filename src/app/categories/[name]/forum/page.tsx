@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { getArticlesByTypeAndCategory } from '@/lib/articles';
+import { getArticlesByCategoryAndType } from '@/lib/articles';
 
 export default async function ForumPage({
   params
@@ -10,7 +10,7 @@ export default async function ForumPage({
   const resolvedParams = await params;
   const name = decodeURIComponent(resolvedParams.name);
   
-  const discussions = await getArticlesByTypeAndCategory('forum', name);
+  const discussions = await getArticlesByCategoryAndType(name, 'Forum');
 
   return (
     <div className="mt-4">
