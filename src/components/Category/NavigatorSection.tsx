@@ -137,16 +137,6 @@ const NavigatorSection: React.FC<NavigatorSectionProps> = ({ missingTypes = [] }
                     )}
                 </div> 
             </div> 
-            
-            {/* Optionnel: Afficher les types manquants en mode debug */}
-            {process.env.NODE_ENV === 'development' && missingTypes.length > 0 && (
-                <div className="mb-2 text-sm text-gray-600">
-                    <span>Types de contenu manquants: </span>
-                    <span className="font-medium">
-                        {missingTypes.join(', ')}
-                    </span>
-                </div>
-            )}
         </div> 
     ); 
 }; 
