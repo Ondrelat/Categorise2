@@ -168,7 +168,7 @@ export async function getTutorialsByCategoryGroupedByLevel(categoryTitle: string
     }
   });
 
-  // Regrouper par level
+  // Regrouper par levele
   const grouped = tutorials.reduce((acc, tutorial) => {
     const level = tutorial.level || 'UNDEFINED';
     if (!acc[level]) acc[level] = [];
