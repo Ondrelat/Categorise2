@@ -7,19 +7,19 @@ import { Category, CategoryTreeItem } from '@/app/types';
 
 
 const buildCategoryTree = (
-    categories: Category[],
-    parentId: string | null = null
+  categories: Category[],
+  parentId: string | null = null
 ): CategoryTreeItem[] => {
-    return categories
-        .filter(cat => cat.parentId === parentId)
-        .map(cat => ({
-            id: cat.id,
-            name: cat.name,
-            description: cat.description ?? "",
-            isActive: cat.isActive ?? false, // Ensure it's always boolean
-            parentId: cat.parentId,
-            subcategories: buildCategoryTree(categories, cat.id)
-        }));
+  return categories
+    .filter(cat => cat.parentId === parentId)
+    .map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      description: cat.description ?? "",
+      isActive: cat.isActive ?? false, // Ensure it's always boolean
+      parentId: cat.parentId,
+      subcategories: buildCategoryTree(categories, cat.id)
+    }));
 };
 
 export const getCategories = cache(async (): Promise<CategoryTreeItem[]> => {
@@ -31,7 +31,7 @@ export const getCategories = cache(async (): Promise<CategoryTreeItem[]> => {
         name: 'asc',
       },
     });
-  
+
     const result = buildCategoryTree(categories);
 
     const endTime = performance.now();
@@ -70,7 +70,7 @@ export async function getCategoryById(id: string) {
 
   try {
     const category = await prisma.categories.findFirst({
-      select : { name: true },
+      select: { name: true },
       where: {
         id: id,
       },
@@ -97,21 +97,6 @@ export async function deleteCategory(categoryId: string) {
       return {
         success: false,
         message: 'Impossible de supprimer une catégorie qui contient des sous-catégories'
-      };
-    }
-
-    // Vérifier s'il y a des produits associés (ajustez selon votre modèle)
-    // Si vous avez une relation entre produits et catégories
-    const productsCount = await prisma.article.count({
-      where: {
-        categoryId
-      }
-    });
-
-    if (productsCount > 0) {
-      return {
-        success: false,
-        message: 'Impossible de supprimer une catégorie qui contient des produits'
       };
     }
 
@@ -143,7 +128,7 @@ export async function deleteCategory(categoryId: string) {
 
 // Nouvelle fonction pour mettre à jour une catégorie
 export async function updateCategory(
-  categoryId: string, 
+  categoryId: string,
   data: { name: string; description?: string; isActive?: boolean }
 ) {
   try {
@@ -202,14 +187,14 @@ export async function updateCategory(
   }
 }
 
-export async function createCategory(data: { 
-  name: string; 
+export async function createCategory(data: {
+  name: string;
   parentCategoryName?: string | null;
   description?: string;
   isActive?: boolean;
 }) {
   'use server';
-  
+
   const { name, parentCategoryName = null, description = '', isActive = true } = data;
   console.log('parentCategoryName:', parentCategoryName);
   try {

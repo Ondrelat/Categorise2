@@ -70,13 +70,13 @@ export async function getArticleClassementById(id: string) {
   } catch (error) {
     console.error('Erreur lors de la récupération de l\'article:', error);
     throw error;
-  } 
+  }
 }
 
 
 
 export async function getclassementsSortedByRating(
-  categoryTitle: string, 
+  categoryTitle: string,
   ratingSource: string,
   userId?: string
 ) {
@@ -85,7 +85,7 @@ export async function getclassementsSortedByRating(
 
   const limit = 50;
   const delimiter = (categoryTitleDecode === "Film" || categoryTitleDecode === "Série") ? 20000 : 10000;
-  
+
   // Pour l'instant seul IMDB est supporté, mais structure extensible
   const orderField = ratingSource === 'IMDB' ? 'averageRatingIMDB' : 'averageRatingIMDB';
 
@@ -112,7 +112,7 @@ export async function getclassementsSortedByRating(
       LIMIT $3
     `;
 
-    const params = userId 
+    const params = userId
       ? [delimiter, categoryTitleDecode, limit, userId]
       : [delimiter, categoryTitleDecode, limit];
 
@@ -146,21 +146,55 @@ export async function getclassementsSortedByRating(
   }
 }
 
-export async function getArticlesByCategoryAndType(
-  categoryTitle: string ,
-  type: string
+// lib/articles.ts
 
+export async function getTutorialsByCategoryGroupedByLevel(categoryTitle: string) {
+  const decodedTitle = decodeURIComponent(categoryTitle);
+
+  const tutorials = await prisma.tutorial.findMany({
+    where: {
+      category: {
+        name: decodedTitle
+      }
+    },
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      level: true
+    },
+    orderBy: {
+      level: 'asc'
+    }
+  });
+
+  // Regrouper par level
+  const grouped = tutorials.reduce((acc, tutorial) => {
+    const level = tutorial.level || 'UNDEFINED';
+    if (!acc[level]) acc[level] = [];
+    acc[level].push({
+      ...tutorial,
+      title: tutorial.title ?? 'Untitled', // ou undefined
+    });
+    return acc;
+  }, {} as Record<string, Article[]>);
+
+  return grouped;
+}
+
+
+
+export async function getDiscussions(
+  categoryTitle: string,
 ): Promise<Article[]> {
   const categoryTitleDecode = decodeURIComponent(categoryTitle);
-      console.log("categoryTitle", categoryTitle);
-            console.log("type", type);
+  console.log("categoryTitle", categoryTitle);
   try {
-    const articles = await prisma.article.findMany({
+    const articles = await prisma.discussion.findMany({
       where: {
         category: {
           name: categoryTitleDecode
         },
-        type: type,
       },
       select: {
         id: true,
@@ -173,13 +207,12 @@ export async function getArticlesByCategoryAndType(
       },
       take: 20
     });
-    console.log("articles", articles);
     return articles.map(article => ({
       ...article,
       title: article.title || 'Untitled' // Fallback for TypeScript
     })) as Article[];
   } catch (error) {
-    console.error(`Error fetching ${type} articles:`, error);
+    console.error(`Error fetching articles:`, error);
     throw error;
   }
 }
@@ -224,15 +257,15 @@ export async function NoteArticle(articleId: string, rating: number, userId: str
       rating,
     },
   });
-  
+
   console.log("Résultat après upsert:", result);
 
   console.log({
-  userId,
-  articleId,
-  rating,
-  type: typeof rating,
-});
+    userId,
+    articleId,
+    rating,
+    type: typeof rating,
+  });
 
   return { success: true };
 }
@@ -256,7 +289,7 @@ export async function getMissingArticleTypes(categoryName: string): Promise<Cont
 
   const categorieId = category.id
 
-  const [hasClassement, hasForum, hasApprentissage, hasMedia] = await Promise.all([
+  const [hasClassement, hasForum, hasApprentissage] = await Promise.all([
     prisma.articleClassementCategory.findFirst({
       where: {
         categoryId: categorieId,
@@ -265,24 +298,19 @@ export async function getMissingArticleTypes(categoryName: string): Promise<Cont
         articleId: true,
       },
     }),
-    prisma.article.findFirst({
-      where: { categoryId: categorieId, type: 'Forum' },
+    prisma.discussion.findFirst({
+      where: { categoryId: categorieId },
       select: { id: true },
     }),
-    prisma.article.findFirst({
-      where: { categoryId: categorieId, type: 'Apprentissage' },
+    prisma.tutorial.findFirst({
+      where: { categoryId: categorieId },
       select: { id: true },
-    }),
-    prisma.article.findFirst({
-      where: { categoryId: categorieId, type: 'Media' },
-      select: { id: true },
-    }),
+    })
   ])
 
   if (!hasClassement) typesManquants.push('Classement')
   if (!hasForum) typesManquants.push('Forum')
   if (!hasApprentissage) typesManquants.push('Apprentissage')
-  if (!hasMedia) typesManquants.push('Media')
 
   return typesManquants
 }

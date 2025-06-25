@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { getArticlesByCategoryAndType } from '@/lib/articles';
+import { getDiscussions } from '@/lib/articles';
 
 export default async function ForumPage({
   params
@@ -9,8 +9,8 @@ export default async function ForumPage({
 }) {
   const resolvedParams = await params;
   const name = decodeURIComponent(resolvedParams.name);
-  
-  const discussions = await getArticlesByCategoryAndType(name, 'Forum');
+
+  const discussions = await getDiscussions(name);
 
   return (
     <div className="mt-4">
@@ -18,8 +18,8 @@ export default async function ForumPage({
       <div className="space-y-3">
         {discussions.map((discussion) => (
           <div key={discussion.id} className="p-4 bg-white shadow-sm rounded-md border-l-4 border-blue-400">
-            <Link 
-              href={`/categories/${name}/${discussion.id}`} 
+            <Link
+              href={`/categories/${name}/${discussion.id}`}
               className="text-blue-500 font-medium hover:underline block mb-1"
             >
               {discussion.title}
@@ -34,7 +34,7 @@ export default async function ForumPage({
         {discussions.length === 0 && (
           <div className="bg-gray-50 p-6 rounded-md text-center">
             <p className="text-gray-600 mb-3">Aucune discussion n&apos;a encore été créée.</p>
-            <Link 
+            <Link
               href={`/categories/${name}/create-article?type=forum`}
               className="inline-block bg-blue-400 text-white px-4 py-2 rounded hover:bg-blue-500"
             >

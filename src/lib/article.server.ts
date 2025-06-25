@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { getCategoryById } from '@/lib/categories';
 import { ArticleSchema } from './articles';
+import { auth } from "@/auth";
 
 export type ActionState = {
   success: boolean;
@@ -20,7 +21,7 @@ export async function createArticle(
     ...formObject,
     isActive: true,
   };
-
+  console.log("try create category")
   // Validation avec schéma dynamique
   const validatedFields = ArticleSchema.safeParse(parsedData);
 
@@ -32,8 +33,25 @@ export async function createArticle(
     };
   }
 
+  const session = await auth();
+
+  if (!session || !session.user || !session.user.id) {
+    return {
+      success: false,
+      message: 'Utilisateur non authentifié',
+      errors: { general: ['Vous devez être connecté pour créer un article.'] },
+    };
+  }
+
+  const userId = session.user.id;
+
   const data = validatedFields.data;
   let categoryName: string | null = null; // 1. On stocke juste le nom nécessaire
+
+  const dataWithUser = {
+    ...data,
+    userId,
+  };
 
   try {
     // 2. Vérification et récupération de la catégorie
@@ -47,15 +65,43 @@ export async function createArticle(
     }
 
     categoryName = category.name; // 3. On conserve uniquement ce dont on a besoin
+    if (data.type === "Apprentissage") {
+      await prisma.tutorial.create({ data: dataWithUser });
+    } else if (data.type === "Forum") {
+      await prisma.discussion.create({ data: dataWithUser });
+    }
+    else if (data.type == "Classement") {
+      await prisma.articleClassement.create({ data: dataWithUser });
+    }
+    else {
 
-    await prisma.article.create({ data });
+    }
+
     revalidatePath(`/categories/${encodeURIComponent(categoryName)}/${data.type.toLowerCase()}`);
 
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Erreur complète Prisma :", error);
+
+      return {
+        success: false,
+        message: "Erreur lors de la création de l'article",
+        errors: {
+          general: [
+            error.message,
+          ],
+        },
+      };
+    }
+
+    // Si ce n’est pas une erreur JS classique
+    console.error("Erreur inconnue :", error);
     return {
       success: false,
-      message: "Erreur lors de la création de l'article",
-      errors: { general: [String(error)] },
+      message: "Erreur inconnue lors de la création",
+      errors: {
+        general: ["Une erreur inattendue s'est produite."],
+      },
     };
   }
 
