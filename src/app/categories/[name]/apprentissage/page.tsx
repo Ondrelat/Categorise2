@@ -6,9 +6,10 @@ import TutorialTabs from './TutorialTabs';
 export default async function ApprentissagePage({
   params
 }: {
-  params: { name: string };
+  params: Promise<{ name: string }>;
 }) {
-  const categoryName = decodeURIComponent(params.name);
+  const resolvedParams = await params;
+  const categoryName = decodeURIComponent(resolvedParams.name);
   const tutorialsByLevel = await getTutorialsByCategoryGroupedByLevel(categoryName);
 
   return (

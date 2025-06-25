@@ -40,7 +40,6 @@ export default function TutorialTabs({
                 <div className="space-y-6">
                     {tutorials.map((tuto) => (
                         <article key={tuto.id} className="bg-white border rounded-lg p-4 shadow-sm">
-                            <h3 className="text-lg font-semibold">{tuto.title}</h3>
                             <div className="prose mt-2">{tuto.content}</div>
                         </article>
                     ))}
