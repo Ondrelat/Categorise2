@@ -19,7 +19,7 @@ export default async function ForumPage({
         {discussions.map((discussion) => (
           <div key={discussion.id} className="p-4 bg-white shadow-sm rounded-md border-l-4 border-blue-400">
             <Link
-              href={`/categories/${name}/${discussion.id}`}
+              href={`/categories/${name}/forum/${discussion.id}`}
               className="text-blue-500 font-medium hover:underline block mb-1"
             >
               {discussion.title}

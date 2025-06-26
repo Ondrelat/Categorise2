@@ -217,6 +217,88 @@ export async function getDiscussions(
   }
 }
 
+type CommentWithUser = {
+  id: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
+  discussionId: string | null;
+  parentId: string | null;
+  userId: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  } | null;
+};
+
+type CommentWithReplies = CommentWithUser & {
+  replies: CommentWithReplies[];
+};
+
+
+export async function getDiscussionWithComments(id: string) {
+  const discussion = await prisma.discussion.findUnique({
+    where: { id }
+  });
+
+  if (!discussion) {
+    return null;
+  }
+
+  // Récupérer TOUS les commentaires de la discussion en une seule requête
+  const allComments = await prisma.comment.findMany({
+    where: {
+      discussionId: id,
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        }
+      }
+    },
+    orderBy: {
+      createdAt: 'asc'
+    }
+  });
+
+  // Créer un map pour accès rapide
+  const commentMap = new Map<string, CommentWithReplies>();
+  const rootComments: CommentWithReplies[] = [];
+
+  // Initialiser tous les commentaires avec un tableau replies vide
+  allComments.forEach(comment => {
+    commentMap.set(comment.id, { ...comment, replies: [] });
+  });
+
+  // Construire la hiérarchie
+  allComments.forEach(comment => {
+    const commentWithReplies = commentMap.get(comment.id);
+
+    if (commentWithReplies) {
+      if (comment.parentId === null) {
+        // Commentaire racine
+        rootComments.push(commentWithReplies);
+      } else {
+        // Commentaire de réponse - l'ajouter à son parent
+        const parent = commentMap.get(comment.parentId);
+        if (parent) {
+          parent.replies.push(commentWithReplies);
+        }
+      }
+    }
+  });
+
+  return {
+    ...discussion,
+    comments: rootComments
+  };
+}
+
 export async function likeArticle(articleId: string, liked: boolean, userId: string) {
   await prisma.articleClassementUserData.upsert({
     where: {

@@ -141,16 +141,22 @@ model Discussion {
 }
 
 model Comment {
-  id        String   @id @default(uuid())
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isActive  Boolean  @default(true)
-  userId    String
-
-  user         User        @relation(fields: [userId], references: [id])
-  Discussion   Discussion? @relation(fields: [discussionId], references: [id])
+  id           String   @id @default(uuid())
+  content      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  isActive     Boolean  @default(true)
+  userId       String
   discussionId String?
+
+  // Relations
+  user       User        @relation(fields: [userId], references: [id])
+  Discussion Discussion? @relation(fields: [discussionId], references: [id])
+
+  // Ajout pour les sous-commentaires
+  parentId String? // ID du commentaire parent, s'il s'agit d'une réponse
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies  Comment[] @relation("CommentReplies")
 
   @@map("comments")
 }
