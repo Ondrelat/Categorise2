@@ -5,53 +5,52 @@ import { useRouter, usePathname } from 'next/navigation';
 import { ARTICLE_TYPES, ContentSection } from '@/app/types';
 
 interface NavigatorSectionProps {
-  missingTypes?: ContentSection[]; // Types manquants passés directement en props
+    missingTypes?: ContentSection[]; // Types manquants passés directement en props
+    categoryName: string; // Nom de la catégorie
 }
 
-const NavigatorSection: React.FC<NavigatorSectionProps> = ({ missingTypes = [] }) => {
+const NavigatorSection: React.FC<NavigatorSectionProps> = ({ missingTypes = [], categoryName }) => {
     const router = useRouter();
     const pathname = usePathname();
-    
+
     // Calculer les sections disponibles (celles qui ne sont pas manquantes)
     const availableSections = ARTICLE_TYPES.filter(section => !missingTypes.includes(section));
-    
+
     // Mémoriser la fonction avec useCallback 
-    const getSectionFromPath = useCallback((): ContentSection => { 
-        if (!pathname) return availableSections[0] || 'Classement'; 
-         
-        const lastSegment = pathname.split('/').pop() || ''; 
-        const decodedSegment = decodeURIComponent(lastSegment); 
-         
+    const getSectionFromPath = useCallback((): ContentSection => {
+        if (!pathname) return availableSections[0] || 'Classement';
+
+        const lastSegment = pathname.split('/').pop() || '';
+        const decodedSegment = decodeURIComponent(lastSegment);
+
         // Vérifier si la section est disponible et dans l'URL
-        return availableSections.includes(decodedSegment as ContentSection)  
-            ? (decodedSegment as ContentSection)  
-            : availableSections[0] || 'Classement'; 
-    }, [pathname, availableSections]); 
-     
+        return availableSections.includes(decodedSegment as ContentSection)
+            ? (decodedSegment as ContentSection)
+            : availableSections[0] || 'Classement';
+    }, [pathname, availableSections]);
+
     // Initialiser activeSection avec la valeur correcte depuis l'URL 
     const [activeSection, setActiveSection] = useState<ContentSection>(getSectionFromPath());
     const [showMissingDropdown, setShowMissingDropdown] = useState(false);
- 
+
     // Mémoriser la fonction getBaseUrl avec useCallback - CORRIGÉ
-    const getBaseUrl = useCallback(() => { 
-        if(!pathname) return ''; 
-        
+    const getBaseUrl = useCallback(() => {
+        if (!pathname) return '';
+
         // Retirer le dernier segment pour obtenir l'URL de base
         const lastSlashIndex = pathname.lastIndexOf('/');
         return lastSlashIndex > 0 ? pathname.substring(0, lastSlashIndex) : '';
-    }, [pathname]); 
- 
-    const handleSectionClick = useCallback((section: ContentSection) => { 
-        setActiveSection(section); 
-        const baseUrl = getBaseUrl(); 
-        router.push(`${baseUrl}/${section.toLowerCase()}`); 
-    }, [getBaseUrl, router]); 
+    }, [pathname]);
+
+    const handleSectionClick = useCallback((section: ContentSection) => {
+        setActiveSection(section);
+        router.push(`/categories/${categoryName}/${section.toLowerCase()}`);
+    }, [getBaseUrl, router]);
 
     const handleAddMissingType = useCallback((missingType: ContentSection) => {
-        const baseUrl = getBaseUrl();
-        router.push(`${baseUrl}/create-article?type=${missingType}`);
+        router.push(`/categories/${categoryName}/create-article?type=${missingType}&category=${encodeURIComponent(categoryName)}`);
         setShowMissingDropdown(false);
-    }, [getBaseUrl, router]);
+    }, [getBaseUrl, router, categoryName]);
 
     // Si aucune section n'est disponible, afficher un message
     if (availableSections.length === 0) {
@@ -86,30 +85,29 @@ const NavigatorSection: React.FC<NavigatorSectionProps> = ({ missingTypes = [] }
             </div>
         );
     }
- 
-    return ( 
-        <div> 
-            <div className="flex mb-4 justify-between items-center"> 
-                <div className="flex items-center"> 
+
+    return (
+        <div>
+            <div className="flex mb-4 justify-between items-center">
+                <div className="flex items-center">
                     {/* Afficher uniquement les sections disponibles */}
                     {availableSections.map((section) => {
                         const isActive = activeSection === section;
-                        
+
                         return (
-                            <button 
-                                key={section} 
-                                className={`mr-2 px-4 py-2 rounded-md transition-all duration-200 ${
-                                    isActive 
-                                        ? 'bg-blue-400 text-white' 
-                                        : 'bg-gray-200 hover:bg-gray-300'
-                                }`}
+                            <button
+                                key={section}
+                                className={`mr-2 px-4 py-2 rounded-md transition-all duration-200 ${isActive
+                                    ? 'bg-blue-400 text-white'
+                                    : 'bg-gray-200 hover:bg-gray-300'
+                                    }`}
                                 onClick={() => handleSectionClick(section)}
-                            > 
+                            >
                                 {section.charAt(0).toUpperCase() + section.slice(1)}
                             </button>
                         );
                     })}
-                    
+
                     {/* Bouton + pour ajouter des types manquants */}
                     {missingTypes.length > 0 && (
                         <div className="relative ml-2">
@@ -135,10 +133,10 @@ const NavigatorSection: React.FC<NavigatorSectionProps> = ({ missingTypes = [] }
                             )}
                         </div>
                     )}
-                </div> 
-            </div> 
-        </div> 
-    ); 
-}; 
- 
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export default NavigatorSection;

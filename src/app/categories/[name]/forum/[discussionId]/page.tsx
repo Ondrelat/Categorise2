@@ -9,9 +9,10 @@ import CommentThread from './CommentThread';
 export default async function DiscussionDetailPage({
     params,
 }: {
-    params: { name: string; discussionId: string };
+    params: Promise<{ name: string; discussionId: string }>;
 }) {
-    const { name, discussionId } = params;
+    const { name, discussionId } = await params;
+
 
     const discussion = await getDiscussionWithComments(discussionId);
 

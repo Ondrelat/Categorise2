@@ -4,11 +4,11 @@ import SideBar from '@/components/Category/Sidebar';
 import NavigatorSection from '@/components/Category/NavigatorSection';
 import { getMissingArticleTypes } from '@/lib/articles';
 
-export default async function CategoryLayout({ 
+export default async function CategoryLayout({
   children,
-  params 
-}: { 
-  children: React.ReactNode, 
+  params
+}: {
+  children: React.ReactNode,
   params: Promise<{ name: string }>;
 }) {
   const resolvedParams = await params;
@@ -24,7 +24,7 @@ export default async function CategoryLayout({
         <div className="w-[800px] ml-4">
           <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold mb-6">{name}</h1>
-              <NavigatorSection missingTypes={missingTypes} />
+            <NavigatorSection missingTypes={missingTypes} categoryName={name} />
             {children}
           </div>
         </div>
