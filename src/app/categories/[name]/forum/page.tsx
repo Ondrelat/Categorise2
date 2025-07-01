@@ -34,14 +34,14 @@ export default async function ForumPage({
         {discussions.length === 0 && (
           <div className="bg-gray-50 p-6 rounded-md text-center">
             <p className="text-gray-600 mb-3">Aucune discussion n&apos;a encore été créée.</p>
-            <Link
-              href={`/categories/${name}/create-article?type=forum`}
-              className="inline-block bg-blue-400 text-white px-4 py-2 rounded hover:bg-blue-500"
-            >
-              Créer une nouvelle discussion
-            </Link>
+
           </div>
-        )}
+        )} <Link
+          href={`/categories/${name}/create-article?type=forum`}
+          className="inline-block bg-blue-400 text-white px-4 py-2 rounded hover:bg-blue-500"
+        >
+          Créer une nouvelle discussion
+        </Link>
       </div>
     </div>
   );
