@@ -89,18 +89,19 @@ enum ArticleLevel {
 }
 
 model Tutorial {
-  id         String         @id @default(uuid())
-  title      String?
-  content    String
-  slug       String?        @unique
-  imageUrl   String?
-  type       String
-  status     ArticleStatus? @default(DRAFT)
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-  categoryId String
-  isActive   Boolean        @default(true)
-  level      ArticleLevel?
+  id          String         @id @default(uuid())
+  title       String?
+  content     String?
+  contentJson Json?
+  slug        String?        @unique
+  imageUrl    String?
+  type        String
+  status      ArticleStatus? @default(DRAFT)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  categoryId  String
+  isActive    Boolean        @default(true)
+  level       ArticleLevel?
 
   userId String
 
@@ -122,16 +123,17 @@ model Tutorial {
 }
 
 model Discussion {
-  id         String   @id @default(uuid())
-  title      String?
-  content    String
-  imageUrl   String?
-  type       String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  categoryId String
-  isActive   Boolean  @default(true)
-  userId     String
+  id          String   @id @default(uuid())
+  title       String?
+  content     String?
+  contentJson Json?
+  imageUrl    String?
+  type        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  categoryId  String
+  isActive    Boolean  @default(true)
+  userId      String
 
   user     User       @relation(fields: [userId], references: [id])
   category Categories @relation(fields: [categoryId], references: [id])
@@ -142,7 +144,8 @@ model Discussion {
 
 model Comment {
   id           String   @id @default(uuid())
-  content      String
+  content      String?
+  contentJson  Json?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   isActive     Boolean  @default(true)

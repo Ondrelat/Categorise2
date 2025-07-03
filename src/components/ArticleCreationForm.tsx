@@ -174,7 +174,7 @@ export default function ArticleCreationForm({ categoryId, categoryName }: Articl
               onChange={handleChange}
               placeholder="Rédigez le contenu de votre article..."
             />
-            <input type="hidden" name="content" value={contentValue} />
+            <input type="hidden" name="contentJson" value={contentValue} />
           </div>
           <p className="mt-1 text-sm text-gray-500">
             Utilisez les outils de formatage pour styliser votre contenu.

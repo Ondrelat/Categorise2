@@ -5,6 +5,19 @@ import { getDiscussionWithComments } from '@/lib/articles';
 import Link from 'next/link';
 import CommentForm from './CommentForm';
 import CommentThread from './CommentThread';
+import LexicalViewer from "@/components/LexicalViewer";
+import type { SerializedLexicalNode } from "lexical";
+
+export type SerializedEditorState = {
+    root: {
+        children: SerializedLexicalNode[];
+        direction?: string;
+        format?: string;
+        indent?: number;
+        type: "root";
+        version: number;
+    };
+};
 
 export default async function DiscussionDetailPage({
     params,
@@ -32,7 +45,11 @@ export default async function DiscussionDetailPage({
 
             <article className="bg-white p-6 rounded shadow">
                 <h1 className="text-2xl font-bold mb-2">{discussion.title}</h1>
-                <div className="text-gray-700 prose">{discussion.content}</div>
+                {discussion.contentJson ? (
+                    <LexicalViewer initialJson={discussion.contentJson as SerializedEditorState} />
+                ) : (
+                    <p className="text-gray-500 italic">Aucun contenu</p>
+                )}
                 <div className="text-sm text-gray-400 mt-4">
                     Publié le {new Date(discussion.createdAt).toLocaleDateString()}
                 </div>

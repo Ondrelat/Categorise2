@@ -8,7 +8,7 @@ import { ContentSection } from '@/app/types';
 
 export const BaseSchema = z.object({
   // Remove type from here if it's defined
-  content: z.string().min(10),
+  contentJson: z.string().min(10),
   categoryId: z.string(),
   isActive: z.boolean().default(true),
 });
