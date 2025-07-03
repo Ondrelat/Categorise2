@@ -182,38 +182,29 @@ export async function getTutorialsByCategoryGroupedByLevel(categoryTitle: string
   return grouped;
 }
 
-
-
-export async function getDiscussions(
-  categoryTitle: string,
-): Promise<Article[]> {
+export async function getDiscussions(categoryTitle: string): Promise<Article[]> {
   const categoryTitleDecode = decodeURIComponent(categoryTitle);
-  console.log("categoryTitle", categoryTitle);
+
   try {
-    const articles = await prisma.discussion.findMany({
-      where: {
-        category: {
-          name: categoryTitleDecode
-        },
-      },
-      select: {
-        id: true,
-        title: true,
-        type: true,
-        createdAt: true
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: 20
-    });
-    return articles.map(article => ({
-      ...article,
-      title: article.title || 'Untitled' // Fallback for TypeScript
-    })) as Article[];
+    const query = `
+      SELECT 
+        d.id,
+        COALESCE(d.title, 'Untitled') AS title,
+        d.type,
+        d."createdAt"
+      FROM "discussion" d
+      INNER JOIN "category" c ON d."categoryId" = c.id
+      WHERE c.name = $1
+      ORDER BY d."createdAt" DESC
+      LIMIT 20
+    `;
+
+    const discussions = await prisma.$queryRawUnsafe<Article[]>(query, categoryTitleDecode);
+
+    return discussions;
   } catch (error) {
-    console.error(`Error fetching articles:`, error);
-    throw error;
+    console.error(`Erreur lors de la récupération des discussions:`, error);
+    throw new Error('Erreur lors de la récupération des discussions');
   }
 }
 
@@ -353,9 +344,10 @@ export async function NoteArticle(articleId: string, rating: number, userId: str
 }
 
 export async function getMissingArticleTypes(categoryName: string): Promise<ContentSection[]> {
-  const typesManquants: ContentSection[] = []
+  const startTime = performance.now(); // Timer global
 
-  // D'abord, récupérer la catégorie par son nom
+  const typesManquants: ContentSection[] = [];
+
   const category = await prisma.categories.findFirst({
     where: {
       name: categoryName,
@@ -363,13 +355,13 @@ export async function getMissingArticleTypes(categoryName: string): Promise<Cont
     select: {
       id: true,
     },
-  })
+  });
 
   if (!category) {
-    throw new Error(`Category with name "${categoryName}" not found`)
+    throw new Error(`Category with name "${categoryName}" not found`);
   }
 
-  const categorieId = category.id
+  const categorieId = category.id;
 
   const [hasClassement, hasForum, hasApprentissage] = await Promise.all([
     prisma.articleClassementCategory.findFirst({
@@ -388,11 +380,14 @@ export async function getMissingArticleTypes(categoryName: string): Promise<Cont
       where: { categoryId: categorieId },
       select: { id: true },
     })
-  ])
+  ]);
 
-  if (!hasClassement) typesManquants.push('Classement')
-  if (!hasForum) typesManquants.push('Forum')
-  if (!hasApprentissage) typesManquants.push('Apprentissage')
+  if (!hasClassement) typesManquants.push('Classement');
+  if (!hasForum) typesManquants.push('Forum');
+  if (!hasApprentissage) typesManquants.push('Apprentissage');
 
-  return typesManquants
+  const executionTime = performance.now() - startTime;
+  console.log(`getMissingArticleTypes - Temps d'exécution: ${executionTime.toFixed(2)}ms`);
+
+  return typesManquants;
 }

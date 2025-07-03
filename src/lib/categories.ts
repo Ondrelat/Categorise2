@@ -196,7 +196,6 @@ export async function createCategory(data: {
   'use server';
 
   const { name, parentCategoryName = null, description = '', isActive = true } = data;
-  console.log('parentCategoryName:', parentCategoryName);
   try {
     // Validation des données
     if (!name) {

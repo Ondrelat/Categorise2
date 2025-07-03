@@ -9,18 +9,16 @@ interface CreateCategoryFormProps {
   parentCategoryName: string | null | undefined;
 }
 
-export default function CreateCategoryForm({ 
-  isOndrelat, 
-  parentCategoryName, 
+export default function CreateCategoryForm({
+  isOndrelat,
+  parentCategoryName,
 }: CreateCategoryFormProps) {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [addCategoryError, setAddCategoryError] = useState<string | null>(null);
   const [addingCategoryLoading, setAddingCategoryLoading] = useState(false);
-  
-  const router = useRouter();
 
-  console.log("parentCategoryName:", parentCategoryName);
+  const router = useRouter();
 
   // Générer automatiquement un name à partir du nom
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,34 +29,34 @@ export default function CreateCategoryForm({
   // Fonction pour créer une nouvelle catégorie
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Vérification des permissions
     if (!isOndrelat) {
       setAddCategoryError("Vous n'avez pas les permissions pour créer des catégories");
       return;
     }
-    
+
     if (!newCategoryName.trim()) {
       setAddCategoryError('Le nom et le name sont requis');
       return;
     }
-    
+
     setAddingCategoryLoading(true);
     setAddCategoryError(null);
-    
+
     try {
       const result = await createCategory({
         name: newCategoryName.trim(),
         parentCategoryName: parentCategoryName || null
       });
-      
+
       if (result.success && result.data) {
         setNewCategoryName('');
         setIsAddingCategory(false);
-        
+
         // Force un rafraîchissement complet
         router.refresh();
-        
+
         // Méthode 1: Redirection vers la nouvelle catégorie créée
         if (parentCategoryName) {
           // Naviguer vers la sous-catégorie nouvellement créée
@@ -95,14 +93,14 @@ export default function CreateCategoryForm({
           </button>
         </div>
       )}
-      
+
       {/* Formulaire d'ajout de catégorie */}
       {isAddingCategory && isOndrelat && (
         <div className="bg-gray-50 p-4 rounded-md mb-6 border border-gray-200">
           <h3 className="text-lg font-medium mb-3">
             {parentCategoryName ? `Ajouter une sous-catégorie à "${parentCategoryName}"` : 'Ajouter une catégorie'}
           </h3>
-          
+
           <form onSubmit={handleCreateCategory} className="space-y-4">
             <div>
               <label htmlFor="categoryName" className="block text-sm font-medium text-gray-700 mb-1">
@@ -118,13 +116,13 @@ export default function CreateCategoryForm({
                 required
               />
             </div>
-            
+
             {addCategoryError && (
               <div className="p-2 bg-red-50 text-red-500 text-sm rounded-md border border-red-200">
                 {addCategoryError}
               </div>
             )}
-            
+
             <div className="flex justify-end">
               <button
                 type="button"
