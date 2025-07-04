@@ -1,6 +1,6 @@
 // app/lib/articles.ts
 import prisma from './db/db';
-import { articleClassement, Article } from '@/app/types';
+import { articleClassement, Article, CommentWithReplies } from '@/app/types';
 
 import { z } from 'zod';
 import { ContentSection } from '@/app/types';
@@ -160,7 +160,7 @@ export async function getTutorialsByCategoryGroupedByLevel(categoryTitle: string
     select: {
       id: true,
       title: true,
-      content: true,
+      contentJson: true,
       level: true
     },
     orderBy: {
@@ -182,51 +182,40 @@ export async function getTutorialsByCategoryGroupedByLevel(categoryTitle: string
   return grouped;
 }
 
-export async function getDiscussions(categoryTitle: string): Promise<Article[]> {
+
+export async function getDiscussions(
+  categoryTitle: string,
+): Promise<Article[]> {
   const categoryTitleDecode = decodeURIComponent(categoryTitle);
-
+  console.log("categoryTitle", categoryTitle);
   try {
-    const query = `
-      SELECT 
-        d.id,
-        COALESCE(d.title, 'Untitled') AS title,
-        d.type,
-        d."createdAt"
-      FROM "discussion" d
-      INNER JOIN "category" c ON d."categoryId" = c.id
-      WHERE c.name = $1
-      ORDER BY d."createdAt" DESC
-      LIMIT 20
-    `;
-
-    const discussions = await prisma.$queryRawUnsafe<Article[]>(query, categoryTitleDecode);
-
-    return discussions;
+    const articles = await prisma.discussion.findMany({
+      where: {
+        category: {
+          name: categoryTitleDecode
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        type: true,
+        createdAt: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      take: 20
+    });
+    return articles.map(article => ({
+      ...article,
+      title: article.title || 'Untitled' // Fallback for TypeScript
+    })) as Article[];
   } catch (error) {
-    console.error(`Erreur lors de la récupération des discussions:`, error);
-    throw new Error('Erreur lors de la récupération des discussions');
+    console.error(`Error fetching articles:`, error);
+    throw error;
   }
 }
 
-type CommentWithUser = {
-  id: string;
-  content: string;
-  createdAt: Date;
-  updatedAt: Date;
-  isActive: boolean;
-  discussionId: string | null;
-  parentId: string | null;
-  userId: string;
-  user: {
-    id: string;
-    name: string | null;
-    email: string | null;
-  } | null;
-};
-
-type CommentWithReplies = CommentWithUser & {
-  replies: CommentWithReplies[];
-};
 
 
 export async function getDiscussionWithComments(id: string) {

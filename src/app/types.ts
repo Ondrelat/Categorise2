@@ -1,4 +1,4 @@
-
+import type { JsonValue } from '@prisma/client/runtime/library';
 
 export interface Category {
   id: string;
@@ -54,6 +54,27 @@ export interface CreateCategoryResponse {
   message: string;
   data?: CategoryTreeItem;
 }
+
+type CommentWithUser = {
+  id: string;
+  content?: string | null | undefined;
+  contentJson?: JsonValue | null | undefined // Au lieu de JSON
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
+  discussionId: string | null;
+  parentId: string | null;
+  userId: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  } | null;
+};
+
+export type CommentWithReplies = CommentWithUser & {
+  replies: CommentWithReplies[];
+};
 
 export const ARTICLE_TYPES = [
   'Classement',
