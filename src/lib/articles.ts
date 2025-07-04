@@ -334,7 +334,6 @@ export async function NoteArticle(articleId: string, rating: number, userId: str
 
 export async function getMissingArticleTypes(categoryName: string): Promise<ContentSection[]> {
   const startTime = performance.now(); // Timer global
-
   const typesManquants: ContentSection[] = [];
 
   const category = await prisma.categories.findFirst({
