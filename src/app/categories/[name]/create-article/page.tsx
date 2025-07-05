@@ -4,16 +4,16 @@ import ArticleCreationForm from '@/components/ArticleCreationForm';
 import { getCategoryByName } from '@/lib/categories';
 
 export default async function CreateArticlePage({
-    params
+  params
 }: {
   params: Promise<{ name: string }>;
 }) {
   const resolvedParams = await params;
   const name = decodeURIComponent(resolvedParams.name);
   const category = await getCategoryByName(name);
-  
+
   console.log("create dans " + category?.name);
-  
+
   if (!category) {
     notFound();
   }
@@ -23,9 +23,9 @@ export default async function CreateArticlePage({
       <h1 className="text-3xl font-bold mb-6">
         Créer un article pour {category.name}
       </h1>
-      <ArticleCreationForm 
-        categoryId={category.id.toString()} 
-        categoryName={category.name}
+      <ArticleCreationForm
+        categoryId={category.id.toString()}
+        categoryName={category.name!}
       />
     </div>
   );
