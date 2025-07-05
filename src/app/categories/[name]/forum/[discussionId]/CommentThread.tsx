@@ -3,17 +3,7 @@
 
 import { useState } from 'react';
 import CommentForm from './CommentForm';
-
-interface Comment {
-    id: string;
-    content: string;
-    createdAt: Date;
-    user: {
-        name: string | null;
-        email: string | null;
-    } | null;
-    replies: Comment[];
-}
+import { Comment } from '@/app/types';
 
 interface CommentThreadProps {
     comment: Comment;

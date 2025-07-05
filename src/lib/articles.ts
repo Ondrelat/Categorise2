@@ -1,6 +1,6 @@
 // app/lib/articles.ts
 import prisma from './db/db';
-import { articleClassement, Article, CommentWithReplies } from '@/app/types';
+import { articleClassement, Article, Comment } from '@/app/types';
 
 import { z } from 'zod';
 import { ContentSection } from '@/app/types';
@@ -227,7 +227,7 @@ export async function getDiscussionWithComments(id: string) {
     return null;
   }
 
-  // Récupérer TOUS les commentaires de la discussion en une seule requête
+  // Récupérer tous les commentaires associés à la discussion
   const allComments = await prisma.comment.findMany({
     where: {
       discussionId: id,
@@ -246,25 +246,22 @@ export async function getDiscussionWithComments(id: string) {
     }
   });
 
-  // Créer un map pour accès rapide
-  const commentMap = new Map<string, CommentWithReplies>();
-  const rootComments: CommentWithReplies[] = [];
+  const commentMap = new Map<string, Comment>();
+  const rootComments: Comment[] = [];
 
-  // Initialiser tous les commentaires avec un tableau replies vide
+  // Ajouter le champ replies manuellement
   allComments.forEach(comment => {
     commentMap.set(comment.id, { ...comment, replies: [] });
   });
 
-  // Construire la hiérarchie
+  // Organiser les commentaires en arbre
   allComments.forEach(comment => {
     const commentWithReplies = commentMap.get(comment.id);
 
     if (commentWithReplies) {
       if (comment.parentId === null) {
-        // Commentaire racine
         rootComments.push(commentWithReplies);
       } else {
-        // Commentaire de réponse - l'ajouter à son parent
         const parent = commentMap.get(comment.parentId);
         if (parent) {
           parent.replies.push(commentWithReplies);

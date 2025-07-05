@@ -55,10 +55,10 @@ export interface CreateCategoryResponse {
   data?: CategoryTreeItem;
 }
 
-type CommentWithUser = {
+export interface Comment {
   id: string;
-  content?: string | null | undefined;
-  contentJson?: JsonValue | null | undefined // Au lieu de JSON
+  content?: string | null;
+  contentJson?: JsonValue | null;
   createdAt: Date;
   updatedAt: Date;
   isActive: boolean;
@@ -70,11 +70,8 @@ type CommentWithUser = {
     name: string | null;
     email: string | null;
   } | null;
-};
-
-export type CommentWithReplies = CommentWithUser & {
-  replies: CommentWithReplies[];
-};
+  replies: Comment[]; // récursivité directe
+}
 
 export const ARTICLE_TYPES = [
   'Classement',
