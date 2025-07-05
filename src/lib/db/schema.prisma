@@ -77,6 +77,11 @@ model Categories {
   tutorials          Tutorial[]
   userLists          UserList[]
   articlesClassement ArticleClassementCategory[]
+
+  @@index([parentId])
+  @@index([name])
+  @@index([isActive])
+  @@index([slug]) // Utile si vous faites des recherches par slug
 }
 
 enum ArticleStatus {

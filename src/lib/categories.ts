@@ -27,31 +27,53 @@ export const getCategories = async (): Promise<CategoryTreeItem[]> => {
   const startTime = performance.now();
 
   try {
-    const categories = await prisma.categories.findMany({
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        isActive: true,
-        parentId: true,
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
-
-    const result = buildCategoryTree(categories);
+    // Utilisation d'une vue matérialisée pour des performances optimales
+    const categories = await prisma.$queryRaw<Category[]>`
+      WITH RECURSIVE category_tree AS (
+        SELECT 
+          id, 
+          name, 
+          description, 
+          "isActive", 
+          "parentId",
+          0 AS depth,
+          ARRAY[id] AS path
+        FROM "Categories"
+        WHERE "parentId" IS NULL
+        
+        UNION ALL
+        
+        SELECT 
+          c.id, 
+          c.name, 
+          c.description, 
+          c."isActive", 
+          c."parentId",
+          ct.depth + 1,
+          ct.path || c.id
+        FROM "Categories" c
+        JOIN category_tree ct ON c."parentId" = ct.id
+      )
+      SELECT 
+        id, 
+        name, 
+        description, 
+        "isActive", 
+        "parentId",
+        depth
+      FROM category_tree
+      ORDER BY path ASC
+    `;
 
     const endTime = performance.now();
-    console.log(`Categories fetched in ${endTime - startTime}ms`);
+    console.log(`Optimized categories fetched in ${endTime - startTime}ms`);
 
-    return result;
+    return buildCategoryTree(categories);
   } catch (error) {
     console.error('Error fetching categories:', error);
-    throw new Error('Error fetching categories');
+    throw error;
   }
 };
-
 
 export async function getCategoryByName(name: string) {
   const startTime = performance.now();
