@@ -1,6 +1,5 @@
 // app/classement/[name]/page.tsx
 import ClientOfficialClassement from './ClientOfficialClassement';
-import { articleClassementInMyList } from '@/app/types';
 import { auth } from "@/auth"
 import { getclassementsSortedByRating } from '@/lib/articles';
 import { fetchMyList } from '@/lib/myList';
@@ -15,23 +14,21 @@ export default async function ClassementPage({
 
   const ratingSource = 'categorise';
 
-const session = await auth()
+  const session = await auth()
   const userId = session?.user?.id as string | undefined;
 
-  const officialClassement = await getclassementsSortedByRating(categoryName, ratingSource, userId);
-
-
-  const myList: articleClassementInMyList[] = userId
-    ? await fetchMyList(userId, categoryName)
-    : [];
+  const [officialClassement, myList] = await Promise.all([
+    getclassementsSortedByRating(categoryName, ratingSource, userId),
+    userId ? fetchMyList(userId, categoryName) : Promise.resolve([])
+  ]);
 
   return (
-<ClientOfficialClassement
-  categoryName={categoryName}
-  OfficialClassement={officialClassement}
-  initialRatingSource={ratingSource}
-  isAuthenticated={!!userId}
-  MyList={myList}
-/>
+    <ClientOfficialClassement
+      categoryName={categoryName}
+      OfficialClassement={officialClassement}
+      initialRatingSource={ratingSource}
+      isAuthenticated={!!userId}
+      MyList={myList}
+    />
   );
 }
