@@ -77,7 +77,7 @@ export async function createArticle(
 
     }
 
-    revalidatePath(`/categories/${encodeURIComponent(categoryName)}/${data.type.toLowerCase()}`);
+    revalidatePath(`/categories/${encodeURIComponent(categoryName!)}/${data.type.toLowerCase()}`);
 
   } catch (error: unknown) {
     if (error instanceof Error) {
