@@ -2,7 +2,7 @@ import type { JsonValue } from '@prisma/client/runtime/library';
 
 export interface Category {
   id: string;
-  name: string;
+  name?: string | null | undefined;  // Changé de name à name?
   description: string;
   parentId?: string | null;  // Changé de parentId à parentCategory
   parentCategory?: string | null;  // Changé de parentId à parentCategory

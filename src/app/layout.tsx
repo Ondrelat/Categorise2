@@ -1,27 +1,28 @@
+// layout.tsx
 import { Inter } from "next/font/google";
 import "./globals.css";
-import SessionWrapper from '../components/sessionWraper';
+import SessionProviderWrapper from '../components/sessionWrapper';
 import Navbar from '@/components/ui/navbar';
 import Footer from './footer';
 
-
 const inter = Inter({ subsets: ["latin"] });
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
+export const metadata = {
+  title: "Categorise - Renseignez-vous sur tous les sujets",
+  description: "Une plateforme pour explorer, apprendre et classer des sujets.",
+};
 
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className="h-full">
-      <head>
-        <title>Categorise - Renseignez-vous sur tous les sujets</title>
-      </head>
       <body className={`${inter.className} bg-gray-50 flex flex-col min-h-screen`}>
-        <SessionWrapper>
+        <SessionProviderWrapper>
           <div className="flex flex-col min-h-screen">
             <Navbar />
-              {children}
+            {children}
             <Footer />
           </div>
-        </SessionWrapper>
+        </SessionProviderWrapper>
       </body>
     </html>
   );

@@ -2,7 +2,6 @@
 
 import prisma from './db/db';
 import { revalidatePath } from 'next/cache';
-import { cache } from 'react';
 import { Category, CategoryTreeItem } from '@/app/types';
 
 
@@ -14,19 +13,28 @@ const buildCategoryTree = (
     .filter(cat => cat.parentId === parentId)
     .map(cat => ({
       id: cat.id,
-      name: cat.name,
+      // Forcer name non nullable
+      name: cat.name ?? "",
       description: cat.description ?? "",
-      isActive: cat.isActive ?? false, // Ensure it's always boolean
-      parentId: cat.parentId,
+      isActive: cat.isActive ?? false,
+      // Forcer parentId non nullable (ou null si tu préfères)
+      parentId: cat.parentId ?? null,
       subcategories: buildCategoryTree(categories, cat.id)
     }));
 };
 
-export const getCategories = cache(async (): Promise<CategoryTreeItem[]> => {
+export const getCategories = async (): Promise<CategoryTreeItem[]> => {
   const startTime = performance.now();
 
   try {
     const categories = await prisma.categories.findMany({
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        isActive: true,
+        parentId: true,
+      },
       orderBy: {
         name: 'asc',
       },
@@ -42,7 +50,8 @@ export const getCategories = cache(async (): Promise<CategoryTreeItem[]> => {
     console.error('Error fetching categories:', error);
     throw new Error('Error fetching categories');
   }
-});
+};
+
 
 export async function getCategoryByName(name: string) {
   const startTime = performance.now();

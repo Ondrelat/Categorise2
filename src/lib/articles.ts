@@ -333,15 +333,24 @@ export async function NoteArticle(articleId: string, rating: number, userId: str
 }
 
 export async function getMissingArticleTypes(categoryName: string): Promise<ContentSection[]> {
-  const startTime = performance.now(); // Timer global
+  const startTime = performance.now();
   const typesManquants: ContentSection[] = [];
 
   const category = await prisma.categories.findFirst({
-    where: {
-      name: categoryName,
-    },
-    select: {
-      id: true,
+    where: { name: categoryName },
+    include: {
+      articlesClassement: {
+        select: { articleId: true },
+        take: 1,
+      },
+      discussions: {
+        select: { id: true },
+        take: 1,
+      },
+      tutorials: {
+        select: { id: true },
+        take: 1,
+      },
     },
   });
 
@@ -349,30 +358,9 @@ export async function getMissingArticleTypes(categoryName: string): Promise<Cont
     throw new Error(`Category with name "${categoryName}" not found`);
   }
 
-  const categorieId = category.id;
-
-  const [hasClassement, hasForum, hasApprentissage] = await Promise.all([
-    prisma.articleClassementCategory.findFirst({
-      where: {
-        categoryId: categorieId,
-      },
-      select: {
-        articleId: true,
-      },
-    }),
-    prisma.discussion.findFirst({
-      where: { categoryId: categorieId },
-      select: { id: true },
-    }),
-    prisma.tutorial.findFirst({
-      where: { categoryId: categorieId },
-      select: { id: true },
-    })
-  ]);
-
-  if (!hasClassement) typesManquants.push('Classement');
-  if (!hasForum) typesManquants.push('Forum');
-  if (!hasApprentissage) typesManquants.push('Apprentissage');
+  if (category.articlesClassement.length === 0) typesManquants.push('Classement');
+  if (category.discussions.length === 0) typesManquants.push('Forum');
+  if (category.tutorials.length === 0) typesManquants.push('Apprentissage');
 
   const executionTime = performance.now() - startTime;
   console.log(`getMissingArticleTypes - Temps d'exécution: ${executionTime.toFixed(2)}ms`);

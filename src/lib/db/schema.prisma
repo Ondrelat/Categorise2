@@ -62,7 +62,11 @@ model VerificationToken {
 
 model Categories {
   id                 String                      @id @default(uuid())
-  name               String
+  name               String?
+  name_en            String?
+  slug               String?                     @unique
+  imageUrl           String?
+  createdAt          DateTime?                   @default(now())
   description        String
   parentId           String?
   updatedAt          DateTime                    @updatedAt

@@ -25,7 +25,9 @@ export default async function CategoryLayout({
   children: React.ReactNode,
   params: { name: string };
 }) {
-  const name = decodeURIComponent(params.name);
+  const resolvedParams = await params;
+  const name = decodeURIComponent(resolvedParams.name);
+
 
   return (
     <div className="w-[800px] ml-4">
