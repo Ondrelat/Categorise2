@@ -2,7 +2,7 @@ import React from 'react';
 import { getCategories } from '@/lib/categories';
 import CategoryActions from './CategoryActions';
 import { cache } from 'react';
-import { auth } from '@/auth';
+import { getSession } from '@/lib/session';
 
 // Utiliser la fonction cache de React pour mémoriser l'appel à getCategories
 const getCachedCategories = cache(async () => {
@@ -16,7 +16,9 @@ interface CategoryTreeProps {
 export default async function CategoryTree({ categoryName }: CategoryTreeProps) {
   // Utiliser la version mise en cache de getCategories
   const categories = await getCachedCategories();
-  const session = await auth(); // ou getServerSession()
+
+  const session = await getSession();
+
 
   return (
     <CategoryActions

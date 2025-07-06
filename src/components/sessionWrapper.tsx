@@ -1,5 +1,7 @@
 // components/sessionWrapper.tsx
-import { auth } from '@/auth';
+
+import { getSession } from '@/lib/session';
+
 import { SessionProvider } from 'next-auth/react';
 import { ReactNode } from 'react';
 
@@ -8,7 +10,9 @@ interface SessionProviderWrapperProps {
 }
 
 export default async function SessionProviderWrapper({ children }: SessionProviderWrapperProps) {
-  const session = await auth();
+
+
+  const session = await getSession();
 
   return (
     <SessionProvider

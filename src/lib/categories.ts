@@ -1,101 +1,179 @@
 'use server';
 
 import prisma from './db/db';
-import { revalidatePath } from 'next/cache';
+
+import { unstable_cache, revalidatePath } from 'next/cache';
 import { Category, CategoryTreeItem } from '@/app/types';
 
+// Cache optimisé pour les catégories avec typage strict
+const getCachedCategories = unstable_cache(
+  async (): Promise<Category[]> => {
+    const startTime = performance.now();
 
-const buildCategoryTree = (
-  categories: Category[],
-  parentId: string | null = null
-): CategoryTreeItem[] => {
-  return categories
-    .filter(cat => cat.parentId === parentId)
-    .map(cat => ({
-      id: cat.id,
-      // Forcer name non nullable
-      name: cat.name ?? "",
-      description: cat.description ?? "",
-      isActive: cat.isActive ?? false,
-      // Forcer parentId non nullable (ou null si tu préfères)
-      parentId: cat.parentId ?? null,
-      subcategories: buildCategoryTree(categories, cat.id)
-    }));
-};
-
-export const getCategories = async (): Promise<CategoryTreeItem[]> => {
-  const startTime = performance.now();
-
-  try {
-    // Utilisation d'une vue matérialisée pour des performances optimales
-    const categories = await prisma.$queryRaw<Category[]>`
-      WITH RECURSIVE category_tree AS (
+    try {
+      const categories = await prisma.$queryRaw<Category[]>`
+        WITH RECURSIVE category_tree AS (
+          SELECT 
+            id, 
+            name, 
+            description, 
+            "isActive", 
+            "parentId",
+            0 AS depth,
+            ARRAY[id] AS path
+          FROM "Categories"
+          WHERE "parentId" IS NULL 
+            AND "isActive" = true
+        
+          UNION ALL
+        
+          SELECT 
+            c.id, 
+            c.name, 
+            c.description, 
+            c."isActive", 
+            c."parentId",
+            ct.depth + 1,
+            ct.path || c.id
+          FROM "Categories" c
+          JOIN category_tree ct ON c."parentId" = ct.id
+          WHERE c."isActive" = true
+        )
         SELECT 
           id, 
           name, 
           description, 
           "isActive", 
           "parentId",
-          0 AS depth,
-          ARRAY[id] AS path
-        FROM "Categories"
-        WHERE "parentId" IS NULL
-        
-        UNION ALL
-        
-        SELECT 
-          c.id, 
-          c.name, 
-          c.description, 
-          c."isActive", 
-          c."parentId",
-          ct.depth + 1,
-          ct.path || c.id
-        FROM "Categories" c
-        JOIN category_tree ct ON c."parentId" = ct.id
-      )
-      SELECT 
-        id, 
-        name, 
-        description, 
-        "isActive", 
-        "parentId",
-        depth
-      FROM category_tree
-      ORDER BY path ASC
-    `;
+          depth
+        FROM category_tree
+        ORDER BY path ASC
+      `;
 
-    const endTime = performance.now();
-    console.log(`Optimized categories fetched in ${endTime - startTime}ms`);
+      const endTime = performance.now();
+      console.log(`Optimized categories fetched in ${endTime - startTime}ms`);
 
+      return categories;
+    } catch (error: unknown) {
+      console.error('Error fetching categories:', error);
+      throw error;
+    }
+  },
+  ['categories-tree'],
+  {
+    revalidate: 3600,
+    tags: ['categories']
+  }
+);
+
+// Fonction optimisée pour construire l'arbre avec typage strict
+const buildCategoryTree = (
+  categories: Category[],
+  parentId: string | null = null
+): CategoryTreeItem[] => {
+  // Créer une Map avec clé strictement typée
+  const categoryMap = new Map<string | null, Category[]>();
+
+  // Grouper les catégories par parentId avec gestion stricte des undefined
+  categories.forEach(cat => {
+    // Conversion explicite : undefined devient null
+    const key: string | null = cat.parentId ?? null;
+
+    if (!categoryMap.has(key)) {
+      categoryMap.set(key, []);
+    }
+    categoryMap.get(key)!.push(cat);
+  });
+
+  // Fonction récursive avec typage strict
+  const buildTree = (currentParentId: string | null): CategoryTreeItem[] => {
+    const children = categoryMap.get(currentParentId) || [];
+
+    return children.map(cat => ({
+      id: cat.id,
+      name: cat.name ?? "",
+      description: cat.description ?? "",
+      isActive: cat.isActive ?? false,
+      // Conversion explicite pour éviter l'erreur TypeScript
+      parentId: cat.parentId ?? null,
+      subcategories: buildTree(cat.id)
+    }));
+  };
+
+  return buildTree(parentId);
+};
+
+// Fonction principale avec gestion d'erreur typée
+export const getCategories = async (): Promise<CategoryTreeItem[]> => {
+  try {
+    const categories = await getCachedCategories();
     return buildCategoryTree(categories);
-  } catch (error) {
-    console.error('Error fetching categories:', error);
+  } catch (error: unknown) {
+    console.error('Error in getCategories:', error);
     throw error;
   }
 };
 
-export async function getCategoryByName(name: string) {
-  const startTime = performance.now();
-  const decodedName = decodeURIComponent(name);
-  console.log("params décodé:", decodedName);
+// Fonction pour obtenir une catégorie spécifique avec typage strict
+export const getCategoryByName = unstable_cache(
+  async (name: string): Promise<Category | null> => {
+    const startTime = performance.now();
 
-  try {
-    const category = await prisma.categories.findFirst({
-      where: {
-        name: decodedName,
-      },
-    });
+    try {
+      const category = await prisma.categories.findFirst({
+        where: {
+          name: name,
+          isActive: true
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          isActive: true,
+          parentId: true,
+          imageUrl: true,
+          slug: true
+        }
+      });
 
-    const endTime = performance.now();
-    console.log(`Temps d'exécution : ${endTime - startTime} ms pour fetch une categorie`);
+      const endTime = performance.now();
+      console.log(`Category "${name}" fetched in ${endTime - startTime}ms`);
 
-    return category;
-  } catch (error) {
-    console.error('Error fetching category:', error);
-    throw new Error('Error fetching category');
+      return category;
+    } catch (error: unknown) {
+      console.error(`Error fetching category "${name}":`, error);
+      throw error;
+    }
+  },
+  ['category-by-name'],
+  {
+    revalidate: 1800,
+    tags: ['categories']
   }
+);
+
+
+// Types plus stricts pour éviter les erreurs undefined
+export interface StrictCategory {
+  id: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  parentId: string | null; // Jamais undefined
+  imageUrl?: string | null;
+  slug?: string | null;
 }
+
+export interface StrictCategoryTreeItem {
+  id: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  parentId: string | null; // Jamais undefined
+  subcategories: StrictCategoryTreeItem[];
+}
+
+
 
 export async function getCategoryById(id: string) {
 

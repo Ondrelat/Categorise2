@@ -1,5 +1,7 @@
 import React from "react";
-import { auth } from "@/auth"
+
+import { getSession } from '@/lib/session';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { signOut } from '@/auth';
@@ -26,7 +28,7 @@ function LogoutButton() {
                 await signOut({ redirectTo: '/' });
             }}
         >
-            <button 
+            <button
                 type="submit"
                 className="bg-red-600 text-white font-bold py-3 px-5 rounded-lg shadow-md hover:bg-red-700 hover:shadow-lg focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-600 transition duration-200"
             >
@@ -71,7 +73,9 @@ function User({ user }: UserProps) {
 
 
 export default async function Navbar() {
-    const session = await auth()
+
+
+    const session = await getSession();
     const user = session?.user
 
     return (

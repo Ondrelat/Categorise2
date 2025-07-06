@@ -4,10 +4,12 @@ import { Input } from "@/components/ui/input";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { GoogleSignIn } from "@/components/google-sign-in";
-import { auth } from "@/auth";
+import { getSession } from '@/lib/session';
+
 
 const Page = async () => {
-  const session = await auth();
+
+  const session = await getSession();
   if (session) redirect("/");
 
   return (

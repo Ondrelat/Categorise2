@@ -1,8 +1,11 @@
 // app/classement/[name]/page.tsx
 import ClientOfficialClassement from './ClientOfficialClassement';
-import { auth } from "@/auth"
+
 import { getclassementsSortedByRating } from '@/lib/articles';
 import { fetchMyList } from '@/lib/myList';
+
+import { getSession } from '@/lib/session';
+
 
 export default async function ClassementPage({
   params,
@@ -14,7 +17,8 @@ export default async function ClassementPage({
 
   const ratingSource = 'categorise';
 
-  const session = await auth()
+
+  const session = await getSession();
   const userId = session?.user?.id as string | undefined;
 
   const [officialClassement, myList] = await Promise.all([

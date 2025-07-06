@@ -4,7 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { getCategoryById } from '@/lib/categories';
 import { ArticleSchema } from './articles';
-import { auth } from "@/auth";
+import { getSession } from '@/lib/session';
+
 
 export type ActionState = {
   success: boolean;
@@ -33,7 +34,8 @@ export async function createArticle(
     };
   }
 
-  const session = await auth();
+
+  const session = await getSession();
 
   if (!session || !session.user || !session.user.id) {
     return {

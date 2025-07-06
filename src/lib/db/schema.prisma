@@ -61,16 +61,18 @@ model VerificationToken {
 }
 
 model Categories {
-  id                 String                      @id @default(uuid())
-  name               String?
-  name_en            String?
-  slug               String?                     @unique
-  imageUrl           String?
-  createdAt          DateTime?                   @default(now())
-  description        String
-  parentId           String?
-  updatedAt          DateTime                    @updatedAt
-  isActive           Boolean                     @default(true)
+  id          String    @id @default(uuid())
+  name        String?
+  name_en     String?
+  slug        String?   @unique
+  imageUrl    String?
+  createdAt   DateTime? @default(now())
+  description String
+  parentId    String?
+  updatedAt   DateTime  @updatedAt
+  isActive    Boolean   @default(true)
+
+  // Relations
   parent             Categories?                 @relation("CategoryToCategory", fields: [parentId], references: [id])
   children           Categories[]                @relation("CategoryToCategory")
   discussions        Discussion[]
@@ -78,10 +80,29 @@ model Categories {
   userLists          UserList[]
   articlesClassement ArticleClassementCategory[]
 
-  @@index([parentId])
-  @@index([name])
-  @@index([isActive])
-  @@index([slug]) // Utile si vous faites des recherches par slug
+  // INDEX OPTIMISÉS POUR VOS REQUÊTES
+
+  // 1. Index composite pour la requête CTE récursive
+  // Couvre: parentId + isActive + id (pour la performance de JOIN)
+  @@index([parentId, isActive, id], name: "idx_categories_recursive_cte")
+  // 2. Index pour les catégories racines actives
+  // Couvre la condition: WHERE "parentId" IS NULL AND "isActive" = true
+  @@index([parentId, isActive], name: "idx_categories_root_active")
+  // 3. Index pour recherche par nom avec statut actif
+  // Couvre: WHERE name = ? AND isActive = true
+  @@index([name, isActive], name: "idx_categories_name_active")
+  // 4. Index pour recherche par slug (si utilisé)
+  // Le @unique crée déjà un index, mais on peut l'optimiser
+  @@index([slug, isActive], name: "idx_categories_slug_active")
+  // 5. Index pour les statistiques et comptages
+  // Utile pour les JOINs dans getCategoriesWithStats
+  @@index([id, isActive], name: "idx_categories_stats")
+  // 6. Index pour les mises à jour récentes
+  // Utile si vous affichez les catégories par date de mise à jour
+  @@index([updatedAt, isActive], name: "idx_categories_updated_active")
+  // 7. Index couvrant pour les sélections fréquentes
+  // Couvre les champs les plus utilisés ensemble
+  @@index([isActive, parentId, name, id], name: "idx_categories_covering")
 }
 
 enum ArticleStatus {
