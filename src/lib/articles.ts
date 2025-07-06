@@ -148,13 +148,13 @@ export async function getclassementsSortedByRating(
 
 // lib/articles.ts
 
-export async function getTutorialsByCategoryGroupedByLevel(categoryTitle: string) {
-  const decodedTitle = decodeURIComponent(categoryTitle);
+export async function getTutorialsByCategoryGroupedByLevel(categorySlug: string) {
+  const decodedTitle = decodeURIComponent(categorySlug);
 
   const tutorials = await prisma.tutorial.findMany({
     where: {
       category: {
-        name: decodedTitle
+        slug: decodedTitle
       }
     },
     select: {
@@ -192,7 +192,7 @@ export async function getDiscussions(
     const articles = await prisma.discussion.findMany({
       where: {
         category: {
-          name: categoryTitleDecode
+          slug: categoryTitleDecode
         },
       },
       select: {
@@ -329,38 +329,42 @@ export async function NoteArticle(articleId: string, rating: number, userId: str
   return { success: true };
 }
 
-export async function getMissingArticleTypes(categoryName: string): Promise<ContentSection[]> {
-  const startTime = performance.now();
-  const typesManquants: ContentSection[] = [];
+// /chemin/vers/votre/fichier.ts
 
-  const category = await prisma.categories.findFirst({
-    where: { name: categoryName },
-    include: {
-      articlesClassement: {
-        select: { articleId: true },
-        take: 1,
-      },
-      discussions: {
-        select: { id: true },
-        take: 1,
-      },
-      tutorials: {
-        select: { id: true },
-        take: 1,
-      },
-    },
+export async function getMissingArticleTypes(categorySlug: string): Promise<ContentSection[]> {
+  const startTime = performance.now();
+
+  console.log("categorySlug", categorySlug);
+  // 1. On récupère l'ID de la catégorie. C'est très rapide.
+  const category = await prisma.categories.findUnique({
+    where: { slug: categorySlug },
+    select: { id: true },
   });
 
   if (!category) {
-    throw new Error(`Category with name "${categoryName}" not found`);
+    throw new Error(`Category with name "${categorySlug}" not found`);
   }
+  const categoryId = category.id;
 
-  if (category.articlesClassement.length === 0) typesManquants.push('Classement');
-  if (category.discussions.length === 0) typesManquants.push('Forum');
-  if (category.tutorials.length === 0) typesManquants.push('Apprentissage');
+  // 2. On lance les 3 comptages EN PARALLÈLE avec Promise.all
+  const [
+    articlesCount,
+    discussionsCount,
+    tutorialsCount
+  ] = await Promise.all([
+    prisma.articleClassementCategory.count({ where: { categoryId: categoryId } }),
+    prisma.discussion.count({ where: { categoryId: categoryId } }),
+    prisma.tutorial.count({ where: { categoryId: categoryId } }),
+  ]);
+
+  // 3. On construit le résultat basé sur les comptages
+  const typesManquants: ContentSection[] = [];
+  if (articlesCount === 0) typesManquants.push('Classement');
+  if (discussionsCount === 0) typesManquants.push('Forum');
+  if (tutorialsCount === 0) typesManquants.push('Apprentissage');
 
   const executionTime = performance.now() - startTime;
-  console.log(`getMissingArticleTypes - Temps d'exécution: ${executionTime.toFixed(2)}ms`);
+  console.log(`getMissingArticleTypes (OPTIMISÉ) - Temps d'exécution: ${executionTime.toFixed(2)}ms`);
 
   return typesManquants;
 }

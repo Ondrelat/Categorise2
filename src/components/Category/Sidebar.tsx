@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { getCategories } from '@/lib/categories';
 import CategoryActions from './CategoryActions';
@@ -10,11 +11,11 @@ const getCachedCategories = cache(async () => {
 });
 
 interface SideBarProps {
-    categoryName?: string;
+    categorySlug?: string;
     session: Session | null;
 }
 
-export default async function SideBar({ categoryName, session }: SideBarProps) {
+export default async function SideBar({ categorySlug, session }: SideBarProps) {
     // Récupérer les catégories (mise en cache)
     const categories = await getCachedCategories();
 
@@ -24,7 +25,7 @@ export default async function SideBar({ categoryName, session }: SideBarProps) {
             <CategoryActions
                 session={session}
                 initialCategories={categories}
-                currentCategoryName={categoryName}
+                currentcategorySlug={categorySlug}
             />
         </div>
     );

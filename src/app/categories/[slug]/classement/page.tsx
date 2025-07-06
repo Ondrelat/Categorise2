@@ -10,10 +10,10 @@ import { getSession } from '@/lib/session';
 export default async function ClassementPage({
   params,
 }: {
-  params: Promise<{ name: string }>;
+  params: Promise<{ slug: string }>;
 }) {
   const resolvedParams = await params;
-  const categoryName = decodeURIComponent(resolvedParams.name || 'Action');
+  const categorySlug = decodeURIComponent(resolvedParams.slug || 'Action');
   const ratingSource = 'categorise';
 
   // 1. Récupérer la session UNE seule fois
@@ -22,13 +22,13 @@ export default async function ClassementPage({
 
   // 2. Passer userId directement aux fonctions
   const [officialClassement, myList] = await Promise.all([
-    getclassementsSortedByRating(categoryName, 'categorise', userId),
-    userId ? fetchMyList(userId, categoryName) : Promise.resolve([])
+    getclassementsSortedByRating(categorySlug, 'categorise', userId),
+    userId ? fetchMyList(userId, categorySlug) : Promise.resolve([])
   ]);
 
   return (
     <ClientOfficialClassement
-      categoryName={categoryName}
+      categorySlug={categorySlug}
       OfficialClassement={officialClassement}
       initialRatingSource={ratingSource}
       isAuthenticated={!!userId}

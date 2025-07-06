@@ -22,9 +22,9 @@ export type SerializedEditorState = {
 export default async function DiscussionDetailPage({
     params,
 }: {
-    params: Promise<{ name: string; discussionId: string }>;
+    params: Promise<{ slug: string; discussionId: string }>;
 }) {
-    const { name, discussionId } = await params;
+    const { slug, discussionId } = await params;
 
 
     const discussion = await getDiscussionWithComments(discussionId);
@@ -60,7 +60,7 @@ export default async function DiscussionDetailPage({
 
                 {/* Formulaire pour nouveau commentaire principal */}
                 <div className="mb-6">
-                    <CommentForm discussionId={discussion.id} categoryName={name} />
+                    <CommentForm discussionId={discussion.id} categorySlug={slug} />
                 </div>
 
                 <div className="space-y-4">
@@ -73,7 +73,7 @@ export default async function DiscussionDetailPage({
                             key={comment.id}
                             comment={comment}
                             discussionId={discussion.id}
-                            categoryName={name}
+                            categorySlug={slug}
                             level={0}
                         />
                     ))}

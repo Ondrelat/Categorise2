@@ -48,7 +48,7 @@ export async function createArticle(
   const userId = session.user.id;
 
   const data = validatedFields.data;
-  let categoryName: string | null = null; // 1. On stocke juste le nom nécessaire
+  let categorySlug: string | null = null; // 1. On stocke juste le nom nécessaire
 
   const dataWithUser = {
     ...data,
@@ -66,7 +66,7 @@ export async function createArticle(
       };
     }
 
-    categoryName = category.name; // 3. On conserve uniquement ce dont on a besoin
+    categorySlug = category.slug; // 3. On conserve uniquement ce dont on a besoin
     if (data.type === "Apprentissage") {
       await prisma.tutorial.create({ data: dataWithUser });
     } else if (data.type === "Forum") {
@@ -79,7 +79,7 @@ export async function createArticle(
 
     }
 
-    revalidatePath(`/categories/${encodeURIComponent(categoryName!)}/${data.type.toLowerCase()}`);
+    revalidatePath(`/categories/${encodeURIComponent(categorySlug!)}/${data.type.toLowerCase()}`);
 
   } catch (error: unknown) {
     if (error instanceof Error) {
@@ -108,7 +108,7 @@ export async function createArticle(
   }
 
   // 4. Redirection sécurisée
-  if (!categoryName) {
+  if (!categorySlug) {
     return {
       success: false,
       message: "Erreur critique : nom de catégorie manquant",
@@ -116,5 +116,5 @@ export async function createArticle(
     };
   }
 
-  redirect(`/categories/${encodeURIComponent(categoryName)}/${data.type.toLowerCase()}`);
+  redirect(`/categories/${encodeURIComponent(categorySlug)}/${data.type.toLowerCase()}`);
 }

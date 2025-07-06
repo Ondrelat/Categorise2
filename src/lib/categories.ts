@@ -4,6 +4,7 @@ import prisma from './db/db';
 
 import { unstable_cache, revalidatePath } from 'next/cache';
 import { Category, CategoryTreeItem } from '@/app/types';
+import { slugify } from '@/utils/slugify';
 
 // Cache optimisé pour les catégories avec typage strict
 const getCachedCategories = unstable_cache(
@@ -12,43 +13,47 @@ const getCachedCategories = unstable_cache(
 
     try {
       const categories = await prisma.$queryRaw<Category[]>`
-        WITH RECURSIVE category_tree AS (
-          SELECT 
-            id, 
-            name, 
-            description, 
-            "isActive", 
-            "parentId",
-            0 AS depth,
-            ARRAY[id] AS path
-          FROM "Categories"
-          WHERE "parentId" IS NULL 
-            AND "isActive" = true
-        
-          UNION ALL
-        
-          SELECT 
-            c.id, 
-            c.name, 
-            c.description, 
-            c."isActive", 
-            c."parentId",
-            ct.depth + 1,
-            ct.path || c.id
-          FROM "Categories" c
-          JOIN category_tree ct ON c."parentId" = ct.id
-          WHERE c."isActive" = true
-        )
-        SELECT 
-          id, 
-          name, 
-          description, 
-          "isActive", 
-          "parentId",
-          depth
-        FROM category_tree
-        ORDER BY path ASC
-      `;
+  WITH RECURSIVE category_tree AS (
+    SELECT 
+      id, 
+      name, 
+      slug,
+      description, 
+      "isActive", 
+      "parentId",
+      0 AS depth,
+      ARRAY[id] AS path
+    FROM "Categories"
+    WHERE "parentId" IS NULL 
+      AND "isActive" = true
+  
+    UNION ALL
+  
+    SELECT 
+      c.id, 
+      c.name,
+      c.slug, -- <- ICI : virgule ajoutée
+      c.description, 
+      c."isActive", 
+      c."parentId",
+      ct.depth + 1,
+      ct.path || c.id
+    FROM "Categories" c
+    JOIN category_tree ct ON c."parentId" = ct.id
+    WHERE c."isActive" = true
+  )
+  SELECT 
+    id, 
+    name, 
+    slug,
+    description, 
+    "isActive", 
+    "parentId",
+    depth
+  FROM category_tree
+  ORDER BY path ASC
+`;
+
 
       const endTime = performance.now();
       console.log(`Optimized categories fetched in ${endTime - startTime}ms`);
@@ -92,6 +97,8 @@ const buildCategoryTree = (
     return children.map(cat => ({
       id: cat.id,
       name: cat.name ?? "",
+      slug: cat.slug ?? "", // Assurez-vous que slug est toujours défini
+      imageUrl: cat.imageUrl ?? null, // Assurez-vous que imageUrl est toujours
       description: cat.description ?? "",
       isActive: cat.isActive ?? false,
       // Conversion explicite pour éviter l'erreur TypeScript
@@ -115,14 +122,14 @@ export const getCategories = async (): Promise<CategoryTreeItem[]> => {
 };
 
 // Fonction pour obtenir une catégorie spécifique avec typage strict
-export const getCategoryByName = unstable_cache(
-  async (name: string): Promise<Category | null> => {
+export const getCategoryBySlug = unstable_cache(
+  async (slug: string): Promise<Category | null> => {
     const startTime = performance.now();
 
     try {
-      const category = await prisma.categories.findFirst({
+      const category = await prisma.categories.findUnique({
         where: {
-          name: name,
+          slug: slug,
           isActive: true
         },
         select: {
@@ -179,7 +186,7 @@ export async function getCategoryById(id: string) {
 
   try {
     const category = await prisma.categories.findFirst({
-      select: { name: true },
+      select: { slug: true },
       where: {
         id: id,
       },
@@ -235,7 +242,103 @@ export async function deleteCategory(categoryId: string) {
   }
 }
 
-// Nouvelle fonction pour mettre à jour une catégorie
+
+export async function createCategory(data: {
+  name: string;
+  parentcategorySlug?: string | null;
+  description?: string;
+  isActive?: boolean;
+}) {
+  'use server';
+
+  const { name, parentcategorySlug = null, description = '', isActive = true } = data;
+
+  try {
+    if (!name) {
+      return {
+        success: false,
+        message: 'Le nom est requis'
+      };
+    }
+
+    const slug = slugify(name);
+
+    // Vérifier unicité du name
+    const existingCategory = await prisma.categories.findFirst({
+      where: { name }
+    });
+    if (existingCategory) {
+      return {
+        success: false,
+        message: 'Une catégorie avec ce nom existe déjà'
+      };
+    }
+
+    // Vérifier unicité du slug
+    const existingSlug = await prisma.categories.findFirst({
+      where: { slug }
+    });
+    if (existingSlug) {
+      return {
+        success: false,
+        message: 'Une catégorie avec ce slug existe déjà'
+      };
+    }
+
+    // Chercher l'ID de la catégorie parente
+    let parentId = null;
+    if (parentcategorySlug) {
+      const parentCategory = await prisma.categories.findFirst({
+        where: { name: parentcategorySlug }
+      });
+
+      if (!parentCategory) {
+        return {
+          success: false,
+          message: `La catégorie parente "${parentcategorySlug}" n'existe pas`
+        };
+      }
+
+      parentId = parentCategory.id;
+    }
+
+    const newCategory = await prisma.categories.create({
+      data: {
+        name,
+        slug,
+        parentId,
+        description,
+        isActive
+      }
+    });
+
+    revalidatePath('/admin/categories');
+    revalidatePath('/categories');
+    revalidatePath(`/categories/${slug}`);
+
+    return {
+      success: true,
+      message: 'Catégorie créée avec succès',
+      data: {
+        id: newCategory.id,
+        name: newCategory.name,
+        slug: newCategory.slug,
+        description: newCategory.description,
+        isActive: newCategory.isActive,
+        subcategories: []
+      }
+    };
+  } catch (error) {
+    console.error('Erreur lors de la création de la catégorie:', error);
+    return {
+      success: false,
+      message: 'Une erreur est survenue lors de la création de la catégorie'
+    };
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 export async function updateCategory(
   categoryId: string,
   data: { name: string; description?: string; isActive?: boolean }
@@ -243,42 +346,56 @@ export async function updateCategory(
   try {
     const { name } = data;
 
-    // Validation des données
     if (!name) {
       return {
         success: false,
-        message: 'Le nom et le name sont requis'
+        message: 'Le nom est requis'
       };
     }
 
-    // Vérifier que le name est unique
+    const slug = slugify(name);
+
+    // Vérifier que le name est unique (hors catégorie actuelle)
     const existingCategory = await prisma.categories.findFirst({
       where: {
         name,
-        id: {
-          not: categoryId
-        }
+        id: { not: categoryId }
       }
     });
-
     if (existingCategory) {
       return {
         success: false,
-        message: 'Une catégorie avec ce name existe déjà'
+        message: 'Une catégorie avec ce nom existe déjà'
       };
     }
 
-    // Mettre à jour la catégorie
+    // Vérifier que le slug est unique (hors catégorie actuelle)
+    const existingSlug = await prisma.categories.findFirst({
+      where: {
+        slug,
+        id: { not: categoryId }
+      }
+    });
+    if (existingSlug) {
+      return {
+        success: false,
+        message: 'Une catégorie avec ce slug existe déjà'
+      };
+    }
+
     const updatedCategory = await prisma.categories.update({
       where: {
         id: categoryId
       },
-      data
+      data: {
+        ...data,
+        slug
+      }
     });
 
-    // Revalider les chemins pour rafraîchir les données
     revalidatePath('/admin/categories');
     revalidatePath('/categories');
+    revalidatePath(`/categories/${slug}`);
 
     return {
       success: true,
@@ -296,93 +413,3 @@ export async function updateCategory(
   }
 }
 
-export async function createCategory(data: {
-  name: string;
-  parentCategoryName?: string | null;
-  description?: string;
-  isActive?: boolean;
-}) {
-  'use server';
-
-  const { name, parentCategoryName = null, description = '', isActive = true } = data;
-  try {
-    // Validation des données
-    if (!name) {
-      return {
-        success: false,
-        message: 'Le nom est requis'
-      };
-    }
-
-    // Vérifier que le name est unique
-    const existingCategory = await prisma.categories.findFirst({
-      where: {
-        name: name
-      }
-    });
-
-    if (existingCategory) {
-      return {
-        success: false,
-        message: 'Une catégorie avec ce name existe déjà'
-      };
-    }
-
-    // Déterminer parentId à partir de parentCategoryName
-    let parentId = null;
-    if (parentCategoryName) {
-      const parentCategory = await prisma.categories.findFirst({
-        where: {
-          name: parentCategoryName
-        }
-      });
-
-      if (!parentCategory) {
-        return {
-          success: false,
-          message: `La catégorie parente "${parentCategoryName}" n'existe pas`
-        };
-      }
-
-      parentId = parentCategory.id;
-    }
-
-    // Créer la nouvelle catégorie
-    const newCategory = await prisma.categories.create({
-      data: {
-        name,
-        parentId,
-        description,
-        isActive
-      }
-    });
-
-    // Convertir en format compatible avec CategoryTreeItem
-    const categoryTreeItem = {
-      id: newCategory.id,
-      name: newCategory.name,
-      description: newCategory.description,
-      isActive: newCategory.isActive,
-      subcategories: []
-    };
-
-    // Revalider les chemins pour rafraîchir les données
-    revalidatePath('/admin/categories');
-    revalidatePath('/categories');
-    revalidatePath(`/categories/${name}`);
-
-    return {
-      success: true,
-      message: 'Catégorie créée avec succès',
-      data: categoryTreeItem
-    };
-  } catch (error) {
-    console.error('Erreur lors de la création de la catégorie:', error);
-    return {
-      success: false,
-      message: 'Une erreur est survenue lors de la création de la catégorie'
-    };
-  } finally {
-    await prisma.$disconnect();
-  }
-}

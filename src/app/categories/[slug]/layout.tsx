@@ -10,12 +10,12 @@ async function ContentLoader({ children }: { children: React.ReactNode }) {
 
 // Créez un composant wrapper asynchrone pour NavigatorSection
 async function NavigatorSectionLoader({
-  categoryName
+  categorySlug
 }: {
-  categoryName: string
+  categorySlug: string
 }) {
-  const missingTypes = await getMissingArticleTypes(categoryName);
-  return <NavigatorSection missingTypes={missingTypes} categoryName={categoryName} />;
+  const missingTypes = await getMissingArticleTypes(categorySlug);
+  return <NavigatorSection missingTypes={missingTypes} categorySlug={categorySlug} />;
 }
 
 export default async function CategoryLayout({
@@ -23,23 +23,23 @@ export default async function CategoryLayout({
   params
 }: {
   children: React.ReactNode,
-  params: { name: string };
+  params: { slug: string };
 }) {
   const resolvedParams = await params;
-  const name = decodeURIComponent(resolvedParams.name);
+  const slug = decodeURIComponent(resolvedParams.slug);
 
 
   return (
     <div className="w-[800px] ml-4">
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">{name}</h1>
+        <h1 className="text-3xl font-bold mb-6">{slug}</h1>
 
         <Suspense fallback={
           <div className="h-[56px] bg-gray-50 animate-pulse rounded-lg mb-4">
             Chargement de la navigation...
           </div>
         }>
-          <NavigatorSectionLoader categoryName={name} />
+          <NavigatorSectionLoader categorySlug={slug} />
         </Suspense>
 
         <Suspense fallback={

@@ -10,13 +10,13 @@ import { Session } from 'next-auth'; // pour typer la session
 
 interface CategoryActionsProps {
   initialCategories: CategoryTreeItem[];
-  currentCategoryName?: string;
+  currentcategorySlug?: string;
   session: Session | null; // 🔁 reçoit directement la session
 }
 
 export default function CategoryActions({
   initialCategories,
-  currentCategoryName,
+  currentcategorySlug,
   session
 }: CategoryActionsProps) {
   const [categories, setCategories] = useState<CategoryTreeItem[]>(initialCategories);
@@ -62,11 +62,11 @@ export default function CategoryActions({
   };
 
   // Helper function to find category name by ID
-  const findCategoryName = (items: CategoryTreeItem[], categoryId: string): string => {
+  const findcategorySlug = (items: CategoryTreeItem[], categoryId: string): string => {
     for (const category of items) {
-      if (category.id === categoryId) return category.name;
+      if (category.id === categoryId) return category.slug;
       if (category.subcategories.length > 0) {
-        const name = findCategoryName(category.subcategories, categoryId);
+        const name = findcategorySlug(category.subcategories, categoryId);
         if (name) return name;
       }
     }
@@ -79,8 +79,8 @@ export default function CategoryActions({
     setEditingCategoryId(categoryId);
 
     // Here you might want to pre-populate any edit form with the category name
-    const categoryName = findCategoryName(categories, categoryId);
-    console.log(`Editing category: ${categoryName}`);
+    const categorySlug = findcategorySlug(categories, categoryId);
+    console.log(`Editing category: ${categorySlug}`);
   };
 
   const handleCancelEdit = () => {
@@ -89,7 +89,7 @@ export default function CategoryActions({
 
   const handleSaveEdit = (categoryId: string, newName: string) => {
     // Function to recursively update category name
-    const updateCategoryName = (items: CategoryTreeItem[]): CategoryTreeItem[] => {
+    const updatecategorySlug = (items: CategoryTreeItem[]): CategoryTreeItem[] => {
       return items.map(category => {
         if (category.id === categoryId) {
           return {
@@ -103,7 +103,7 @@ export default function CategoryActions({
         if (category.subcategories.length > 0) {
           return {
             ...category,
-            subcategories: updateCategoryName(category.subcategories)
+            subcategories: updatecategorySlug(category.subcategories)
           };
         }
 
@@ -111,7 +111,7 @@ export default function CategoryActions({
       });
     };
 
-    setCategories(updateCategoryName([...categories]));
+    setCategories(updatecategorySlug([...categories]));
     setEditingCategoryId(null);
 
     // Here you would typically also make an API call to update the category on the server
@@ -144,10 +144,10 @@ export default function CategoryActions({
     <div className="space-y-6">
 
       {/* Affichage de la catégorie actuelle si elle existe */}
-      {currentCategoryName && (
+      {currentcategorySlug && (
         <div className="bg-blue-50 p-3 rounded-md mb-4">
           <p className="text-sm font-medium">
-            Catégorie actuelle: <span className="text-blue-600">{currentCategoryName}</span>
+            Catégorie actuelle: <span className="text-blue-600">{currentcategorySlug}</span>
           </p>
         </div>
       )}
@@ -155,7 +155,7 @@ export default function CategoryActions({
       {/* Composant de création de catégorie */}
       <CreateCategoryForm
         isOndrelat={isOndrelat}
-        parentCategoryName={currentCategoryName}
+        parentcategorySlug={currentcategorySlug}
       />
 
       {/* Arbre des catégories */}

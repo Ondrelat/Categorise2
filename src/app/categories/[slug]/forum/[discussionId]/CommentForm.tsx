@@ -6,7 +6,7 @@ import { postComment } from '@/lib/post-comment';
 
 interface CommentFormProps {
     discussionId: string;
-    categoryName: string;
+    categorySlug: string;
     parentId?: string;
     onSubmitSuccess?: () => void;
     placeholder?: string;
@@ -14,7 +14,7 @@ interface CommentFormProps {
 
 export default function CommentForm({
     discussionId,
-    categoryName,
+    categorySlug,
     parentId,
     onSubmitSuccess,
     placeholder = "Votre commentaire..."
@@ -34,7 +34,7 @@ export default function CommentForm({
         const formData = new FormData();
         formData.append('content', content.trim());
         formData.append('discussionId', discussionId);
-        formData.append('categoryName', categoryName);
+        formData.append('categorySlug', categorySlug);
 
         if (parentId) {
             formData.append('parentId', parentId);
@@ -92,8 +92,8 @@ export default function CommentForm({
 
             {message && (
                 <div className={`text-sm p-2 rounded ${message.includes('ajouté')
-                        ? 'text-green-700 bg-green-50 border border-green-200'
-                        : 'text-red-700 bg-red-50 border border-red-200'
+                    ? 'text-green-700 bg-green-50 border border-green-200'
+                    : 'text-red-700 bg-red-50 border border-red-200'
                     }`}>
                     {message}
                 </div>

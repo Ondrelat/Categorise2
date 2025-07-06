@@ -31,11 +31,11 @@ function SubmitButton() {
 
 interface ArticleCreationFormProps {
   categoryId: string;
-  categoryName: string; // Ajout pour la redirection
+  categorySlug: string; // Ajout pour la redirection
 }
 
 
-export default function ArticleCreationForm({ categoryId, categoryName }: ArticleCreationFormProps) {
+export default function ArticleCreationForm({ categoryId, categorySlug }: ArticleCreationFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [state, formAction] = useActionState(createArticle, initialState);
@@ -61,9 +61,9 @@ export default function ArticleCreationForm({ categoryId, categoryName }: Articl
   // Gérer la redirection après succès
   useEffect(() => {
     if (state.success && selectedType) {
-      router.push(`/categories/${encodeURIComponent(categoryName)}/${selectedType}`);
+      router.push(`/categories/${encodeURIComponent(categorySlug)}/${selectedType}`);
     }
-  }, [state.success, selectedType, categoryName, router]);
+  }, [state.success, selectedType, categorySlug, router]);
 
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedType(e.target.value as ContentSection | '');
@@ -187,7 +187,7 @@ export default function ArticleCreationForm({ categoryId, categoryName }: Articl
         <div className="flex justify-end gap-4">
           <button
             type="button"
-            onClick={() => router.push(`/categories/${encodeURIComponent(categoryName)}`)}
+            onClick={() => router.push(`/categories/${encodeURIComponent(categorySlug)}`)}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
           >
             Annuler

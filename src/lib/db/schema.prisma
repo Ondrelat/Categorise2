@@ -24,6 +24,7 @@ model Account {
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId]) // <-- OPTIMISATION: Accélère la recherche des comptes par utilisateur.
 }
 
 model Session {
@@ -32,6 +33,8 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId]) // <-- OPTIMISATION: Accélère la recherche des sessions par utilisateur.
 }
 
 model User {
@@ -80,28 +83,13 @@ model Categories {
   userLists          UserList[]
   articlesClassement ArticleClassementCategory[]
 
-  // INDEX OPTIMISÉS POUR VOS REQUÊTES
-
-  // 1. Index composite pour la requête CTE récursive
-  // Couvre: parentId + isActive + id (pour la performance de JOIN)
+  // VOS INDEX EXISTANTS SONT BONS, JE LES LAISSE
   @@index([parentId, isActive, id], name: "idx_categories_recursive_cte")
-  // 2. Index pour les catégories racines actives
-  // Couvre la condition: WHERE "parentId" IS NULL AND "isActive" = true
   @@index([parentId, isActive], name: "idx_categories_root_active")
-  // 3. Index pour recherche par nom avec statut actif
-  // Couvre: WHERE name = ? AND isActive = true
-  @@index([name, isActive], name: "idx_categories_name_active")
-  // 4. Index pour recherche par slug (si utilisé)
-  // Le @unique crée déjà un index, mais on peut l'optimiser
+  @@index([name, isActive], name: "idx_categories_name_active") // <-- OPTIMISATION: Parfait pour vos requêtes.
   @@index([slug, isActive], name: "idx_categories_slug_active")
-  // 5. Index pour les statistiques et comptages
-  // Utile pour les JOINs dans getCategoriesWithStats
   @@index([id, isActive], name: "idx_categories_stats")
-  // 6. Index pour les mises à jour récentes
-  // Utile si vous affichez les catégories par date de mise à jour
   @@index([updatedAt, isActive], name: "idx_categories_updated_active")
-  // 7. Index couvrant pour les sélections fréquentes
-  // Couvre les champs les plus utilisés ensemble
   @@index([isActive, parentId, name, id], name: "idx_categories_covering")
 }
 
@@ -132,23 +120,20 @@ model Tutorial {
   categoryId  String
   isActive    Boolean        @default(true)
   level       ArticleLevel?
+  userId      String
 
-  userId String
-
-  user User @relation(fields: [userId], references: [id])
-
+  user      User       @relation(fields: [userId], references: [id])
   category  Categories @relation(fields: [categoryId], references: [id])
   revisions Revision[]
 
-  // Relations pour les prérequis
   prerequisites     Tutorial[] @relation("TutorialPrerequisites")
   isPrerequisiteFor Tutorial[] @relation("TutorialPrerequisites")
-
-  // Relations pour les suites
   nextTutorials     Tutorial[] @relation("TutorialNext")
   previousTutorials Tutorial[] @relation("TutorialNext")
 
-  @@unique([categoryId, level]) // ✅ la ligne clé
+  @@unique([categoryId, level])
+  @@index([categoryId]) // <-- OPTIMISATION: Accélère la recherche de tutos par catégorie.
+  @@index([userId]) // <-- OPTIMISATION: Accélère la recherche de tutos par utilisateur.
   @@map("tutorials")
 }
 
@@ -169,6 +154,8 @@ model Discussion {
   category Categories @relation(fields: [categoryId], references: [id])
   comments Comment[]
 
+  @@index([categoryId]) // <-- OPTIMISATION: Accélère la recherche de discussions par catégorie.
+  @@index([userId]) // <-- OPTIMISATION: Accélère la recherche de discussions par utilisateur.
   @@map("discussions")
 }
 
@@ -181,16 +168,15 @@ model Comment {
   isActive     Boolean  @default(true)
   userId       String
   discussionId String?
+  parentId     String? // ID du commentaire parent, s'il s'agit d'une réponse
 
-  // Relations
   user       User        @relation(fields: [userId], references: [id])
   Discussion Discussion? @relation(fields: [discussionId], references: [id])
+  parent     Comment?    @relation("CommentReplies", fields: [parentId], references: [id])
+  replies    Comment[]   @relation("CommentReplies")
 
-  // Ajout pour les sous-commentaires
-  parentId String? // ID du commentaire parent, s'il s'agit d'une réponse
-  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
-  replies  Comment[] @relation("CommentReplies")
-
+  @@index([discussionId]) // <-- OPTIMISATION: Accélère la recherche des commentaires d'une discussion.
+  @@index([userId]) // <-- OPTIMISATION: Accélère la recherche des commentaires d'un utilisateur.
   @@map("comments")
 }
 
@@ -231,60 +217,68 @@ model ArticleClassement {
   articleClassementUserLists ArticleClassementUserList[]
   articleClassementUserDatas ArticleClassementUserData[]
 
+  // <-- OPTIMISATION MAJEURE: Cet index couvre le tri ET le filtre de votre requête principale.
+  // Il accélère `ORDER BY averageRatingIMDB DESC` pour les articles ayant `numVotesIMDB > x`.
+  @@index([averageRatingIMDB(sort: Desc), numVotesIMDB])
   @@map("article_classement")
 }
 
 model ArticleClassementUserList {
-  id         String  @id @default(cuid())
-  articleId  String
-  categoryId String?
-  listId     String?
-  userId     String
+  id           String   @id @default(cuid())
+  articleId    String
+  categoryId   String?
+  listId       String?
+  userId       String
+  rank         Int?
+  rankTierList String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   article ArticleClassement @relation(fields: [articleId], references: [id])
   list    UserList?         @relation(fields: [listId], references: [id])
 
-  rank         Int?
-  rankTierList String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([listId, articleId]) // <= clé unique composée Il ne peut avoir qu'une fois un même article dans une liste
+  @@unique([listId, articleId])
+  // <-- OPTIMISATION MAJEURE: Cet index couvre le filtre par utilisateur ET le tri de sa liste.
+  // C'est l'index le plus important pour la performance des classements personnalisés.
+  @@index([userId, rank, createdAt(sort: Desc)])
+  @@index([articleId]) // <-- OPTIMISATION: Accélère les jointures sur l'article.
+  @@index([listId]) // <-- OPTIMISATION: Accélère les jointures sur la liste.
 }
 
 model ArticleClassementUserData {
-  id        String @id @default(cuid())
+  id        String   @id @default(cuid())
   articleId String
   userId    String
+  liked     Boolean?
+  rating    Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   article ArticleClassement @relation(fields: [articleId], references: [id])
   user    User              @relation(fields: [userId], references: [id])
 
-  liked  Boolean?
-  rating Float?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([articleId, userId]) // <= clé unique composée Il ne peut avoir qu'une fois un même article dans une liste
+  // L'index unique suivant est parfait pour la jointure LEFT JOIN que vous faites.
+  // Il permet de trouver très vite les données d'un user pour un article.
+  @@unique([articleId, userId])
 }
 
 model UserList {
-  id         String  @id @default(cuid())
+  id         String   @id @default(cuid())
   name       String
   userId     String
   categoryId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   user                       User                        @relation(fields: [userId], references: [id])
   articleClassementUserLists ArticleClassementUserList[]
+  category                   Categories?                 @relation(fields: [categoryId], references: [id])
 
-  category Categories? @relation(fields: [categoryId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([categoryId, userId]) // <= clé unique composée clé unique composée Si il y a une category, on est en mode normalList, alors il ne peut y avoir qu'un même article par category
+  // La clé unique est bonne si un user ne peut avoir qu'une liste par catégorie
+  @@unique([categoryId, userId])
+  // <-- OPTIMISATION: Accélère la recherche des listes d'un utilisateur,
+  // indépendamment de la catégorie.
+  @@index([userId])
 }
 
 model ArticleClassementCategory {
@@ -295,24 +289,7 @@ model ArticleClassementCategory {
   category Categories        @relation(fields: [categoryId], references: [id])
 
   @@id([articleId, categoryId])
+  // <-- OPTIMISATION: Accélère la recherche de tous les articles dans une catégorie
+  // et les opérations de type `getMissingArticleTypes`.
+  @@index([categoryId])
 }
-
-/**
- * model Tag {
- * id          String  @id @default(uuid())
- * name        String  @unique
- * description String?
- * articles ArticleTag[]
- * @@map("tags")
- * }
- * /** * model ArticleTag {
- * articleId String
- * tagId     String
- * article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
- * tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
- * @@id([articleId, tagId])
- * @@index([articleId])
- * @@index([tagId])
- * @@map("article_tags")
- * }
- */

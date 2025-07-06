@@ -10,7 +10,7 @@ import { ReorderMyList } from '@/components/Ranking/actions'
 
 interface ClassementClientPageProps {
   OfficialClassement: articleClassement[];
-  categoryName: string;
+  categorySlug: string;
   initialRatingSource: 'imdb' | 'categorise';
   isAuthenticated: boolean;
   MyList: articleClassementInMyList[];
@@ -18,7 +18,7 @@ interface ClassementClientPageProps {
 
 export default function ClientOfficialClassement({
   OfficialClassement,
-  categoryName,
+  categorySlug,
   initialRatingSource,
   isAuthenticated: initialIsAuthenticated,
   MyList,
@@ -29,7 +29,7 @@ export default function ClientOfficialClassement({
   const [myList, setMyList] = useState<articleClassement[]>(MyList);
   const [showmyList, setShowMyList] = useState(false);
   const [isAuthenticated] = useState<boolean>(initialIsAuthenticated);
-  
+
   // useTransition pour gérer les états de chargement des Server Actions
   const [isPending, startTransition] = useTransition();
 
@@ -40,21 +40,21 @@ export default function ClientOfficialClassement({
     if (ratingSource !== initialRatingSource) {
       console.log(`[Client] Rating source changed to: ${ratingSource}. Page reload might be needed.`);
     }
-  }, [ratingSource, categoryName, initialRatingSource]);
+  }, [ratingSource, categorySlug, initialRatingSource]);
 
   // --- Gestionnaires d'événements appelant les Server Actions -
 
   const handleReorderMyList = async (newmyList: articleClassement[]) => {
     // Sauvegarde pour revert si nécessaire
     const previousMyList = [...myList];
-    
+
     // Mise à jour optimiste de l'UI
     setMyList(newmyList);
-    
+
     if (isAuthenticated) {
       startTransition(async () => {
         const classementids = newmyList.map(article => article.id);
-        const result = await ReorderMyList(classementids, categoryName);
+        const result = await ReorderMyList(classementids, categorySlug);
         if (!result.success) {
           // Revert en cas d'échec
           setMyList(previousMyList);
@@ -76,27 +76,25 @@ export default function ClientOfficialClassement({
     <main className="min-h-screen bg-gray-50 flex justify-center">
       <div className="max-w-6xl px-4 py-8 w-full">
         <h1 className="text-4xl font-bold mb-4 text-center">
-          {categoryName} les mieux notés ({ratingSource === 'imdb' ? 'IMDB' : 'Catégorisé'})
+          {categorySlug} les mieux notés ({ratingSource === 'imdb' ? 'IMDB' : 'Catégorisé'})
         </h1>
 
         <div className="flex justify-center gap-4 mb-6">
           <button
             onClick={() => setRatingSource('categorise')}
-            className={`px-4 py-2 rounded transition ${
-              ratingSource === 'categorise'
+            className={`px-4 py-2 rounded transition ${ratingSource === 'categorise'
                 ? 'bg-purple-600 text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
+              }`}
           >
             Voir par Catégorisation
           </button>
           <button
             onClick={() => setRatingSource('imdb')}
-            className={`px-4 py-2 rounded transition ${
-              ratingSource === 'imdb'
+            className={`px-4 py-2 rounded transition ${ratingSource === 'imdb'
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
+              }`}
           >
             Voir par IMDB
           </button>
@@ -111,18 +109,18 @@ export default function ClientOfficialClassement({
             </button>
           )}
         </div>
-          <div className="flex flex-col items-center gap-6">
-            {officialClassement.map((articleOfficialClassement: articleClassement) => (
-              <ArticleClassementCard
-                key={articleOfficialClassement.id}
-                articleOfficialClassement={articleOfficialClassement}
-                ratingSource={ratingSource}
-                onShowMyList={handleShowMyList}
-                IsInMyList={myList.some(f => f.id === articleOfficialClassement.id)}
-                categoryName={categoryName}
-              />
-            ))}
-          </div>
+        <div className="flex flex-col items-center gap-6">
+          {officialClassement.map((articleOfficialClassement: articleClassement) => (
+            <ArticleClassementCard
+              key={articleOfficialClassement.id}
+              articleOfficialClassement={articleOfficialClassement}
+              ratingSource={ratingSource}
+              onShowMyList={handleShowMyList}
+              IsInMyList={myList.some(f => f.id === articleOfficialClassement.id)}
+              categorySlug={categorySlug}
+            />
+          ))}
+        </div>
       </div>
 
       <Modal

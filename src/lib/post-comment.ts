@@ -9,11 +9,11 @@ export async function postComment(formData: FormData) {
     const content = formData.get('content')?.toString() || '';
     const discussionId = formData.get('discussionId')?.toString() || '';
     const parentId = formData.get('parentId')?.toString() || null;
-    const categoryName = formData.get('categoryName') as string;
+    const categorySlug = formData.get('categorySlug') as string;
 
     const session = await auth();
 
-    if (!session || !session.user || !session.user.id || !categoryName) {
+    if (!session || !session.user || !session.user.id || !categorySlug) {
         return {
             success: false,
             message: 'Vous devez être connecté.',
@@ -38,7 +38,7 @@ export async function postComment(formData: FormData) {
         },
     });
 
-    revalidatePath(`/categories/${categoryName}/${discussionId}`);
+    revalidatePath(`/categories/${categorySlug}/${discussionId}`);
 
     return { success: true };
 }

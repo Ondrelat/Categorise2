@@ -68,21 +68,21 @@ const ClientCategoryTree: React.FC<CategoryTreeProps> = ({
                             )}
                         </span>
                         <FolderIcon className="w-4 h-4 text-blue-500 mr-2" />
-                        
+
                         {editingCategoryId === category.id ? (
-                            <CategoryEditForm 
+                            <CategoryEditForm
                                 categoryId={category.id}
-                                initialName={category.name}
+                                initialName={category.slug}
                                 onSave={onSaveEdit}
                                 onCancel={onCancelEdit}
                             />
                         ) : (
                             <>
-                                <Link href={`/categories/${category.name}/${nameDefaultSectionForThisCategory}`} className="text-sm hover:text-blue-500 flex-1">
+                                <Link href={`/categories/${category.slug}/${nameDefaultSectionForThisCategory}`} className="text-sm hover:text-blue-500 flex-1">
                                     {category.name}
                                 </Link>
-                                
-                                <CategoryActionButtons 
+
+                                <CategoryActionButtons
                                     categoryId={category.id}
                                     onEdit={handleEdit}
                                     onDelete={handleDelete}
@@ -92,8 +92,8 @@ const ClientCategoryTree: React.FC<CategoryTreeProps> = ({
                         )}
                     </div>
                     {expandedCategories[category.id] && category.subcategories.length > 0 && (
-                        <ClientCategoryTree 
-                            categories={category.subcategories} 
+                        <ClientCategoryTree
+                            categories={category.subcategories}
                             level={level + 1}
                             expandedCategories={expandedCategories}
                             editingCategoryId={editingCategoryId}

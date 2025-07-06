@@ -6,12 +6,12 @@ import { ARTICLE_TYPES, ContentSection } from '@/app/types';
 
 interface NavigatorSectionProps {
     missingTypes?: ContentSection[];
-    categoryName: string;
+    categorySlug: string;
 }
 
 const NavigatorSection: React.FC<NavigatorSectionProps> = ({
     missingTypes = [],
-    categoryName
+    categorySlug
 }) => {
     const router = useRouter();
     const pathname = usePathname();
@@ -48,11 +48,11 @@ const NavigatorSection: React.FC<NavigatorSectionProps> = ({
 
     const handleSectionClick = (section: ContentSection) => {
         setActiveSection(section);
-        router.push(`/categories/${categoryName}/${section.toLowerCase()}`);
+        router.push(`/categories/${categorySlug}/${section.toLowerCase()}`);
     };
 
     const handleAddMissingType = (missingType: ContentSection) => {
-        router.push(`/categories/${categoryName}/create-article?type=${missingType}&category=${encodeURIComponent(categoryName)}`);
+        router.push(`/categories/${categorySlug}/create-article?type=${missingType}&category=${encodeURIComponent(categorySlug)}`);
         setShowMissingDropdown(false);
     };
 

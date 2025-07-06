@@ -8,14 +8,14 @@ import { Comment } from '@/app/types';
 interface CommentThreadProps {
     comment: Comment;
     discussionId: string;
-    categoryName: string;
+    categorySlug: string;
     level: number;
 }
 
 export default function CommentThread({
     comment,
     discussionId,
-    categoryName,
+    categorySlug,
     level
 }: CommentThreadProps) {
     const [showReplyForm, setShowReplyForm] = useState(false);
@@ -86,7 +86,7 @@ export default function CommentThread({
                     <div className="mt-4 pt-4 border-t border-gray-200">
                         <CommentForm
                             discussionId={discussionId}
-                            categoryName={categoryName}
+                            categorySlug={categorySlug}
                             parentId={comment.id}
                             onSubmitSuccess={() => setShowReplyForm(false)}
                             placeholder="Répondre à ce commentaire..."
@@ -103,7 +103,7 @@ export default function CommentThread({
                             key={reply.id}
                             comment={reply}
                             discussionId={discussionId}
-                            categoryName={categoryName}
+                            categorySlug={categorySlug}
                             level={level + 1}
                         />
                     ))}

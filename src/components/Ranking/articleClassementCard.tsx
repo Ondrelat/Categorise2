@@ -4,7 +4,7 @@ import { articleClassement } from '@/app/types';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
-import { toggleLikeArticle, handleRateSlider, AddToMyList, RemoveFromMyList} from './actions'
+import { toggleLikeArticle, handleRateSlider, AddToMyList, RemoveFromMyList } from './actions'
 
 interface articleClassementCardProps {
   articleOfficialClassement: articleClassement;
@@ -12,7 +12,7 @@ interface articleClassementCardProps {
   onShowMyList?: () => void;
   onWatched?: (articleid: string, watched: boolean) => void;
   IsInMyList?: boolean;
-  categoryName: string
+  categorySlug: string
 }
 
 export default function ArticleClassementCard({
@@ -20,7 +20,7 @@ export default function ArticleClassementCard({
   ratingSource,
   onShowMyList,
   IsInMyList = false,
-  categoryName
+  categorySlug
 }: articleClassementCardProps) {
   // États locaux synchronisés avec les props
   const [isInMyList, setIsInMyList] = useState(IsInMyList)
@@ -51,8 +51,8 @@ export default function ArticleClassementCard({
       await toggleLikeArticle(articleOfficialClassement.id, !liked);
       setLiked(!liked);
     } catch (error) {
-console.error(error);
-    } 
+      console.error(error);
+    }
   };
 
   const handleSliderChange = (value: number) => {
@@ -62,13 +62,13 @@ console.error(error);
   const handleConfirmRating = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Mise à jour immédiate de l'UI
     setConfirmedRating(rating);
     setShowRatingTool(false);
-    
+
     try {
-        await handleRateSlider(articleOfficialClassement.id, rating);
+      await handleRateSlider(articleOfficialClassement.id, rating);
     } catch (error) {
       setShowRatingTool(true);
       console.error(error);
@@ -83,7 +83,7 @@ console.error(error);
       onShowMyList();
     } else {
       try {
-        await AddToMyList(articleOfficialClassement.id, categoryName);
+        await AddToMyList(articleOfficialClassement.id, categorySlug);
         // Mettre à jour l'état local après succès
         setIsInMyList(true);
       } catch (error) {
@@ -96,9 +96,9 @@ console.error(error);
   const handleRemoveFromList = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
-      await RemoveFromMyList(articleOfficialClassement.id, categoryName);
+      await RemoveFromMyList(articleOfficialClassement.id, categorySlug);
       // Mettre à jour l'état local après succès
       setIsInMyList(false);
       setShowConfirmRemove(false);
@@ -187,11 +187,10 @@ console.error(error);
                     <button
                       type="button"
                       onClick={handleLike}
-                      className={`p-2 rounded-full transition ${
-                        liked
+                      className={`p-2 rounded-full transition ${liked
                           ? 'bg-red-500 text-white'
                           : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                      }`}
+                        }`}
                     >
                       <Heart className={`w-5 h-5 ${liked ? 'fill-current' : ''}`} />
                     </button>
@@ -201,9 +200,8 @@ console.error(error);
                   <button
                     type="button"
                     onClick={handleToggleRatingTool}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-100 hover:bg-indigo-200 text-indigo-700 transition-all duration-300 ease-in-out group ${
-                      rating ? 'opacity-70' : ''
-                    }`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-100 hover:bg-indigo-200 text-indigo-700 transition-all duration-300 ease-in-out group ${rating ? 'opacity-70' : ''
+                      }`}
                   >
                     <Star className="w-4 h-4 text-indigo-500" />
                     Ma note
@@ -279,7 +277,7 @@ console.error(error);
                           <List className="w-4 h-4" />
                           <span>Voir mon classement</span>
                         </button>
-                        
+
                         {/* Bouton retirer avec confirmation */}
                         {!showConfirmRemove ? (
                           <button

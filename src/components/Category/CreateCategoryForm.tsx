@@ -6,15 +6,15 @@ import { createCategory } from '@/lib/categories';
 
 interface CreateCategoryFormProps {
   isOndrelat: boolean;
-  parentCategoryName: string | null | undefined;
+  parentcategorySlug: string | null | undefined;
 }
 
 export default function CreateCategoryForm({
   isOndrelat,
-  parentCategoryName,
+  parentcategorySlug,
 }: CreateCategoryFormProps) {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newcategorySlug, setNewcategorySlug] = useState('');
   const [addCategoryError, setAddCategoryError] = useState<string | null>(null);
   const [addingCategoryLoading, setAddingCategoryLoading] = useState(false);
 
@@ -23,7 +23,7 @@ export default function CreateCategoryForm({
   // Générer automatiquement un name à partir du nom
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
-    setNewCategoryName(name);
+    setNewcategorySlug(name);
   };
 
   // Fonction pour créer une nouvelle catégorie
@@ -36,7 +36,7 @@ export default function CreateCategoryForm({
       return;
     }
 
-    if (!newCategoryName.trim()) {
+    if (!newcategorySlug.trim()) {
       setAddCategoryError('Le nom et le name sont requis');
       return;
     }
@@ -46,22 +46,22 @@ export default function CreateCategoryForm({
 
     try {
       const result = await createCategory({
-        name: newCategoryName.trim(),
-        parentCategoryName: parentCategoryName || null
+        name: newcategorySlug.trim(),
+        parentcategorySlug: parentcategorySlug || null
       });
 
       if (result.success && result.data) {
-        setNewCategoryName('');
+        setNewcategorySlug('');
         setIsAddingCategory(false);
 
         // Force un rafraîchissement complet
         router.refresh();
 
         // Méthode 1: Redirection vers la nouvelle catégorie créée
-        if (parentCategoryName) {
+        if (parentcategorySlug) {
           // Naviguer vers la sous-catégorie nouvellement créée
           setTimeout(() => {
-            router.push(`/categories/${newCategoryName.trim()}`);
+            router.push(`/categories/${newcategorySlug.trim()}`);
           }, 300);  // Un léger délai pour permettre au router.refresh() de terminer
         } else {
           // Méthode 2: Rafraîchissement de la page actuelle après un court délai
@@ -89,7 +89,7 @@ export default function CreateCategoryForm({
             onClick={() => setIsAddingCategory(!isAddingCategory)}
             className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
           >
-            {isAddingCategory ? 'Annuler' : `Ajouter une ${parentCategoryName ? 'sous-catégorie' : 'catégorie'}`}
+            {isAddingCategory ? 'Annuler' : `Ajouter une ${parentcategorySlug ? 'sous-catégorie' : 'catégorie'}`}
           </button>
         </div>
       )}
@@ -98,18 +98,18 @@ export default function CreateCategoryForm({
       {isAddingCategory && isOndrelat && (
         <div className="bg-gray-50 p-4 rounded-md mb-6 border border-gray-200">
           <h3 className="text-lg font-medium mb-3">
-            {parentCategoryName ? `Ajouter une sous-catégorie à "${parentCategoryName}"` : 'Ajouter une catégorie'}
+            {parentcategorySlug ? `Ajouter une sous-catégorie à "${parentcategorySlug}"` : 'Ajouter une catégorie'}
           </h3>
 
           <form onSubmit={handleCreateCategory} className="space-y-4">
             <div>
-              <label htmlFor="categoryName" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="categorySlug" className="block text-sm font-medium text-gray-700 mb-1">
                 Nom de la catégorie
               </label>
               <input
                 type="text"
-                id="categoryName"
-                value={newCategoryName}
+                id="categorySlug"
+                value={newcategorySlug}
                 onChange={handleNameChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                 placeholder="Entrez le nom de la catégorie"

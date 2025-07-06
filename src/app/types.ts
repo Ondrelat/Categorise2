@@ -3,6 +3,8 @@ import type { JsonValue } from '@prisma/client/runtime/library';
 export interface Category {
   id: string;
   name?: string | null | undefined;  // Changé de name à name?
+  slug?: string | null;  // Changé de name à slug
+  imageUrl?: string | null;  // Changé de imageUrl à imageUrl?
   description: string;
   parentId?: string | null;  // Changé de parentId à parentCategory
   parentCategory?: string | null;  // Changé de parentId à parentCategory
@@ -14,6 +16,7 @@ export interface Category {
 export interface CategoryTreeItem {
   id: string;
   name: string;
+  slug: string;
   description: string;
   isActive: boolean;
   subcategories: CategoryTreeItem[];

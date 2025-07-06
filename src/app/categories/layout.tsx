@@ -2,9 +2,9 @@ import React, { Suspense } from 'react';
 import SideBar from '@/components/Category/Sidebar';
 import { getSession } from '@/lib/session';
 
-async function SidebarLoader({ categoryName }: { categoryName?: string }) {
+async function SidebarLoader({ categorySlug }: { categorySlug?: string }) {
     const session = await getSession();
-    return <SideBar categoryName={categoryName} session={session} />;
+    return <SideBar categorySlug={categorySlug} session={session} />;
 }
 
 export default function CategoriesLayout({

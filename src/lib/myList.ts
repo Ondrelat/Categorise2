@@ -1,11 +1,11 @@
 import prisma from './db/db';
 
-export async function getCategoryId(categoryName?: string): Promise<string | undefined> {
-  if (!categoryName) return undefined;
+export async function getCategoryId(categorySlug?: string): Promise<string | undefined> {
+  if (!categorySlug) return undefined;
 
   try {
     const category = await prisma.categories.findFirst({
-      where: { name: categoryName, isActive: true }
+      where: { slug: categorySlug, isActive: true }
     });
     return category?.id;
   } catch (error) {
@@ -14,7 +14,7 @@ export async function getCategoryId(categoryName?: string): Promise<string | und
   }
 }
 
-export async function fetchMyList(userId: string, categoryName?: string) {
+export async function fetchMyList(userId: string, categorySlug?: string) {
   try {
     // Requête raw optimisée pour éviter les includes multiples
     const query = `
@@ -36,7 +36,7 @@ export async function fetchMyList(userId: string, categoryName?: string) {
         ac.genres,
         ac."startYear",
         ac."titleType",
-        c.name as "categoryName"
+        c.name as "categorySlug"
       FROM "ArticleClassementUserList" acul
       INNER JOIN "UserList" ul ON acul."listId" = ul.id
       INNER JOIN "Categories" c ON ul."categoryId" = c.id
@@ -67,10 +67,10 @@ export async function fetchMyList(userId: string, categoryName?: string) {
       genres: string | null;
       startYear: number | null;
       titleType: string | null;
-      categoryName: string;
+      categorySlug: string;
     }
 
-    const rawResults = await prisma.$queryRawUnsafe<RawQueryResult[]>(query, userId, categoryName);
+    const rawResults = await prisma.$queryRawUnsafe<RawQueryResult[]>(query, userId, categorySlug);
 
     return rawResults.map((row) => ({
       id: row.article_id,
@@ -87,7 +87,7 @@ export async function fetchMyList(userId: string, categoryName?: string) {
       startYear: row.startYear,
       titleType: row.titleType,
       rank: row.rank,
-      categoryName: row.categoryName,
+      categorySlug: row.categorySlug,
       rankCategorise: null as number | null,
       scoreCategorise: null as number | null,
     }));
@@ -99,8 +99,8 @@ export async function fetchMyList(userId: string, categoryName?: string) {
 
 
 // Fonction pour récupérer ou créer la UserList correspondant au user + catégorie
-async function getOrCreateUserList(userId: string, categoryName?: string) {
-  const categoryId = await getCategoryId(categoryName);
+async function getOrCreateUserList(userId: string, categorySlug?: string) {
+  const categoryId = await getCategoryId(categorySlug);
   if (!categoryId) throw new Error("Catégorie inconnue");
 
   let list = await prisma.userList.findFirst({
@@ -112,7 +112,7 @@ async function getOrCreateUserList(userId: string, categoryName?: string) {
       data: {
         userId,
         categoryId,
-        name: categoryName || 'Default',
+        name: categorySlug || 'Default',
       },
     });
   }
@@ -120,9 +120,9 @@ async function getOrCreateUserList(userId: string, categoryName?: string) {
   return list;
 }
 
-export async function AddOrRemoveToMyList(articleId: string, onList: boolean, userId: string, categoryName?: string) {
+export async function AddOrRemoveToMyList(articleId: string, onList: boolean, userId: string, categorySlug?: string) {
   try {
-    const list = await getOrCreateUserList(userId, categoryName);
+    const list = await getOrCreateUserList(userId, categorySlug);
 
     if (onList) {
       // Ajouter à la liste
@@ -162,13 +162,13 @@ export async function AddOrRemoveToMyList(articleId: string, onList: boolean, us
   }
 }
 
-export async function ReOrderMyList(ranking: { id: string }[], userId: string, categoryName?: string) {
+export async function ReOrderMyList(ranking: { id: string }[], userId: string, categorySlug?: string) {
   if (!userId) throw new Error("User ID manquant");
   if (!ranking || ranking.length === 0) return { success: false, message: 'Classement vide' };
-  console.log("categoryName", categoryName)
+  console.log("categorySlug", categorySlug)
 
   try {
-    const list = await getOrCreateUserList(userId, categoryName);
+    const list = await getOrCreateUserList(userId, categorySlug);
 
     const updateOps = ranking.map((article, index) =>
       prisma.articleClassementUserList.upsert({

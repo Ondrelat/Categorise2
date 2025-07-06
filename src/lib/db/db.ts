@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prismaClientSingleton = () => {
   return new PrismaClient({
-    log: ['query', 'info', 'warn', 'error'], // 👈 Ajout des logs ici
+    log: ['query', 'error', 'warn', { level: 'info', emit: 'event' }],
   });
 };
 

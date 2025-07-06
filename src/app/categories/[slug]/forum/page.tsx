@@ -5,10 +5,10 @@ import { getDiscussions } from '@/lib/articles';
 export default async function ForumPage({
   params
 }: {
-  params: Promise<{ name: string }>;
+  params: Promise<{ slug: string }>;
 }) {
   const resolvedParams = await params;
-  const name = decodeURIComponent(resolvedParams.name);
+  const name = decodeURIComponent(resolvedParams.slug);
 
   const discussions = await getDiscussions(name);
 
