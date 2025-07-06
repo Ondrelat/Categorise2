@@ -14,53 +14,89 @@ export async function getCategoryId(categoryName?: string): Promise<string | und
   }
 }
 
-// Récupère la UserList pour un user + catégorie, ou undefined si introuvable
-async function getUserListId(userId: string, categoryId?: string): Promise<string | undefined> {
-  if (!categoryId) return undefined;
-  const list = await prisma.userList.findFirst({
-    where: { userId, categoryId },
-  });
-  return list?.id;
-}
-
 export async function fetchMyList(userId: string, categoryName?: string) {
   try {
-    const categoryId = await getCategoryId(categoryName);
-    if (!categoryId) return [];
+    // Requête raw optimisée pour éviter les includes multiples
+    const query = `
+      SELECT 
+        acul.id,
+        acul."articleId",
+        acul.rank,
+        acul."createdAt",
+        ac.id as "article_id",
+        ac.tconst,
+        ac."averageRatingIMDB",
+        ac."numVotesIMDB",
+        ac.titre_fr,
+        ac.titre_en,
+        ac.image_url,
+        ac."createdAt" as "article_createdAt",
+        ac.duration,
+        ac."endYear",
+        ac.genres,
+        ac."startYear",
+        ac."titleType",
+        c.name as "categoryName"
+      FROM "ArticleClassementUserList" acul
+      INNER JOIN "UserList" ul ON acul."listId" = ul.id
+      INNER JOIN "Categories" c ON ul."categoryId" = c.id
+      INNER JOIN "article_classement" ac ON acul."articleId" = ac.id
+      WHERE 
+        acul."userId" = $1
+        AND ul."userId" = $1
+        AND c.name = $2
+        AND c."isActive" = true
+      ORDER BY acul.rank ASC NULLS LAST, acul."createdAt" DESC
+    `;
 
-    const listId = await getUserListId(userId, categoryId);
-    if (!listId) return [];
+    interface RawQueryResult {
+      id: string;
+      articleId: string;
+      rank: number | null;
+      createdAt: Date;
+      article_id: string;
+      tconst: string;
+      averageRatingIMDB: number | null;
+      numVotesIMDB: number | null;
+      titre_fr: string | null;
+      titre_en: string | null;
+      image_url: string | null;
+      article_createdAt: Date;
+      duration: number | null;
+      endYear: number | null;
+      genres: string | null;
+      startYear: number | null;
+      titleType: string | null;
+      categoryName: string;
+    }
 
-    const userRankings = await prisma.articleClassementUserList.findMany({
-      where: {
-        listId
-      },
-      orderBy: [
-        { rank: { sort: 'asc', nulls: 'last' } },
-        { createdAt: 'desc' }
-      ],
-      include: {
-        article: true,
-        list: {
-          include: {
-            category: true,
-          }
-        }
-      }
-    });
+    const rawResults = await prisma.$queryRawUnsafe<RawQueryResult[]>(query, userId, categoryName);
 
-    return userRankings.map((userRanking) => ({
-      ...userRanking.article,
-      rank: userRanking.rank,
-      categoryName: userRanking.list?.category?.name || null,
+    return rawResults.map((row) => ({
+      id: row.article_id,
+      tconst: row.tconst,
+      averageRatingIMDB: row.averageRatingIMDB,
+      numVotesIMDB: row.numVotesIMDB,
+      titre_fr: row.titre_fr,
+      titre_en: row.titre_en,
+      image_url: row.image_url,
+      createdAt: row.article_createdAt,
+      duration: row.duration,
+      endYear: row.endYear,
+      genres: row.genres,
+      startYear: row.startYear,
+      titleType: row.titleType,
+      rank: row.rank,
+      categoryName: row.categoryName,
       rankCategorise: null as number | null,
       scoreCategorise: null as number | null,
     }));
-  } catch (error) {
+  } catch (error: Error | unknown) {
     console.error('Erreur lors de la récupération de la liste:', error);
     throw new Error('Impossible de récupérer la liste des articles');
   }
 }
+
 
 // Fonction pour récupérer ou créer la UserList correspondant au user + catégorie
 async function getOrCreateUserList(userId: string, categoryName?: string) {
@@ -133,7 +169,7 @@ export async function ReOrderMyList(ranking: { id: string }[], userId: string, c
 
   try {
     const list = await getOrCreateUserList(userId, categoryName);
-    
+
     const updateOps = ranking.map((article, index) =>
       prisma.articleClassementUserList.upsert({
         where: {

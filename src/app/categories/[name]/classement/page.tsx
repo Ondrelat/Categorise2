@@ -14,15 +14,15 @@ export default async function ClassementPage({
 }) {
   const resolvedParams = await params;
   const categoryName = decodeURIComponent(resolvedParams.name || 'Action');
-
   const ratingSource = 'categorise';
 
-
+  // 1. Récupérer la session UNE seule fois
   const session = await getSession();
   const userId = session?.user?.id as string | undefined;
 
+  // 2. Passer userId directement aux fonctions
   const [officialClassement, myList] = await Promise.all([
-    getclassementsSortedByRating(categoryName, ratingSource, userId),
+    getclassementsSortedByRating(categoryName, 'categorise', userId),
     userId ? fetchMyList(userId, categoryName) : Promise.resolve([])
   ]);
 
