@@ -1,10 +1,8 @@
 import React from "react";
-
-import { getSession } from '@/lib/session';
-
 import Link from 'next/link';
 import Image from 'next/image';
 import { signOut } from '@/auth';
+import { Session } from 'next-auth';
 
 import '@/app/fontButterfly.css';
 
@@ -71,12 +69,12 @@ function User({ user }: UserProps) {
     );
 }
 
+interface NavbarProps {
+    session: Session | null;
+}
 
-export default async function Navbar() {
-
-
-    const session = await getSession();
-    const user = session?.user
+export default function Navbar({ session }: NavbarProps) {
+    const user = session?.user;
 
     return (
         <nav className="bg-gray-50 text-gray-800 py-5 shadow-md">
