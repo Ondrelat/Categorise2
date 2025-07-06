@@ -1,18 +1,21 @@
-// lib/prisma.ts (ou où tu définis ton client Prisma)
+// /lib/db.ts
 import { PrismaClient } from '@prisma/client';
 
-const prismaClientSingleton = () => {
-  return new PrismaClient({
-    log: ['query', 'error', 'warn', { level: 'info', emit: 'event' }],
-  });
-};
+// Déclare la variable globale pour la compatibilité avec TypeScript
+declare global {
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClient | undefined;
+}
 
-declare const globalThis: {
-  prismaGlobal?: ReturnType<typeof prismaClientSingleton>;
-} & typeof global;
+// Recherche une instance existante sur l'objet global, sinon en crée une nouvelle.
+const db = globalThis.prisma ?? new PrismaClient({
+  // Il est recommandé de simplifier les logs en production
+  log: process.env.NODE_ENV === 'production' ? ['error'] : ['query', 'info', 'warn', 'error'],
+});
 
-const db = globalThis.prismaGlobal ?? prismaClientSingleton();
-
-if (process.env.NODE_ENV !== 'production') globalThis.prismaGlobal = db;
+// Assigne l'instance à la variable globale.
+// En production, cela se produit une fois au démarrage du serveur.
+// En développement, cela préserve l'instance à travers les rechargements à chaud.
+globalThis.prisma = db;
 
 export default db;
