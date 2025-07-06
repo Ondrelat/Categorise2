@@ -1,3 +1,4 @@
+// app/categories/[name]/layout.tsx
 import React, { Suspense } from 'react';
 import NavigatorSection from '@/components/Category/NavigatorSection';
 import { getMissingArticleTypes } from '@/lib/articles';

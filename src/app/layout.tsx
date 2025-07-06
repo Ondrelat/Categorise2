@@ -1,9 +1,10 @@
-// layout.tsx
+// app/layout.tsx
 import { Inter } from "next/font/google";
 import "./globals.css";
 import SessionProviderWrapper from '../components/sessionWrapper';
 import Navbar from '@/components/ui/navbar';
 import Footer from './footer';
+import SideBar from '@/components/Category/Sidebar';
 import { getSession } from '@/lib/session';
 
 const inter = Inter({ subsets: ["latin"] });
@@ -23,7 +24,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SessionProviderWrapper session={session}>
           <div className="flex flex-col min-h-screen">
             <Navbar session={session} />
-            {children}
+
+            <div className="flex flex-1 h-full mt-4 justify-center">
+              <div className="relative">
+                {/* Sidebar fixe disponible sur toutes les pages */}
+                <div className="absolute -translate-x-full">
+                  <SideBar session={session} />
+                </div>
+
+                {children}
+              </div>
+            </div>
+
             <Footer />
           </div>
         </SessionProviderWrapper>

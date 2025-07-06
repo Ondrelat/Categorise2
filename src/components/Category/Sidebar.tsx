@@ -1,31 +1,31 @@
-
 import React from 'react';
 import { getCategories } from '@/lib/categories';
 import CategoryActions from './CategoryActions';
 import { cache } from 'react';
 import { Session } from 'next-auth';
 
-// Utiliser la fonction cache de React pour mémoriser l'appel à getCategories
+// Votre fonction de mise en cache est parfaite, on la garde.
 const getCachedCategories = cache(async () => {
     return await getCategories();
 });
 
 interface SideBarProps {
-    categorySlug?: string;
     session: Session | null;
 }
 
-export default async function SideBar({ categorySlug, session }: SideBarProps) {
-    // Récupérer les catégories (mise en cache)
+export default async function SideBar({ session }: SideBarProps) {
+    // 1. Récupérer les catégories côté serveur
     const categories = await getCachedCategories();
 
     return (
-        <div className="w-64 h-screen bg-gray-50 p-4 border-r">
+        // 2. Le conteneur principal reste un composant serveur
+        <div className="w-64 h-full bg-gray-50 p-4 border-r overflow-y-auto">
             <h2 className="text-xl font-semibold mb-4">Catégories</h2>
+
+            {/* 3. On délègue toute la partie interactive au Client Component */}
             <CategoryActions
                 session={session}
                 initialCategories={categories}
-                currentcategorySlug={categorySlug}
             />
         </div>
     );
