@@ -73,74 +73,47 @@ export async function getArticleClassementById(id: string) {
   }
 }
 
-
-
 export async function getclassementsSortedByRating(
-  categoryTitle: string,
+  categorySlug: string,
   ratingSource: string,
   userId?: string
-) {
+): Promise<articleClassement[]> {
   const startTime = performance.now();
-  const categoryTitleDecode = decodeURIComponent(categoryTitle);
-
-  const limit = 50;
-  const delimiter = (categoryTitleDecode === "Film" || categoryTitleDecode === "Série") ? 20000 : 10000;
-
-  // Pour l'instant seul IMDB est supporté, mais structure extensible
-  const orderField = ratingSource === 'IMDB' ? 'averageRatingIMDB' : 'averageRatingIMDB';
+  const categoryDecode = decodeURIComponent(categorySlug);
+  const delimiter = (categoryDecode === "Film" || categoryDecode === "Série") ? 20000 : 10000;
 
   try {
+    const userFields = userId ? ', acud.liked as "liked", acud.rating as "rating"' : ', NULL as "liked", NULL as "rating"';
+    const userJoin = userId ? 'LEFT JOIN "ArticleClassementUserData" acud ON ac.id = acud."articleId" AND acud."userId" = $4' : '';
+
     const query = `
-      SELECT 
-        ac.id,
-        ac.tconst,
-        ac."averageRatingIMDB",
-        ac."numVotesIMDB",
-        ac.titre_fr,
-        ac.titre_en,
-        ac.image_url,
-        ac."createdAt"${userId ? ',\n        acud.liked as "liked",\n        acud.rating as "rating"' : ',\n        NULL as "userLiked",\n        NULL as "userRating"'}
+      SELECT ac.id, ac.tconst, ac."averageRatingIMDB", ac."numVotesIMDB", ac.titre_fr, ac.titre_en, ac.image_url, ac."createdAt"${userFields}
       FROM "article_classement" ac
       INNER JOIN "ArticleClassementCategory" acc ON ac.id = acc."articleId"
-      INNER JOIN "Categories" c ON acc."categoryId" = c.id${userId ? '\n      LEFT JOIN "ArticleClassementUserData" acud ON ac.id = acud."articleId" AND acud."userId" = $4' : ''}
-      WHERE 
-        ac."${orderField}" IS NOT NULL
-        AND ac."numVotesIMDB" IS NOT NULL
-        AND ac."numVotesIMDB" > $1
-        AND c.name = $2
-      ORDER BY ac."${orderField}" DESC
-      LIMIT $3
+      INNER JOIN "Categories" c ON acc."categoryId" = c.id
+      ${userJoin}
+      WHERE ac."averageRatingIMDB" IS NOT NULL AND ac."numVotesIMDB" > $1 AND c.slug = $2
+      ORDER BY ac."averageRatingIMDB" DESC LIMIT $3
     `;
 
-    const params = userId
-      ? [delimiter, categoryTitleDecode, limit, userId]
-      : [delimiter, categoryTitleDecode, limit];
+    const params = userId ? [delimiter, categoryDecode, 50, userId] : [delimiter, categoryDecode, 50];
 
     const rawResults = await prisma.$queryRawUnsafe<articleClassement[]>(query, ...params);
 
-    const films = rawResults.map(film => ({
-      id: film.id,
-      tconst: film.tconst,
-      averageRatingIMDB: film.averageRatingIMDB,
-      numVotesIMDB: film.numVotesIMDB,
-      titre_fr: film.titre_fr,
-      titre_en: film.titre_en,
-      image_url: film.image_url,
-      createdAt: film.createdAt,
+    const films = rawResults.map(f => ({
+      ...f,
       rankCategorise: null as number | null,
       scoreCategorise: null as number | null,
-      liked: film.liked ?? null,
-      rating: film.rating ? parseFloat(film.rating.toString()) : null,
+      liked: f.liked ?? null,
+      rating: f.rating ? parseFloat(f.rating.toString()) : null,
     }));
 
-    const endTime = performance.now();
     if (process.env.NODE_ENV === 'development') {
-      console.log(`Films récupérés en ${endTime - startTime} ms`);
-      console.log(`Nombre de films trouvés : ${films.length}`);
+      console.log(`Films récupérés en ${performance.now() - startTime} ms - Count: ${films.length}`);
     }
 
     return films;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Erreur lors de la récupération des films:', error);
     throw new Error('Erreur lors de la récupération des films');
   }

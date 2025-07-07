@@ -166,14 +166,6 @@ export default function CategoryActions({
   // --- Rendu du composant ---
   return (
     <div className="space-y-6">
-      {/* Affichage de la catégorie actuelle si elle existe */}
-      {currentCategorySlug && (
-        <div className="bg-blue-50 p-3 rounded-md mb-4">
-          <p className="text-sm font-medium">
-            Catégorie actuelle: <span className="text-blue-600">{currentCategorySlug}</span>
-          </p>
-        </div>
-      )}
 
       {/* Composant de création de catégorie */}
       <CreateCategoryForm
