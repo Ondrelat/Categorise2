@@ -73,6 +73,7 @@ export async function getArticleClassementById(id: string) {
   }
 }
 
+//faire attention la conditions sur le slug ça casse tout parfois, si ça prend name au lieu de slug
 export async function getclassementsSortedByRating(
   categorySlug: string,
   ratingSource: string,

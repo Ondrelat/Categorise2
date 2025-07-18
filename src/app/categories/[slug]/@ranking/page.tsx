@@ -1,5 +1,6 @@
-// app/categories/[slug]/classement/page.tsx
-import ClientOfficialClassement from './ClientOfficialClassement';
+import ExpandableCard from '@/components/ExpandableCard'; // Assure-toi que le chemin est correct
+
+import ClientOfficialClassement from '../classement/ClientOfficialClassement';
 
 import { getclassementsSortedByRating } from '@/lib/articles';
 import { fetchMyList } from '@/lib/myList';
@@ -26,14 +27,36 @@ export default async function ClassementPage({
     userId ? fetchMyList(userId, categorySlug) : Promise.resolve([])
   ]);
 
-  return (
+  // Si le classement officiel est vide, retourne null (pas de card affichée)
+  if (officialClassement.length === 0) {
+    return null;
+  }
+
+  const content = (
     <ClientOfficialClassement
       categorySlug={categorySlug}
       OfficialClassement={officialClassement}
       initialRatingSource={ratingSource}
       isAuthenticated={!!userId}
       MyList={myList}
-      isInParallelRoute={false}
     />
+  );
+
+  return (
+    <ExpandableCard
+      title="Classement des utilisateurs"
+      iconName="Trophy"
+      previewContent={
+        <div className="h-full overflow-hidden relative">
+          {content}
+          {/* Gradient fade pour indiquer qu'il y a plus de contenu */}
+          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+        </div>
+      }
+      loadingText="Chargement du classement..."
+      showCount={officialClassement.length} // Optionnel : affiche le nombre d'éléments si pertinent
+    >
+      {content}
+    </ExpandableCard>
   );
 }
