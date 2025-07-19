@@ -27,6 +27,8 @@ export default async function ClassementPage({
     userId ? fetchMyList(userId, categorySlug) : Promise.resolve([])
   ]);
 
+  console.log("my list", myList)
+
   // Si le classement officiel est vide, retourne null (pas de card affichée)
   if (officialClassement.length === 0) {
     return null;

@@ -53,7 +53,6 @@ export async function AddToMyList(articleId: string, categorySlug: string) {
   const session = await auth()
   const userId = session?.user?.id as string | undefined;
   if (!userId) return { success: false };
-
   const result = await AddOrRemoveToMyList(articleId, true, userId, categorySlug);
 
   if (result.success) {

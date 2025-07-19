@@ -235,7 +235,6 @@ model ArticleClassement {
 model ArticleClassementUserList {
   id           String   @id @default(cuid())
   articleId    String
-  categoryId   String?
   listId       String?
   userId       String
   rank         Int?

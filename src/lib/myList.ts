@@ -14,89 +14,74 @@ export async function getCategoryId(categorySlug?: string): Promise<string | und
   }
 }
 
-export async function fetchMyList(userId: string, categorySlug?: string) {
-  try {
-    // Requête raw optimisée pour éviter les includes multiples
-    const query = `
-      SELECT 
-        acul.id,
-        acul."articleId",
-        acul.rank,
-        acul."createdAt",
-        ac.id as "article_id",
-        ac.tconst,
-        ac."averageRatingIMDB",
-        ac."numVotesIMDB",
-        ac.titre_fr,
-        ac.titre_en,
-        ac.image_url,
-        ac."createdAt" as "article_createdAt",
-        ac.duration,
-        ac."endYear",
-        ac.genres,
-        ac."startYear",
-        ac."titleType",
-        c.name as "categorySlug"
-      FROM "ArticleClassementUserList" acul
-      INNER JOIN "UserList" ul ON acul."listId" = ul.id
-      INNER JOIN "Categories" c ON ul."categoryId" = c.id
-      INNER JOIN "article_classement" ac ON acul."articleId" = ac.id
-      WHERE 
-        acul."userId" = $1
-        AND ul."userId" = $1
-        AND c.name = $2
-        AND c."isActive" = true
-      ORDER BY acul.rank ASC NULLS LAST, acul."createdAt" DESC
-    `;
 
-    interface RawQueryResult {
-      id: string;
-      articleId: string;
-      rank: number | null;
-      createdAt: Date;
-      article_id: string;
-      tconst: string;
-      averageRatingIMDB: number | null;
-      numVotesIMDB: number | null;
-      titre_fr: string | null;
-      titre_en: string | null;
-      image_url: string | null;
-      article_createdAt: Date;
-      duration: number | null;
-      endYear: number | null;
-      genres: string | null;
-      startYear: number | null;
-      titleType: string | null;
-      categorySlug: string;
-    }
-
-    const rawResults = await prisma.$queryRawUnsafe<RawQueryResult[]>(query, userId, categorySlug);
-
-    return rawResults.map((row) => ({
-      id: row.article_id,
-      tconst: row.tconst,
-      averageRatingIMDB: row.averageRatingIMDB,
-      numVotesIMDB: row.numVotesIMDB,
-      titre_fr: row.titre_fr,
-      titre_en: row.titre_en,
-      image_url: row.image_url,
-      createdAt: row.article_createdAt,
-      duration: row.duration,
-      endYear: row.endYear,
-      genres: row.genres,
-      startYear: row.startYear,
-      titleType: row.titleType,
-      rank: row.rank,
-      categorySlug: row.categorySlug,
-      rankCategorise: null as number | null,
-      scoreCategorise: null as number | null,
-    }));
-  } catch (error: Error | unknown) {
-    console.error('Erreur lors de la récupération de la liste:', error);
-    throw new Error('Impossible de récupérer la liste des articles');
-  }
+type R = {
+  id: string;
+  articleId: string;
+  rank: number | null;
+  createdAt: Date;
+  article_id: string;
+  tconst: string | null;
+  averageRatingIMDB: number | null;
+  numVotesIMDB: number | null;
+  titre_fr: string | null;
+  titre_en: string | null;
+  image_url: string | null;
+  article_createdAt: Date;
+  duration: string | null;
+  endYear: number | null;
+  genres: string | null;
+  startYear: number | null;
+  titleType: string | null;
+  categorySlug: string | null;
+  categoryName: string | null;
 }
 
+export type MyListItem = Omit<R, 'id' | 'articleId' | 'createdAt' | 'article_id' | 'article_createdAt' | 'categoryName'> & {
+  id: string;
+  createdAt: Date;
+  categoryName: string | null;
+  rankCategorise: number | null;
+  scoreCategorise: number | null;
+};
+
+export async function fetchMyList(userId: string, categorySlug?: string): Promise<MyListItem[]> {
+  if (!userId || !categorySlug) throw new Error('Paramètres requis');
+  
+  try {
+    return (await prisma.$queryRawUnsafe<R[]>(`
+      SELECT acul.*, ac.id article_id, ac.*, ac."createdAt" article_createdAt,
+             c.slug "categorySlug", c.name "categoryName"
+      FROM "ArticleClassementUserList" acul
+      JOIN "UserList" ul ON acul."listId"=ul.id AND ul."userId"=$1
+      JOIN "Categories" c ON ul."categoryId"=c.id AND c.slug=$2 AND c."isActive"
+      JOIN "article_classement" ac ON acul."articleId"=ac.id
+      WHERE acul."userId"=$1
+      ORDER BY acul.rank NULLS LAST, acul."createdAt" DESC
+    `, userId, categorySlug)).map((r: R): MyListItem => ({
+      id: r.article_id,
+      tconst: r.tconst,
+      averageRatingIMDB: r.averageRatingIMDB,
+      numVotesIMDB: r.numVotesIMDB,
+      titre_fr: r.titre_fr,
+      titre_en: r.titre_en,
+      image_url: r.image_url,
+      createdAt: r.article_createdAt,
+      duration: r.duration,
+      endYear: r.endYear,
+      genres: r.genres,
+      startYear: r.startYear,
+      titleType: r.titleType,
+      rank: r.rank,
+      categorySlug: r.categorySlug,
+      categoryName: r.categoryName,
+      rankCategorise: null,
+      scoreCategorise: null,
+    }));
+  } catch (e: unknown) {
+    throw new Error(`Erreur liste: ${e instanceof Error ? e.message : 'Inconnue'}`);
+  }
+}
 
 // Fonction pour récupérer ou créer la UserList correspondant au user + catégorie
 async function getOrCreateUserList(userId: string, categorySlug?: string) {
