@@ -1,25 +1,21 @@
-'use client';
-
-import React from 'react';
-import { MessageCircle, Trophy, BookOpen, Eye } from 'lucide-react';
-
-interface CategoryLayoutProps {
+export default async function CategoryLayout({
+  children,
+  information,
+  ranking,
+  tutorials,
+  forum,
+  params,
+}: {
   children: React.ReactNode;
   information: React.ReactNode;
   ranking: React.ReactNode;
   tutorials: React.ReactNode;
   forum: React.ReactNode;
   params: Promise<{ slug: string }>;
-}
-
-export default function CategoryLayout({
-  children,
-  information,
-  ranking,
-  tutorials,
-  forum,
-  params
-}: CategoryLayoutProps) {
+}) {
+  const resolvedParams = await params;
+  console.log("params slug:", resolvedParams.slug);
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8 flex flex-col">

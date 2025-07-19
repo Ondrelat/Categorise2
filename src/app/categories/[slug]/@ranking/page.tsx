@@ -32,7 +32,7 @@ export default async function ClassementPage({
     return null;
   }
 
-  const content = (
+  const fullContent = (
     <ClientOfficialClassement
       categorySlug={categorySlug}
       OfficialClassement={officialClassement}
@@ -42,13 +42,24 @@ export default async function ClassementPage({
     />
   );
 
+  const previewContent = (
+    <ClientOfficialClassement
+      categorySlug={categorySlug}
+      OfficialClassement={officialClassement.slice(0, 5)} // Affiche seulement les 10 premiers pour le preview (ajuste selon tes besoins)
+      initialRatingSource={ratingSource}
+      isAuthenticated={!!userId}
+      MyList={myList.slice(0, 10)} // Optionnel : limite aussi myList si pertinent
+      // Ajoute un prop si nécessaire pour indiquer que c'est un preview, ex. isPreview={true}
+    />
+  );
+
   return (
     <ExpandableCard
       title="Classement des utilisateurs"
       iconName="Trophy"
       previewContent={
         <div className="h-full overflow-hidden relative">
-          {content}
+          {previewContent}
           {/* Gradient fade pour indiquer qu'il y a plus de contenu */}
           <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
         </div>
@@ -56,7 +67,7 @@ export default async function ClassementPage({
       loadingText="Chargement du classement..."
       showCount={officialClassement.length} // Optionnel : affiche le nombre d'éléments si pertinent
     >
-      {content}
+      {fullContent}
     </ExpandableCard>
   );
 }

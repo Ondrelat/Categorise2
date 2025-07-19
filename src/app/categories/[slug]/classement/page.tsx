@@ -33,7 +33,6 @@ export default async function ClassementPage({
       initialRatingSource={ratingSource}
       isAuthenticated={!!userId}
       MyList={myList}
-      isInParallelRoute={false}
     />
   );
 }
