@@ -1,20 +1,24 @@
 // src/app/categories/[slug]/layout.tsx
 import { ReactNode } from 'react';
 
-interface CategoryLayoutProps {
+export default async function CategoryLayout({
+  children,
+  information,
+  ranking,
+  tutorials,
+  forum,
+  params,
+}: {
   children: ReactNode;
   information: ReactNode;
   ranking: ReactNode;
   tutorials: ReactNode;
   forum: ReactNode;
   params: Promise<{ slug: string }>;
-}
-
-export default async function CategoryLayout(props: CategoryLayoutProps) {
-  const { children, information, ranking, tutorials, forum, params } = props;
-  const resolvedParams = await params;
+}) {
+  const { slug } = await params;
   
-  console.log("params slug:", resolvedParams.slug);
+  console.log("params slug:", slug);
   
   return (
     <div className="min-h-screen bg-gray-50">
