@@ -5,6 +5,10 @@
   "prisma": {
     "schema": "src/lib/db/schema.prisma"
   },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "prisma generate && next build",
@@ -12,7 +16,8 @@
     "lint": "next lint",
     "db:migrate": "npx prisma migrate dev",
     "db:reset": "prisma migrate reset && prisma migrate dev",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
@@ -21,14 +26,14 @@
     "@lexical/react": "^0.32.1",
     "@lexical/rich-text": "^0.32.1",
     "@lexical/utils": "^0.32.1",
-    "@prisma/client": "^6.1.0",
+    "@prisma/client": "6.1.0",
     "@radix-ui/react-slot": "^1.1.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lexical": "^0.32.1",
     "lucide-react": "^0.469.0",
     "next": "15.4.2",
-    "next-auth": "^5.0.0-beta.25",
+    "next-auth": "5.0.0-beta.25",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "tailwind-merge": "^2.6.0",
@@ -45,7 +50,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.4.2",
     "postcss": "^8",
-    "prisma": "^6.1.0",
+    "prisma": "6.1.0",
     "tailwindcss": "^4.1.10",
     "typescript": "^5"
   },
