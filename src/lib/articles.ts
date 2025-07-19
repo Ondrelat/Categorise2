@@ -135,7 +135,8 @@ export async function getTutorialsByCategoryGroupedByLevel(categorySlug: string)
       id: true,
       title: true,
       contentJson: true,
-      level: true
+      level: true,
+      content: true
     },
     orderBy: {
       level: 'asc'

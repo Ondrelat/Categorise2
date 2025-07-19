@@ -25,7 +25,7 @@ export interface CategoryTreeItem {
 export interface Article {
   id: string;
   title?: string;
-  content?: string;
+  content?: string | null;
   imageUrl?: string;
   createdAt?: Date;
   categoryId?: string;

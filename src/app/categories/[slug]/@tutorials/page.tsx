@@ -13,7 +13,7 @@ export default async function TutorialsPage({
   
   try {
     const tutorialsByLevel = await getTutorialsByCategoryGroupedByLevel(categorySlug);
-
+    console.log("tutorialsByLevel", tutorialsByLevel)
     // Si pas de tutoriels, retourner null
     if (!tutorialsByLevel || Object.keys(tutorialsByLevel).length === 0) {
       return null;
@@ -25,19 +25,6 @@ export default async function TutorialsPage({
         <TutorialTabs tutorialsByLevel={tutorialsByLevel} />
       </div>
     );
-
-    // Préparer une version preview : par exemple, limiter à un certain nombre de tutoriels par niveau
-    // Assumons que tutorialsByLevel est un objet comme { beginner: array, intermediate: array, advanced: array }
-    // Limiter à 3 tutoriels par niveau pour le preview (ajuste selon tes besoins)
-    const previewTutorialsByLevel = Object.fromEntries(
-      Object.entries(tutorialsByLevel).map(([level, tutorials]) => [level, tutorials.slice(0, 3)])
-    );
-
-    const previewContent = (
-      <div className="space-y-4">
-        <TutorialTabs tutorialsByLevel={previewTutorialsByLevel} />
-      </div>
-    );
     
     return (
       <ExpandableCard
@@ -45,7 +32,7 @@ export default async function TutorialsPage({
         iconName="BookOpen"
         previewContent={
           <div className="h-full overflow-hidden relative">
-            {previewContent}
+            {fullContent}
             {/* Gradient fade pour indiquer qu'il y a plus de contenu */}
             <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
           </div>
